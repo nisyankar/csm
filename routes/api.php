@@ -1,0 +1,631 @@
+<?php
+
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\TimesheetController;
+use App\Http\Controllers\TimesheetApprovalController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\QRCodeController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\FileUploadController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+// Public API Routes (No Authentication Required)
+Route::prefix('v1/public')->name('api.public.')->group(function () {
+    
+    // System Status
+    Route::get('/status', function () {
+        return response()->json([
+            'status' => 'ok',
+            'version' => '1.0.0',
+            'timestamp' => now()->toISOString(),
+            'environment' => app()->environment(),
+        ]);
+    })->name('status');
+    
+    // QR Code Verification (Public Kiosks)
+    Route::post('/qr/verify', [QRCodeController::class, 'publicQrVerify'])->name('qr.verify');
+    
+    // Employee Info by QR Code (Limited Info)
+    Route::get('/employee/{code}/info', [EmployeeController::class, 'publicEmployeeInfo'])->name('employee.info');
+    
+    // Project Location Verification
+    Route::post('/project/location-verify', [QRCodeController::class, 'verifyProjectLocation'])->name('project.location-verify');
+});
+
+// Authentication API Routes
+Route::prefix('v1/auth')->name('api.auth.')->group(function () {
+    
+    // Login/Logout
+    Route::post('/login', [AuthController::class, 'apiLogin'])->name('login');
+    Route::post('/qr-login', [AuthController::class, 'apiQrLogin'])->name('qr-login');
+    Route::post('/logout', [AuthController::class, 'apiLogout'])->middleware('auth:sanctum')->name('logout');
+    
+    // Token Management
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/user', function (Request $request) {
+            return response()->json([
+                'user' => $request->user()->load(['employee', 'roles', 'permissions']),
+            ]);
+        })->name('user');
+        
+        Route::post('/refresh-token', [AuthController::class, 'refreshToken'])->name('refresh-token');
+        Route::post('/revoke-tokens', [AuthController::class, 'revokeAllTokens'])->name('revoke-tokens');
+        Route::get('/active-sessions', [AuthController::class, 'getActiveSessions'])->name('active-sessions');
+    });
+    
+    // Password Reset (if needed for mobile)
+    Route::post('/forgot-password', [AuthController::class, 'apiForgotPassword'])->name('forgot-password');
+    Route::post('/reset-password', [AuthController::class, 'apiResetPassword'])->name('reset-password');
+});
+
+// Authenticated API Routes
+Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(function () {
+    
+    // Dashboard API
+    Route::prefix('dashboard')->name('dashboard.')->group(function () {
+        Route::get('/data', [DashboardController::class, 'apiDashboardData'])->name('data');
+        Route::get('/stats', [DashboardController::class, 'apiStats'])->name('stats');
+        Route::get('/recent-activity', [DashboardController::class, 'apiRecentActivity'])->name('recent-activity');
+        Route::get('/alerts', [DashboardController::class, 'apiAlerts'])->name('alerts');
+    });
+    
+    // Employee API
+    Route::prefix('employees')->name('employees.')->group(function () {
+        Route::get('/', [EmployeeController::class, 'apiIndex'])->name('index');
+        Route::post('/', [EmployeeController::class, 'apiStore'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('store');
+        Route::get('/{employee}', [EmployeeController::class, 'apiShow'])->name('show');
+        Route::put('/{employee}', [EmployeeController::class, 'apiUpdate'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('update');
+        Route::delete('/{employee}', [EmployeeController::class, 'apiDestroy'])
+            ->middleware('role:admin|hr')
+            ->name('destroy');
+        
+        // Employee Actions
+        Route::post('/{employee}/assign-project', [EmployeeController::class, 'apiAssignProject'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('assign-project');
+        Route::delete('/{employee}/remove-project/{project}', [EmployeeController::class, 'apiRemoveFromProject'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('remove-project');
+        Route::patch('/{employee}/status', [EmployeeController::class, 'apiToggleStatus'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('toggle-status');
+        
+        // Search and Filters
+        Route::get('/search/{query}', [EmployeeController::class, 'apiSearch'])->name('search');
+        Route::get('/by-project/{project}', [EmployeeController::class, 'apiByProject'])->name('by-project');
+        Route::get('/by-department/{department}', [EmployeeController::class, 'apiByDepartment'])->name('by-department');
+        
+        // QR Code Management
+        Route::get('/{employee}/qr-code', [EmployeeController::class, 'apiGenerateQrCode'])->name('qr-code');
+        Route::post('/bulk-qr-generate', [EmployeeController::class, 'apiBulkGenerateQrCodes'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('bulk-qr-generate');
+    });
+    
+    // Timesheet API
+    Route::prefix('timesheets')->name('timesheets.')->group(function () {
+        Route::get('/', [TimesheetController::class, 'apiIndex'])->name('index');
+        Route::post('/', [TimesheetController::class, 'apiStore'])->name('store');
+        Route::get('/{timesheet}', [TimesheetController::class, 'apiShow'])->name('show');
+        Route::put('/{timesheet}', [TimesheetController::class, 'apiUpdate'])->name('update');
+        Route::delete('/{timesheet}', [TimesheetController::class, 'apiDestroy'])->name('destroy');
+        
+        // Timesheet Actions
+        Route::post('/{timesheet}/submit', [TimesheetController::class, 'apiSubmitForApproval'])->name('submit');
+        Route::post('/bulk-submit', [TimesheetController::class, 'apiBulkSubmit'])->name('bulk-submit');
+        
+        // QR Code Entry (Mobile App Primary Feature)
+        Route::post('/qr-checkin', [TimesheetController::class, 'apiQrCheckIn'])->name('qr-checkin');
+        Route::post('/qr-checkout', [TimesheetController::class, 'apiQrCheckOut'])->name('qr-checkout');
+        Route::post('/qr-scan', [TimesheetController::class, 'apiQrScan'])->name('qr-scan');
+        
+        // Mobile Specific
+        Route::get('/my-timesheets', [TimesheetController::class, 'apiMyTimesheets'])->name('my-timesheets');
+        Route::get('/today', [TimesheetController::class, 'apiTodayTimesheet'])->name('today');
+        Route::get('/week/{date?}', [TimesheetController::class, 'apiWeekTimesheets'])->name('week');
+        Route::get('/month/{date?}', [TimesheetController::class, 'apiMonthTimesheets'])->name('month');
+        
+        // Filters and Search
+        Route::get('/by-employee/{employee}', [TimesheetController::class, 'apiByEmployee'])->name('by-employee');
+        Route::get('/by-project/{project}', [TimesheetController::class, 'apiByProject'])->name('by-project');
+        Route::get('/by-date-range', [TimesheetController::class, 'apiByDateRange'])->name('by-date-range');
+    });
+    
+    // Timesheet Approval API
+    Route::prefix('timesheet-approvals')->name('timesheet-approvals.')->group(function () {
+        Route::get('/', [TimesheetApprovalController::class, 'apiIndex'])->name('index');
+        Route::get('/{approval}', [TimesheetApprovalController::class, 'apiShow'])->name('show');
+        
+        // Approval Actions
+        Route::post('/{approval}/approve', [TimesheetApprovalController::class, 'apiApprove'])->name('approve');
+        Route::post('/{approval}/reject', [TimesheetApprovalController::class, 'apiReject'])->name('reject');
+        Route::post('/{approval}/request-revision', [TimesheetApprovalController::class, 'apiRequestRevision'])->name('request-revision');
+        
+        // Bulk Actions
+        Route::post('/bulk-approve', [TimesheetApprovalController::class, 'apiBulkApprove'])->name('bulk-approve');
+        Route::post('/bulk-reject', [TimesheetApprovalController::class, 'apiBulkReject'])->name('bulk-reject');
+        
+        // Mobile Queue
+        Route::get('/queue', [TimesheetApprovalController::class, 'apiQueue'])->name('queue');
+        Route::get('/pending-count', [TimesheetApprovalController::class, 'apiPendingCount'])->name('pending-count');
+        Route::get('/my-pending', [TimesheetApprovalController::class, 'apiMyPending'])->name('my-pending');
+        
+        // Statistics
+        Route::get('/statistics', [TimesheetApprovalController::class, 'apiStatistics'])->name('statistics');
+    });
+    
+    // Project API
+    Route::prefix('projects')->name('projects.')->group(function () {
+        Route::get('/', [ProjectController::class, 'apiIndex'])->name('index');
+        Route::post('/', [ProjectController::class, 'apiStore'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('store');
+        Route::get('/{project}', [ProjectController::class, 'apiShow'])->name('show');
+        Route::put('/{project}', [ProjectController::class, 'apiUpdate'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{project}', [ProjectController::class, 'apiDestroy'])
+            ->middleware('role:admin|hr')
+            ->name('destroy');
+        
+        // Project Actions
+        Route::post('/{project}/assign-employee', [ProjectController::class, 'apiAssignEmployee'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('assign-employee');
+        Route::delete('/{project}/remove-employee/{employee}', [ProjectController::class, 'apiRemoveEmployee'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('remove-employee');
+        Route::patch('/{project}/status', [ProjectController::class, 'apiUpdateStatus'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('update-status');
+        
+        // Project Data
+        Route::get('/{project}/employees', [ProjectController::class, 'apiProjectEmployees'])->name('employees');
+        Route::get('/{project}/departments', [ProjectController::class, 'apiProjectDepartments'])->name('departments');
+        Route::get('/{project}/timesheets', [ProjectController::class, 'apiProjectTimesheets'])->name('timesheets');
+        Route::get('/{project}/statistics', [ProjectController::class, 'apiProjectStatistics'])->name('statistics');
+        
+        // Search and Filters
+        Route::get('/search/{query}', [ProjectController::class, 'apiSearch'])->name('search');
+        Route::get('/active', [ProjectController::class, 'apiActive'])->name('active');
+        Route::get('/my-projects', [ProjectController::class, 'apiMyProjects'])->name('my-projects');
+    });
+    
+    // Department API
+    Route::prefix('departments')->name('departments.')->group(function () {
+        Route::get('/', [DepartmentController::class, 'apiIndex'])->name('index');
+        Route::post('/', [DepartmentController::class, 'apiStore'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{department}', [DepartmentController::class, 'apiShow'])->name('show');
+        Route::put('/{department}', [DepartmentController::class, 'apiUpdate'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{department}', [DepartmentController::class, 'apiDestroy'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('destroy');
+        
+        // Department Actions
+        Route::patch('/{department}/status', [DepartmentController::class, 'apiUpdateStatus'])->name('update-status');
+        Route::post('/{department}/assign-supervisor', [DepartmentController::class, 'apiAssignSupervisor'])->name('assign-supervisor');
+        
+        // Department Data
+        Route::get('/by-project/{project}', [DepartmentController::class, 'apiByProject'])->name('by-project');
+        Route::get('/{department}/employees', [DepartmentController::class, 'apiDepartmentEmployees'])->name('employees');
+    });
+    
+    // Leave Request API
+    Route::prefix('leave-requests')->name('leave-requests.')->group(function () {
+        Route::get('/', [LeaveRequestController::class, 'apiIndex'])->name('index');
+        Route::post('/', [LeaveRequestController::class, 'apiStore'])->name('store');
+        Route::get('/{leaveRequest}', [LeaveRequestController::class, 'apiShow'])->name('show');
+        Route::put('/{leaveRequest}', [LeaveRequestController::class, 'apiUpdate'])->name('update');
+        Route::delete('/{leaveRequest}', [LeaveRequestController::class, 'apiDestroy'])->name('destroy');
+        
+        // Leave Actions
+        Route::post('/{leaveRequest}/submit', [LeaveRequestController::class, 'apiSubmit'])->name('submit');
+        Route::post('/{leaveRequest}/approve', [LeaveRequestController::class, 'apiApprove'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('approve');
+        Route::post('/{leaveRequest}/reject', [LeaveRequestController::class, 'apiReject'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('reject');
+        Route::post('/{leaveRequest}/cancel', [LeaveRequestController::class, 'apiCancel'])->name('cancel');
+        
+        // Mobile Specific
+        Route::get('/my-requests', [LeaveRequestController::class, 'apiMyRequests'])->name('my-requests');
+        Route::get('/my-balance', [LeaveRequestController::class, 'apiMyBalance'])->name('my-balance');
+        Route::get('/pending-approvals', [LeaveRequestController::class, 'apiPendingApprovals'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('pending-approvals');
+        
+        // Calendar and Planning
+        Route::get('/calendar/{year}/{month}', [LeaveRequestController::class, 'apiCalendar'])->name('calendar');
+        Route::get('/check-availability', [LeaveRequestController::class, 'apiCheckAvailability'])->name('check-availability');
+        Route::post('/bulk-approve', [LeaveRequestController::class, 'apiBulkApprove'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('bulk-approve');
+    });
+    
+    // Document API
+    Route::prefix('documents')->name('documents.')->group(function () {
+        Route::get('/', [DocumentController::class, 'apiIndex'])->name('index');
+        Route::post('/', [DocumentController::class, 'apiStore'])->name('store');
+        Route::get('/{document}', [DocumentController::class, 'apiShow'])->name('show');
+        Route::put('/{document}', [DocumentController::class, 'apiUpdate'])->name('update');
+        Route::delete('/{document}', [DocumentController::class, 'apiDestroy'])->name('destroy');
+        
+        // Document Actions
+        Route::get('/{document}/download', [DocumentController::class, 'apiDownload'])->name('download');
+        Route::post('/{document}/verify', [DocumentController::class, 'apiVerify'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('verify');
+        Route::post('/{document}/reject', [DocumentController::class, 'apiReject'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('reject');
+        
+        // Document Management
+        Route::get('/my-documents', [DocumentController::class, 'apiMyDocuments'])->name('my-documents');
+        Route::get('/expiring', [DocumentController::class, 'apiExpiring'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('expiring');
+        Route::get('/pending-verification', [DocumentController::class, 'apiPendingVerification'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('pending-verification');
+        
+        // Search and Filters
+        Route::get('/search/{query}', [DocumentController::class, 'apiSearch'])->name('search');
+        Route::get('/by-employee/{employee}', [DocumentController::class, 'apiByEmployee'])->name('by-employee');
+        Route::get('/by-project/{project}', [DocumentController::class, 'apiByProject'])->name('by-project');
+    });
+    
+    // Notification API
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'apiIndex'])->name('index');
+        Route::get('/unread-count', [NotificationController::class, 'apiUnreadCount'])->name('unread-count');
+        Route::get('/recent', [NotificationController::class, 'apiRecent'])->name('recent');
+        
+        // Notification Actions
+        Route::post('/{id}/mark-read', [NotificationController::class, 'apiMarkAsRead'])->name('mark-read');
+        Route::post('/mark-all-read', [NotificationController::class, 'apiMarkAllAsRead'])->name('mark-all-read');
+        Route::delete('/{id}', [NotificationController::class, 'apiDestroy'])->name('destroy');
+        
+        // Bulk Actions
+        Route::post('/bulk-mark-read', [NotificationController::class, 'apiBulkMarkAsRead'])->name('bulk-mark-read');
+        Route::post('/bulk-delete', [NotificationController::class, 'apiBulkDelete'])->name('bulk-delete');
+        
+        // Settings
+        Route::get('/settings', [NotificationController::class, 'apiGetSettings'])->name('settings');
+        Route::post('/settings', [NotificationController::class, 'apiUpdateSettings'])->name('update-settings');
+        
+        // Admin/Manager Features
+        Route::middleware('role:admin|project_manager|site_manager')->group(function () {
+            Route::post('/send', [NotificationController::class, 'apiSend'])->name('send');
+            Route::get('/templates', [NotificationController::class, 'apiTemplates'])->name('templates');
+            Route::post('/send-test', [NotificationController::class, 'apiSendTest'])->name('send-test');
+        });
+    });
+    
+    // File Upload API
+    Route::prefix('files')->name('files.')->group(function () {
+        Route::post('/upload', [FileUploadController::class, 'apiUpload'])->name('upload');
+        Route::post('/upload-multiple', [FileUploadController::class, 'apiUploadMultiple'])->name('upload-multiple');
+        Route::post('/upload-base64', [FileUploadController::class, 'apiUploadBase64'])->name('upload-base64');
+        
+        Route::get('/{id}', [FileUploadController::class, 'apiGetFileInfo'])->name('info');
+        Route::get('/{id}/download', [FileUploadController::class, 'apiDownload'])->name('download');
+        Route::delete('/{id}', [FileUploadController::class, 'apiDelete'])->name('delete');
+        
+        // File Processing
+        Route::post('/{id}/generate-thumbnail', [FileUploadController::class, 'apiGenerateThumbnail'])->name('generate-thumbnail');
+        Route::post('/validate-signature', [FileUploadController::class, 'apiValidateFileSignature'])->name('validate-signature');
+        
+        // Upload Progress (for large files)
+        Route::get('/upload-progress/{upload_id}', [FileUploadController::class, 'apiGetUploadProgress'])->name('upload-progress');
+    });
+    
+    // QR Code API
+    Route::prefix('qr')->name('qr.')->group(function () {
+        Route::get('/', [QRCodeController::class, 'apiIndex'])->name('index');
+        
+        // QR Code Generation
+        Route::post('/generate-employee', [QRCodeController::class, 'apiGenerateEmployeeQR'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('generate-employee');
+        Route::post('/generate-project', [QRCodeController::class, 'apiGenerateProjectQR'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('generate-project');
+        
+        // QR Code Scanning (Main Mobile Feature)
+        Route::post('/scan', [QRCodeController::class, 'apiScanQR'])->name('scan');
+        Route::post('/validate', [QRCodeController::class, 'apiValidateQR'])->name('validate');
+        
+        // QR Code Management
+        Route::get('/history', [QRCodeController::class, 'apiScanHistory'])->name('history');
+        Route::delete('/delete', [QRCodeController::class, 'apiDeleteQR'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('delete');
+        
+        // Mobile Camera Integration
+        Route::post('/scan-image', [QRCodeController::class, 'apiScanFromImage'])->name('scan-image');
+        Route::post('/batch-scan', [QRCodeController::class, 'apiBatchScan'])->name('batch-scan');
+    });
+    
+    // Reports API
+    Route::prefix('reports')->name('reports.')->middleware('role:admin|hr|project_manager|site_manager')->group(function () {
+        Route::get('/', [ReportController::class, 'apiIndex'])->name('index');
+        
+        // Employee Reports
+        Route::get('/employee-attendance', [ReportController::class, 'apiEmployeeAttendance'])->name('employee-attendance');
+        Route::get('/employee-performance', [ReportController::class, 'apiEmployeePerformance'])->name('employee-performance');
+        
+        // Project Reports
+        Route::get('/project-progress', [ReportController::class, 'apiProjectProgress'])->name('project-progress');
+        Route::get('/financial-summary', [ReportController::class, 'apiFinancialSummary'])
+            ->middleware('role:admin|project_manager')
+            ->name('financial-summary');
+        
+        // Leave Reports
+        Route::get('/leave-report', [ReportController::class, 'apiLeaveReport'])->name('leave-report');
+        
+        // Quick Stats for Mobile Dashboard
+        Route::get('/quick-stats', [ReportController::class, 'apiQuickStats'])->name('quick-stats');
+        Route::get('/dashboard-charts', [ReportController::class, 'apiDashboardCharts'])->name('dashboard-charts');
+    });
+    
+    // Mobile Specific API Routes
+    Route::prefix('mobile')->name('mobile.')->group(function () {
+        
+        // Mobile Dashboard
+        Route::get('/dashboard', [DashboardController::class, 'apiMobileDashboard'])->name('dashboard');
+        Route::get('/quick-actions', [DashboardController::class, 'apiQuickActions'])->name('quick-actions');
+        
+        // Mobile Timesheet
+        Route::get('/timesheet/today', [TimesheetController::class, 'apiMobileTodayStatus'])->name('timesheet.today');
+        Route::post('/timesheet/quick-entry', [TimesheetController::class, 'apiMobileQuickEntry'])->name('timesheet.quick-entry');
+        Route::get('/timesheet/week-summary', [TimesheetController::class, 'apiMobileWeekSummary'])->name('timesheet.week-summary');
+        
+        // Mobile Approvals
+        Route::get('/approvals/pending-count', [TimesheetApprovalController::class, 'apiMobilePendingCount'])->name('approvals.pending-count');
+        Route::get('/approvals/quick-list', [TimesheetApprovalController::class, 'apiMobileQuickList'])->name('approvals.quick-list');
+        
+        // Mobile Notifications
+        Route::get('/notifications/badge-count', [NotificationController::class, 'apiMobileBadgeCount'])->name('notifications.badge-count');
+        Route::get('/notifications/latest', [NotificationController::class, 'apiMobileLatest'])->name('notifications.latest');
+        
+        // Mobile Profile
+        Route::get('/profile', [AuthController::class, 'apiMobileProfile'])->name('profile');
+        Route::get('/profile/quick-stats', [AuthController::class, 'apiMobileProfileStats'])->name('profile.stats');
+        
+        // Offline Sync
+        Route::post('/sync/upload', [TimesheetController::class, 'apiOfflineSync'])->name('sync.upload');
+        Route::get('/sync/download', [TimesheetController::class, 'apiSyncData'])->name('sync.download');
+        Route::get('/sync/status', [TimesheetController::class, 'apiSyncStatus'])->name('sync.status');
+    });
+    
+    // Admin API Routes
+    Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
+        
+        // System Management
+        Route::get('/system/status', function () {
+            return response()->json([
+                'database' => 'connected',
+                'cache' => 'active',
+                'queue' => 'running',
+                'storage' => 'accessible',
+                'memory_usage' => memory_get_usage(true),
+                'disk_usage' => disk_total_space('.') - disk_free_space('.'),
+                'uptime' => now()->diffInSeconds(cache('app_start_time', now())),
+            ]);
+        })->name('system.status');
+        
+        Route::get('/users', [AuthController::class, 'apiAdminUsers'])->name('users');
+        Route::post('/users/{user}/toggle-status', [AuthController::class, 'apiAdminToggleUserStatus'])->name('users.toggle-status');
+        Route::get('/logs', [AuthController::class, 'apiAdminLogs'])->name('logs');
+        Route::post('/backup', [AuthController::class, 'apiAdminBackup'])->name('backup');
+        
+        // System Statistics
+        Route::get('/statistics', [DashboardController::class, 'apiAdminStatistics'])->name('statistics');
+        Route::get('/performance-metrics', [DashboardController::class, 'apiPerformanceMetrics'])->name('performance-metrics');
+    });
+});
+
+// Webhook Routes (for external integrations)
+Route::prefix('webhooks')->name('webhooks.')->group(function () {
+    
+    // Payroll System Integration
+    Route::post('/payroll/export', function (Request $request) {
+        // Validate webhook signature
+        // Export timesheet data for payroll
+        return response()->json(['status' => 'received']);
+    })->name('payroll.export');
+    
+    // HR System Integration
+    Route::post('/hr/employee-sync', function (Request $request) {
+        // Sync employee data with external HR system
+        return response()->json(['status' => 'synced']);
+    })->name('hr.sync');
+    
+    // Project Management Tool Integration
+    Route::post('/project/status-update', function (Request $request) {
+        // Receive project status updates from external tools
+        return response()->json(['status' => 'updated']);
+    })->name('project.status-update');
+});
+
+// Health Check and Monitoring
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'timestamp' => now()->toISOString(),
+        'version' => config('app.version', '1.0.0'),
+        'environment' => app()->environment(),
+        'database' => 'ok',
+        'cache' => cache()->get('health_check') ? 'ok' : 'warning',
+    ]);
+})->name('health');
+
+// Rate Limited Public API
+Route::middleware('throttle:60,1')->prefix('public')->name('public.')->group(function () {
+    
+    // Public Company Info
+    Route::get('/company/info', function () {
+        return response()->json([
+            'name' => config('app.name'),
+            'industry' => 'Construction',
+            'location' => 'Turkey',
+            'established' => '2024',
+        ]);
+    })->name('company.info');
+    
+    // Public Project Info (limited)
+    Route::get('/projects/active-count', [ProjectController::class, 'apiPublicActiveCount'])->name('projects.active-count');
+    
+    // Public Career Info
+    Route::get('/careers/openings', function () {
+        return response()->json([
+            'total_openings' => 5,
+            'departments' => ['Construction', 'Engineering', 'Management'],
+            'contact' => 'hr@company.com',
+        ]);
+    })->name('careers.openings');
+});
+
+// Purchasing Module API Routes (Added for Procurement Management)
+Route::middleware(['auth:sanctum'])->prefix('v1/purchasing')->name('api.v1.purchasing.')->group(function () {
+
+    // Purchasing Requests API
+    Route::prefix('requests')->name('requests.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'store'])->name('store');
+        Route::get('/{purchasingRequest}', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'show'])->name('show');
+        Route::put('/{purchasingRequest}', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'update'])->name('update');
+        Route::delete('/{purchasingRequest}', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'destroy'])->name('destroy');
+
+        // Request Actions
+        Route::post('/{purchasingRequest}/submit', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'submit'])->name('submit');
+        Route::post('/{purchasingRequest}/approve-supervisor', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'approveBySupervisor'])
+            ->middleware('role:admin|site_manager|foreman')
+            ->name('approve-supervisor');
+        Route::post('/{purchasingRequest}/approve-manager', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'approveByManager'])
+            ->middleware('role:admin|project_manager')
+            ->name('approve-manager');
+        Route::post('/{purchasingRequest}/reject', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'reject'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('reject');
+        Route::post('/{purchasingRequest}/cancel', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'cancel'])->name('cancel');
+
+        // Statistics
+        Route::get('/statistics', [\App\Http\Controllers\Api\PurchasingRequestController::class, 'statistics'])->name('statistics');
+    });
+
+    // Suppliers API
+    Route::prefix('suppliers')->name('suppliers.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\SupplierController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\SupplierController::class, 'store'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('store');
+        Route::get('/{supplier}', [\App\Http\Controllers\Api\SupplierController::class, 'show'])->name('show');
+        Route::put('/{supplier}', [\App\Http\Controllers\Api\SupplierController::class, 'update'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('update');
+        Route::delete('/{supplier}', [\App\Http\Controllers\Api\SupplierController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Supplier Actions
+        Route::post('/{supplier}/blacklist', [\App\Http\Controllers\Api\SupplierController::class, 'blacklist'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('blacklist');
+        Route::post('/{supplier}/activate', [\App\Http\Controllers\Api\SupplierController::class, 'activate'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('activate');
+
+        // Supplier Data
+        Route::get('/{supplier}/performance', [\App\Http\Controllers\Api\SupplierController::class, 'performance'])->name('performance');
+        Route::post('/compare', [\App\Http\Controllers\Api\SupplierController::class, 'compare'])->name('compare');
+        Route::get('/category/{category}', [\App\Http\Controllers\Api\SupplierController::class, 'byCategory'])->name('by-category');
+    });
+
+    // Purchase Orders API
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'store'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('store');
+        Route::get('/{purchaseOrder}', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'show'])->name('show');
+        Route::put('/{purchaseOrder}', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'update'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('update');
+        Route::delete('/{purchaseOrder}', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Order Actions
+        Route::post('/{purchaseOrder}/approve', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'approve'])
+            ->middleware('role:admin|project_manager')
+            ->name('approve');
+        Route::post('/{purchaseOrder}/cancel', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'cancel'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('cancel');
+        Route::post('/{purchaseOrder}/update-payment-status', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'updatePaymentStatus'])
+            ->middleware('role:admin|project_manager|purchasing_manager|accountant')
+            ->name('update-payment-status');
+
+        // Order Data
+        Route::get('/statistics', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'statistics'])->name('statistics');
+        Route::get('/supplier/{supplierId}', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'bySupplier'])->name('by-supplier');
+        Route::get('/upcoming-deliveries', [\App\Http\Controllers\Api\PurchaseOrderController::class, 'upcomingDeliveries'])->name('upcoming-deliveries');
+    });
+
+    // Deliveries API
+    Route::prefix('deliveries')->name('deliveries.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\DeliveryController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\DeliveryController::class, 'store'])
+            ->middleware('role:admin|project_manager|purchasing_manager|warehouse_manager')
+            ->name('store');
+        Route::get('/{delivery}', [\App\Http\Controllers\Api\DeliveryController::class, 'show'])->name('show');
+        Route::put('/{delivery}', [\App\Http\Controllers\Api\DeliveryController::class, 'update'])
+            ->middleware('role:admin|project_manager|purchasing_manager|warehouse_manager')
+            ->name('update');
+        Route::delete('/{delivery}', [\App\Http\Controllers\Api\DeliveryController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Delivery Actions
+        Route::post('/{delivery}/mark-received', [\App\Http\Controllers\Api\DeliveryController::class, 'markAsReceived'])
+            ->middleware('role:admin|project_manager|purchasing_manager|warehouse_manager|site_manager')
+            ->name('mark-received');
+        Route::post('/{delivery}/reject', [\App\Http\Controllers\Api\DeliveryController::class, 'reject'])
+            ->middleware('role:admin|project_manager|purchasing_manager|warehouse_manager|site_manager')
+            ->name('reject');
+
+        // Delivery Data
+        Route::get('/today', [\App\Http\Controllers\Api\DeliveryController::class, 'today'])->name('today');
+        Route::get('/pending', [\App\Http\Controllers\Api\DeliveryController::class, 'pending'])->name('pending');
+        Route::get('/statistics', [\App\Http\Controllers\Api\DeliveryController::class, 'statistics'])->name('statistics');
+        Route::get('/purchase-order/{purchaseOrderId}', [\App\Http\Controllers\Api\DeliveryController::class, 'byPurchaseOrder'])->name('by-purchase-order');
+    });
+});

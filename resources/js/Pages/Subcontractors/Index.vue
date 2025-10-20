@@ -1,0 +1,463 @@
+<template>
+  <AppLayout
+    title="Taşeron Yönetimi - SPT İnşaat Puantaj Sistemi"
+    :full-width="true"
+  >
+    <!-- Full-width header -->
+    <template #fullWidthHeader>
+      <div class="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-800 border-b border-purple-900/20 w-full">
+        <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <!-- Header Info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center space-x-4 mb-3">
+                <div class="flex-shrink-0 w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                  <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 class="text-2xl lg:text-3xl font-bold text-white">Taşeron Yönetimi</h1>
+                  <p class="text-purple-100 text-sm mt-1">Taşeronları görüntüleyin ve yönetin</p>
+                </div>
+              </div>
+
+              <!-- Stats Row -->
+              <div class="flex flex-wrap items-center gap-4 lg:gap-6">
+                <div class="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
+                  <span class="text-purple-100 text-sm">Toplam:</span>
+                  <span class="font-semibold text-white ml-1">{{ stats?.total || 0 }}</span>
+                </div>
+                <div class="flex items-center space-x-4 text-sm">
+                  <span class="flex items-center text-purple-100">
+                    <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                    Aktif: <span class="text-white font-medium ml-1">{{ stats?.active || 0 }}</span>
+                  </span>
+                  <span class="flex items-center text-purple-100">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                    Onaylı: <span class="text-white font-medium ml-1">{{ stats?.approved || 0 }}</span>
+                  </span>
+                  <span class="flex items-center text-purple-100">
+                    <div class="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
+                    Bekleyen: <span class="text-white font-medium ml-1">{{ stats?.pending_approval || 0 }}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="flex-shrink-0">
+              <Link
+                :href="route('subcontractors.create')"
+                class="inline-flex items-center px-4 py-2 bg-white text-purple-600 text-sm font-medium rounded-lg hover:bg-purple-50 shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Yeni Taşeron
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breadcrumb inside header -->
+        <div class="bg-black/10 border-t border-white/10">
+          <div class="w-full px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center space-x-2 py-2">
+              <ol class="flex items-center space-x-2">
+                <li>
+                  <Link
+                    :href="route('dashboard')"
+                    class="text-purple-100 hover:text-white transition-colors"
+                  >
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>
+                    <span class="sr-only">Ana Sayfa</span>
+                  </Link>
+                </li>
+                <li class="flex items-center">
+                  <svg class="h-3 w-3 text-purple-200 mx-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <span class="text-xs font-medium text-white">Taşeron Yönetimi</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Main Content -->
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <!-- Filters Panel -->
+      <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h3 class="text-lg font-medium text-gray-900">Arama ve Filtreler</h3>
+        </div>
+
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <!-- Search -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Ara</label>
+              <input
+                v-model="filters.search"
+                @input="handleFilter"
+                type="text"
+                placeholder="Firma adı, vergi no..."
+                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              />
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Durum</label>
+              <select
+                v-model="filters.status"
+                @change="handleFilter"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              >
+                <option value="">Tümü</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Pasif</option>
+                <option value="blacklisted">Kara Liste</option>
+              </select>
+            </div>
+
+            <!-- Category Filter -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+              <select
+                v-model="filters.category_id"
+                @change="handleFilter"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              >
+                <option value="">Tümü</option>
+                <option v-for="category in categories" :key="category.id" :value="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- City Filter -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Şehir</label>
+              <select
+                v-model="filters.city"
+                @change="handleFilter"
+                class="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              >
+                <option value="">Tümü</option>
+                <option v-for="city in cities" :key="city" :value="city">
+                  {{ city }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <button
+              v-if="hasActiveFilters"
+              @click="clearFilters"
+              class="text-sm text-purple-600 hover:text-purple-900 font-medium"
+            >
+              Filtreleri Temizle
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Firma</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İletişim</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Şehir</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Puan</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Onay</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-if="!subcontractorsData.data || subcontractorsData.data.length === 0">
+                <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                  <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+                    </svg>
+                    <p class="text-sm">Taşeron bulunamadı</p>
+                  </div>
+                </td>
+              </tr>
+              <tr v-for="subcontractor in subcontractorsData.data" :key="subcontractor.id" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div>
+                      <Link
+                        :href="route('subcontractors.show', subcontractor.id)"
+                        class="text-sm font-medium text-gray-900 hover:text-purple-600"
+                      >
+                        {{ subcontractor.company_name }}
+                      </Link>
+                      <div class="text-xs text-gray-500">{{ subcontractor.tax_number || '-' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ subcontractor.category?.name || '-' }}</div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-900">{{ subcontractor.authorized_person || '-' }}</div>
+                  <div class="text-xs text-gray-500">{{ subcontractor.phone || '-' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">{{ subcontractor.city || '-' }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-yellow-600">
+                    {{ subcontractor.rating ? Number(subcontractor.rating).toFixed(2) : '0.00' }}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', getStatusColor(subcontractor.status)]">
+                    {{ getStatusText(subcontractor.status) }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span :class="['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', subcontractor.is_approved ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800']">
+                    {{ subcontractor.is_approved ? 'Onaylı' : 'Bekliyor' }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex justify-end items-center space-x-3">
+                    <Link
+                      :href="route('subcontractors.show', subcontractor.id)"
+                      class="text-purple-600 hover:text-purple-900"
+                    >
+                      Görüntüle
+                    </Link>
+                    <Link
+                      :href="route('subcontractors.edit', subcontractor.id)"
+                      class="text-indigo-600 hover:text-indigo-900"
+                    >
+                      Düzenle
+                    </Link>
+                    <button
+                      @click="confirmDelete(subcontractor)"
+                      class="text-red-600 hover:text-red-900"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="subcontractorsData.data && subcontractorsData.data.length > 0" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+          <div class="flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+              <Link
+                v-if="subcontractorsData.prev_page_url"
+                :href="subcontractorsData.prev_page_url"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Önceki
+              </Link>
+              <Link
+                v-if="subcontractorsData.next_page_url"
+                :href="subcontractorsData.next_page_url"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Sonraki
+              </Link>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm text-gray-700">
+                  <span class="font-medium">{{ subcontractorsData.from || 0 }}</span>
+                  -
+                  <span class="font-medium">{{ subcontractorsData.to || 0 }}</span>
+                  arası gösteriliyor, toplam
+                  <span class="font-medium">{{ subcontractorsData.total || 0 }}</span>
+                  kayıt
+                </p>
+              </div>
+              <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <Link
+                    v-if="subcontractorsData.prev_page_url"
+                    :href="subcontractorsData.prev_page_url"
+                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  >
+                    <span class="sr-only">Önceki</span>
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </Link>
+                  <Link
+                    v-if="subcontractorsData.next_page_url"
+                    :href="subcontractorsData.next_page_url"
+                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  >
+                    <span class="sr-only">Sonraki</span>
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </Link>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      v-if="showDeleteModal"
+      class="fixed z-50 inset-0 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showDeleteModal = false"></div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                  Taşeronu Sil
+                </h3>
+                <div class="mt-2">
+                  <p class="text-sm text-gray-500">
+                    <strong>{{ selectedSubcontractor?.company_name }}</strong> taşeronunu silmek istediğinizden emin misiniz?
+                    Bu işlem geri alınamaz.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button
+              @click="deleteSubcontractor"
+              type="button"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              Sil
+            </button>
+            <button
+              @click="showDeleteModal = false"
+              type="button"
+              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+            >
+              İptal
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AppLayout>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
+import AppLayout from '@/Layouts/AppLayout.vue'
+
+const props = defineProps({
+  subcontractors: Object,
+  categories: Array,
+  cities: Array,
+  filters: Object,
+  stats: Object
+})
+
+const filters = ref({
+  search: props.filters?.search || '',
+  status: props.filters?.status || '',
+  category_id: props.filters?.category_id || '',
+  city: props.filters?.city || ''
+})
+
+const showDeleteModal = ref(false)
+const selectedSubcontractor = ref(null)
+
+const subcontractorsData = computed(() => {
+  if (props.subcontractors && typeof props.subcontractors === 'object' && props.subcontractors.data) {
+    return props.subcontractors
+  }
+  return { data: [], total: 0, from: 0, to: 0 }
+})
+
+const hasActiveFilters = computed(() => {
+  return filters.value.search || filters.value.status || filters.value.category_id || filters.value.city
+})
+
+const handleFilter = () => {
+  router.get(route('subcontractors.index'), filters.value, {
+    preserveState: true,
+    preserveScroll: true
+  })
+}
+
+const clearFilters = () => {
+  filters.value = {
+    search: '',
+    status: '',
+    category_id: '',
+    city: ''
+  }
+  handleFilter()
+}
+
+const confirmDelete = (subcontractor) => {
+  selectedSubcontractor.value = subcontractor
+  showDeleteModal.value = true
+}
+
+const deleteSubcontractor = () => {
+  router.delete(route('subcontractors.destroy', selectedSubcontractor.value.id), {
+    onSuccess: () => {
+      showDeleteModal.value = false
+      selectedSubcontractor.value = null
+    }
+  })
+}
+
+const getStatusColor = (status) => {
+  const colors = {
+    active: 'bg-green-100 text-green-800',
+    inactive: 'bg-gray-100 text-gray-800',
+    blacklisted: 'bg-red-100 text-red-800'
+  }
+  return colors[status] || 'bg-gray-100 text-gray-800'
+}
+
+const getStatusText = (status) => {
+  const texts = {
+    active: 'Aktif',
+    inactive: 'Pasif',
+    blacklisted: 'Kara Liste'
+  }
+  return texts[status] || status
+}
+</script>
