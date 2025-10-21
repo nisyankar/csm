@@ -48,6 +48,20 @@
                 Detaylar
               </button>
               <button
+                @click="activeTab = 'structures'"
+                :class="[
+                  'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                  activeTab === 'structures'
+                    ? 'border-white text-white'
+                    : 'border-transparent text-cyan-100 hover:text-white hover:border-cyan-200'
+                ]"
+              >
+                Proje Yapısı
+                <span v-if="project.structures?.length" class="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                  {{ project.structures.length }}
+                </span>
+              </button>
+              <button
                 @click="activeTab = 'subcontractors'"
                 :class="[
                   'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
@@ -351,6 +365,146 @@
       </Card>
       </div>
 
+      <!-- Structures Tab -->
+      <div v-show="activeTab === 'structures'" class="space-y-6">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">Proje Yapısı</h2>
+            <p class="mt-1 text-sm text-gray-500">Bloklar, katlar ve birimler</p>
+          </div>
+        </div>
+
+        <!-- Structures List -->
+        <div v-if="project.structures && project.structures.length > 0" class="space-y-6">
+          <Card v-for="structure in project.structures" :key="structure.id">
+            <div class="p-6">
+              <!-- Structure Header -->
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center space-x-4">
+                  <div class="flex-shrink-0 w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-bold text-gray-900">{{ structure.name }}</h3>
+                    <p class="text-sm text-gray-500">Kod: {{ structure.code }} | {{ getStructureTypeLabel(structure.structure_type) }}</p>
+                  </div>
+                </div>
+                <Badge :variant="getStatusVariant(structure.status)">
+                  {{ getStatusLabel(structure.status) }}
+                </Badge>
+              </div>
+
+              <!-- Structure Stats -->
+              <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="text-sm text-gray-500">Toplam Kat</div>
+                  <div class="text-2xl font-bold text-gray-900">{{ structure.calculated_total_floors || 0 }}</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="text-sm text-gray-500">Toplam Birim</div>
+                  <div class="text-2xl font-bold text-gray-900">{{ structure.calculated_total_units || 0 }}</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="text-sm text-gray-500">Toplam Alan</div>
+                  <div class="text-2xl font-bold text-gray-900">{{ structure.calculated_total_area || 0 }} m²</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="text-sm text-gray-500">İlerleme</div>
+                  <div class="text-2xl font-bold text-gray-900">{{ structure.calculated_progress || 0 }}%</div>
+                </div>
+              </div>
+
+              <!-- Floors -->
+              <div v-if="structure.floors && structure.floors.length > 0" class="space-y-4">
+                <h4 class="text-lg font-semibold text-gray-900">Katlar</h4>
+                <div class="space-y-3">
+                  <div v-for="floor in structure.floors" :key="floor.id" class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="flex items-center space-x-3">
+                        <div class="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                          <span class="text-sm font-bold text-indigo-600">{{ floor.floor_number }}</span>
+                        </div>
+                        <div>
+                          <h5 class="font-semibold text-gray-900">{{ floor.name }}</h5>
+                          <p class="text-xs text-gray-500">{{ getFloorTypeLabel(floor.floor_type) }}</p>
+                        </div>
+                      </div>
+                      <Badge :variant="getStatusVariant(floor.status)">
+                        {{ getStatusLabel(floor.status) }}
+                      </Badge>
+                    </div>
+
+                    <!-- Units -->
+                    <div v-if="floor.units && floor.units.length > 0" class="mt-4">
+                      <h6 class="text-sm font-medium text-gray-700 mb-2">Birimler ({{ floor.units.length }})</h6>
+                      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        <div v-for="unit in floor.units" :key="unit.id" class="bg-white rounded-lg p-3 border border-gray-200">
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-semibold text-gray-900">{{ unit.unit_code }}</span>
+                            <Badge size="sm" :variant="getStatusVariant(unit.status)">
+                              {{ getStatusLabel(unit.status) }}
+                            </Badge>
+                          </div>
+                          <div class="text-xs text-gray-600 space-y-1">
+                            <div>{{ getUnitTypeLabel(unit.unit_type) }}</div>
+                            <div v-if="unit.room_count">{{ unit.room_count }}</div>
+                            <div v-if="unit.gross_area" class="flex items-center justify-between">
+                              <span>Brüt:</span>
+                              <span class="font-medium">{{ unit.gross_area }} m²</span>
+                            </div>
+                            <div v-if="unit.net_area" class="flex items-center justify-between">
+                              <span>Net:</span>
+                              <span class="font-medium">{{ unit.net_area }} m²</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="mt-3 text-xs text-gray-500 text-center py-2 bg-white rounded border border-gray-200">
+                      Henüz birim eklenmedi
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-sm text-gray-500 text-center py-4 bg-gray-50 rounded">
+                Henüz kat eklenmedi
+              </div>
+
+              <!-- Structure Description -->
+              <div v-if="structure.description" class="mt-4 pt-4 border-t border-gray-200">
+                <h5 class="text-sm font-semibold text-gray-700 mb-2">Açıklama</h5>
+                <p class="text-sm text-gray-600">{{ structure.description }}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <!-- Empty State -->
+        <Card v-else>
+          <div class="p-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Henüz yapı eklenmedi</h3>
+            <p class="mt-1 text-sm text-gray-500">Projeye blok, kat ve birimler eklemek için düzenle butonunu kullanın.</p>
+            <div class="mt-6">
+              <Link
+                v-if="can_edit"
+                :href="route('projects.edit', project.id)"
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+              >
+                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Yapı Ekle
+              </Link>
+            </div>
+          </div>
+        </Card>
+      </div>
+
       <!-- Subcontractors Tab -->
       <div v-show="activeTab === 'subcontractors'" class="space-y-6">
         <!-- Header with Add Button -->
@@ -477,7 +631,7 @@
     </div>
 
     <!-- Assign/Edit Subcontractor Modal -->
-    <Modal :show="showAssignModal" @close="closeModal" max-width="2xl">
+    <Modal :show="showAssignModal" @close="closeModal" size="2xl">
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-semibold text-gray-900">
@@ -714,7 +868,9 @@ const getStatusLabel = (status) => {
     active: 'Aktif',
     on_hold: 'Beklemede',
     completed: 'Tamamlandı',
-    cancelled: 'İptal'
+    cancelled: 'İptal',
+    not_started: 'Başlanmadı',
+    in_progress: 'Devam Ediyor'
   }
   return labels[status] || status
 }
@@ -725,7 +881,9 @@ const getStatusVariant = (status) => {
     active: 'success',
     on_hold: 'info',
     completed: 'primary',
-    cancelled: 'danger'
+    cancelled: 'danger',
+    not_started: 'secondary',
+    in_progress: 'info'
   }
   return variants[status] || 'secondary'
 }
@@ -823,5 +981,47 @@ const closeModal = () => {
   showAssignModal.value = false
   editingSubcontractor.value = null
   assignForm.reset()
+}
+
+// Helper functions for structures
+const getStructureTypeLabel = (type) => {
+  const types = {
+    'residential_block': 'Konut Bloğu',
+    'office_block': 'Ofis Bloğu',
+    'commercial': 'Ticari',
+    'villa': 'Villa',
+    'infrastructure': 'Altyapı',
+    'mixed_use': 'Karma Kullanım',
+    'other': 'Diğer'
+  }
+  return types[type] || type
+}
+
+const getFloorTypeLabel = (type) => {
+  const types = {
+    'basement': 'Bodrum',
+    'ground': 'Zemin',
+    'standard': 'Normal Kat',
+    'roof': 'Çatı',
+    'penthouse': 'Penthouse',
+    'technical': 'Teknik Kat',
+    'mezzanine': 'Asma Kat'
+  }
+  return types[type] || type
+}
+
+const getUnitTypeLabel = (type) => {
+  const types = {
+    'apartment': 'Daire',
+    'office': 'Ofis',
+    'shop': 'Dükkan',
+    'warehouse': 'Depo',
+    'parking_space': 'Otopark',
+    'storage': 'Depo',
+    'technical_room': 'Teknik Oda',
+    'common_area': 'Ortak Alan',
+    'other': 'Diğer'
+  }
+  return types[type] || type
 }
 </script>

@@ -305,6 +305,323 @@
           </div>
         </Card>
 
+        <!-- Project Structure (Phase 1) -->
+        <Card>
+          <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">Proje Yapısı</h2>
+                <p class="text-sm text-gray-500 mt-1">Bloklar, katlar ve birimleri tanımlayın</p>
+              </div>
+              <button
+                type="button"
+                @click="addStructure"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Blok/Bina Ekle
+              </button>
+            </div>
+
+            <div v-if="form.structures.filter(s => !s._destroy).length === 0" class="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <p class="mt-2 text-sm text-gray-600">Henüz yapı tanımlanmamış</p>
+              <p class="text-xs text-gray-500">Blok veya bina ekleyerek başlayın</p>
+            </div>
+
+            <!-- Structures List -->
+            <div v-else class="space-y-4">
+              <div
+                v-for="(structure, sIndex) in form.structures"
+                v-show="!structure._destroy"
+                :key="sIndex"
+                class="border border-gray-200 rounded-lg overflow-hidden"
+              >
+                <!-- Structure Header -->
+                <div class="bg-gray-50 p-4 flex items-center justify-between cursor-pointer hover:bg-gray-100 transition-colors" @click="toggleStructure(sIndex)">
+                  <div class="flex items-center space-x-3 flex-1">
+                    <svg
+                      class="h-5 w-5 text-gray-500 transition-transform"
+                      :class="{ 'rotate-90': expandedStructures[sIndex] }"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <div class="flex-1">
+                      <div class="font-medium text-gray-900">
+                        {{ structure.name || 'Yeni Yapı' }}
+                        <span v-if="structure.code" class="text-gray-500 text-sm ml-2">({{ structure.code }})</span>
+                      </div>
+                      <div class="text-xs text-gray-500 mt-1">
+                        {{ structure.floors.filter(f => !f._destroy).length }} kat,
+                        {{ structure.floors.reduce((sum, f) => !f._destroy ? sum + f.units.filter(u => !u._destroy).length : sum, 0) }} birim
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    @click.stop="removeStructure(sIndex)"
+                    class="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Structure Details (Collapsible) -->
+                <div v-show="expandedStructures[sIndex]" class="p-4 space-y-4 bg-white">
+                  <!-- Structure Basic Info -->
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Yapı Adı <span class="text-red-500">*</span></label>
+                      <Input
+                        v-model="structure.name"
+                        type="text"
+                        placeholder="A Blok"
+                        class="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Kod <span class="text-red-500">*</span></label>
+                      <Input
+                        v-model="structure.code"
+                        type="text"
+                        placeholder="A, B, C..."
+                        class="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Tip</label>
+                      <Select
+                        v-model="structure.structure_type"
+                        :options="structureTypeOptions"
+                        class="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Durum</label>
+                      <Select
+                        v-model="structure.status"
+                        :options="structureStatusOptions"
+                        class="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Toplam Kat</label>
+                      <Input
+                        v-model="structure.total_floors"
+                        type="number"
+                        placeholder="8"
+                        class="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Toplam Birim</label>
+                      <Input
+                        v-model="structure.total_units"
+                        type="number"
+                        placeholder="32"
+                        class="text-sm"
+                      />
+                    </div>
+                    <div class="md:col-span-3">
+                      <label class="block text-xs font-medium text-gray-700 mb-1">Toplam Alan (m²)</label>
+                      <Input
+                        v-model="structure.total_area"
+                        type="number"
+                        step="0.01"
+                        placeholder="3200.00"
+                        class="text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Açıklama</label>
+                    <textarea
+                      v-model="structure.description"
+                      rows="2"
+                      class="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      placeholder="Yapı açıklaması"
+                    ></textarea>
+                  </div>
+
+                  <!-- Floors Section -->
+                  <div class="border-t pt-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h4 class="text-sm font-semibold text-gray-900">Katlar</h4>
+                      <button
+                        type="button"
+                        @click="addFloor(sIndex)"
+                        class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700 flex items-center gap-1"
+                      >
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Kat Ekle
+                      </button>
+                    </div>
+
+                    <div v-if="structure.floors.filter(f => !f._destroy).length === 0" class="text-center py-4 bg-gray-50 rounded text-xs text-gray-500">
+                      Henüz kat eklenmedi
+                    </div>
+
+                    <div v-else class="space-y-3">
+                      <div
+                        v-for="(floor, fIndex) in structure.floors"
+                        v-show="!floor._destroy"
+                        :key="fIndex"
+                        class="bg-gray-50 p-3 rounded-lg border border-gray-200"
+                      >
+                        <div class="flex items-center justify-between mb-2">
+                          <input
+                            v-model="floor.name"
+                            type="text"
+                            placeholder="Kat adı (örn: 1. Kat)"
+                            class="text-sm font-medium bg-white border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-indigo-500 flex-1"
+                          />
+                          <button
+                            type="button"
+                            @click="removeFloor(sIndex, fIndex)"
+                            class="ml-2 p-1.5 text-red-600 hover:bg-red-50 rounded"
+                          >
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Kat Numarası</label>
+                            <Input
+                              v-model="floor.floor_number"
+                              type="number"
+                              placeholder="1, 2, -1 (bodrum)"
+                              class="text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Kat Tipi</label>
+                            <Select
+                              v-model="floor.floor_type"
+                              :options="floorTypeOptions"
+                              class="text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Durum</label>
+                            <Select
+                              v-model="floor.status"
+                              :options="structureStatusOptions"
+                              class="text-sm"
+                            />
+                          </div>
+                        </div>
+
+                        <!-- Units Section -->
+                        <div class="mt-3 border-t border-gray-300 pt-3">
+                          <div class="flex items-center justify-between mb-2">
+                            <h5 class="text-xs font-semibold text-gray-800">Birimler (Daireler)</h5>
+                            <button
+                              type="button"
+                              @click="addUnit(sIndex, fIndex)"
+                              class="px-2 py-1 bg-teal-600 text-white rounded text-xs hover:bg-teal-700 flex items-center gap-1"
+                            >
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                              </svg>
+                              Birim
+                            </button>
+                          </div>
+
+                          <div v-if="floor.units.filter(u => !u._destroy).length === 0" class="text-center py-2 bg-white rounded text-xs text-gray-500 border border-gray-200">
+                            Henüz birim eklenmedi
+                          </div>
+
+                          <div v-else class="space-y-2">
+                            <div
+                              v-for="(unit, uIndex) in floor.units"
+                              v-show="!unit._destroy"
+                              :key="uIndex"
+                              class="bg-white p-2 rounded border border-gray-300"
+                            >
+                              <div class="flex items-center justify-between mb-2">
+                                <input
+                                  v-model="unit.unit_code"
+                                  type="text"
+                                  placeholder="Birim kodu (örn: D1, D2)"
+                                  class="text-xs font-medium bg-gray-50 border border-gray-200 rounded px-2 py-1 focus:ring-2 focus:ring-teal-500 flex-1"
+                                />
+                                <button
+                                  type="button"
+                                  @click="removeUnit(sIndex, fIndex, uIndex)"
+                                  class="ml-2 p-1 text-red-600 hover:bg-red-50 rounded"
+                                >
+                                  <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+
+                              <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <div>
+                                  <label class="block text-xs text-gray-600 mb-1">Tip</label>
+                                  <Select
+                                    v-model="unit.unit_type"
+                                    :options="unitTypeOptions"
+                                    class="text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label class="block text-xs text-gray-600 mb-1">Oda</label>
+                                  <Input
+                                    v-model="unit.room_count"
+                                    type="text"
+                                    placeholder="3+1"
+                                    class="text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label class="block text-xs text-gray-600 mb-1">Brüt m²</label>
+                                  <Input
+                                    v-model="unit.gross_area"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="120.00"
+                                    class="text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label class="block text-xs text-gray-600 mb-1">Net m²</label>
+                                  <Input
+                                    v-model="unit.net_area"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="100.00"
+                                    class="text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         <!-- Management & Client Information -->
         <Card>
           <div class="p-6">
@@ -460,10 +777,132 @@ const form = ref({
   client_name: '',
   client_contact: '',
   estimated_employees: '',
-  notes: ''
+  notes: '',
+  structures: []
 })
 
 const processing = ref(false)
+const expandedStructures = ref({})
+
+// Structure Types
+const structureTypeOptions = [
+  { value: 'residential_block', label: 'Konut Bloğu' },
+  { value: 'office_block', label: 'Ofis Bloğu' },
+  { value: 'commercial', label: 'Ticari' },
+  { value: 'villa', label: 'Villa' },
+  { value: 'infrastructure', label: 'Altyapı' },
+  { value: 'mixed_use', label: 'Karma Kullanım' },
+  { value: 'other', label: 'Diğer' }
+]
+
+// Floor Types
+const floorTypeOptions = [
+  { value: 'basement', label: 'Bodrum' },
+  { value: 'ground', label: 'Zemin' },
+  { value: 'standard', label: 'Normal Kat' },
+  { value: 'roof', label: 'Çatı' },
+  { value: 'technical', label: 'Teknik Kat' }
+]
+
+// Unit Types
+const unitTypeOptions = [
+  { value: 'apartment', label: 'Daire' },
+  { value: 'office', label: 'Ofis' },
+  { value: 'shop', label: 'Dükkan' },
+  { value: 'storage', label: 'Depo' },
+  { value: 'parking', label: 'Park Yeri' },
+  { value: 'other', label: 'Diğer' }
+]
+
+// Status options for structures/floors/units
+const structureStatusOptions = [
+  { value: 'not_started', label: 'Başlanmadı' },
+  { value: 'in_progress', label: 'Devam Ediyor' },
+  { value: 'completed', label: 'Tamamlandı' },
+  { value: 'on_hold', label: 'Beklemede' },
+  { value: 'cancelled', label: 'İptal Edildi' }
+]
+
+// Add new structure
+const addStructure = () => {
+  const newIndex = form.value.structures.length
+  form.value.structures.push({
+    code: '',
+    name: '',
+    structure_type: 'residential_block',
+    total_floors: '',
+    total_units: '',
+    total_area: '',
+    status: 'not_started',
+    description: '',
+    floors: []
+  })
+  expandedStructures.value[newIndex] = true
+}
+
+// Remove structure
+const removeStructure = (index) => {
+  const structure = form.value.structures[index]
+  if (structure.id) {
+    // Mark for deletion
+    structure._destroy = true
+  } else {
+    // Remove from array if not saved yet
+    form.value.structures.splice(index, 1)
+  }
+  delete expandedStructures.value[index]
+}
+
+// Toggle structure expansion
+const toggleStructure = (index) => {
+  expandedStructures.value[index] = !expandedStructures.value[index]
+}
+
+// Add floor to structure
+const addFloor = (structureIndex) => {
+  form.value.structures[structureIndex].floors.push({
+    floor_number: '',
+    name: '',
+    floor_type: 'standard',
+    status: 'not_started',
+    description: '',
+    units: []
+  })
+}
+
+// Remove floor
+const removeFloor = (structureIndex, floorIndex) => {
+  const floor = form.value.structures[structureIndex].floors[floorIndex]
+  if (floor.id) {
+    floor._destroy = true
+  } else {
+    form.value.structures[structureIndex].floors.splice(floorIndex, 1)
+  }
+}
+
+// Add unit to floor
+const addUnit = (structureIndex, floorIndex) => {
+  form.value.structures[structureIndex].floors[floorIndex].units.push({
+    unit_code: '',
+    unit_type: 'apartment',
+    room_count: '',
+    gross_area: '',
+    net_area: '',
+    balcony_area: '',
+    status: 'not_started',
+    description: ''
+  })
+}
+
+// Remove unit
+const removeUnit = (structureIndex, floorIndex, unitIndex) => {
+  const unit = form.value.structures[structureIndex].floors[floorIndex].units[unitIndex]
+  if (unit.id) {
+    unit._destroy = true
+  } else {
+    form.value.structures[structureIndex].floors[floorIndex].units.splice(unitIndex, 1)
+  }
+}
 
 const typeOptions = [
   { value: '', label: 'Seçiniz' },
@@ -498,6 +937,61 @@ const managerOptions = [
 ]
 
 onMounted(() => {
+  console.log('Project data loaded:', props.project)
+  console.log('Start date:', props.project.start_date)
+  console.log('Planned end date:', props.project.planned_end_date)
+
+  // Load existing structures with floors and units
+  const structures = []
+  if (props.project.structures && props.project.structures.length > 0) {
+    props.project.structures.forEach((structure, sIndex) => {
+      const floors = []
+      if (structure.floors && structure.floors.length > 0) {
+        structure.floors.forEach(floor => {
+          const units = []
+          if (floor.units && floor.units.length > 0) {
+            floor.units.forEach(unit => {
+              units.push({
+                id: unit.id,
+                unit_code: unit.unit_code || '',
+                unit_type: unit.unit_type || 'apartment',
+                room_count: unit.room_count || '',
+                gross_area: unit.gross_area || '',
+                net_area: unit.net_area || '',
+                balcony_area: unit.balcony_area || '',
+                status: unit.status || 'planned',
+                description: unit.description || ''
+              })
+            })
+          }
+          floors.push({
+            id: floor.id,
+            floor_number: floor.floor_number || '',
+            name: floor.name || '',
+            floor_type: floor.floor_type || 'standard',
+            status: floor.status || 'planned',
+            description: floor.description || '',
+            units: units
+          })
+        })
+      }
+      structures.push({
+        id: structure.id,
+        code: structure.code || '',
+        name: structure.name || '',
+        structure_type: structure.structure_type || 'residential_block',
+        total_floors: structure.total_floors || '',
+        total_units: structure.total_units || '',
+        total_area: structure.total_area || '',
+        status: structure.status || 'planned',
+        description: structure.description || '',
+        floors: floors
+      })
+      // Auto-expand structures with data
+      expandedStructures.value[sIndex] = false
+    })
+  }
+
   form.value = {
     name: props.project.name || '',
     project_code: props.project.project_code || '',
@@ -523,13 +1017,40 @@ onMounted(() => {
     client_name: props.project.client_name || '',
     client_contact: props.project.client_contact || '',
     estimated_employees: props.project.estimated_employees || '',
-    notes: props.project.notes || ''
+    notes: props.project.notes || '',
+    structures: structures
   }
 })
 
 const submit = () => {
   processing.value = true
-  router.put(route('projects.update', props.project.id), form.value, {
+
+  // Boş structure'ları filtrele - code ve name zorunlu
+  const validStructures = form.value.structures.filter(s =>
+    s.code && s.code.trim() !== '' && s.name && s.name.trim() !== ''
+  )
+
+  const submitData = {
+    ...form.value,
+    structures: validStructures
+  }
+
+  console.log('Updating project with data:', submitData)
+
+  router.put(route('projects.update', props.project.id), submitData, {
+    preserveState: false,
+    preserveScroll: false,
+    onError: (errors) => {
+      let errorMessage = 'Validation Hataları:\n\n'
+      for (const [field, messages] of Object.entries(errors)) {
+        errorMessage += `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}\n`
+      }
+      alert(errorMessage)
+      processing.value = false
+    },
+    onSuccess: () => {
+      console.log('Project updated successfully!')
+    },
     onFinish: () => {
       processing.value = false
     }

@@ -74,7 +74,7 @@
 
     <!-- Main Content -->
     <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
-      <div class="max-w-4xl mx-auto">
+      <div class="w-full">
         <form @submit.prevent="submitForm" class="space-y-6">
           <!-- Basic Information Card -->
           <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">

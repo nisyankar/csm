@@ -13,6 +13,10 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\QRCodeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\Api\ProjectController as ApiProjectController;
+use App\Http\Controllers\Api\SubcontractorController as ApiSubcontractorController;
+use App\Http\Controllers\Api\MaterialController as ApiMaterialController;
+use App\Http\Controllers\Api\DepartmentController as ApiDepartmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -178,62 +182,110 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(functi
     
     // Project API
     Route::prefix('projects')->name('projects.')->group(function () {
-        Route::get('/', [ProjectController::class, 'apiIndex'])->name('index');
-        Route::post('/', [ProjectController::class, 'apiStore'])
+        Route::get('/', [ApiProjectController::class, 'index'])->name('index');
+        Route::post('/', [ApiProjectController::class, 'store'])
             ->middleware('role:admin|hr|project_manager')
             ->name('store');
-        Route::get('/{project}', [ProjectController::class, 'apiShow'])->name('show');
-        Route::put('/{project}', [ProjectController::class, 'apiUpdate'])
+        Route::get('/stats', [ApiProjectController::class, 'stats'])->name('stats');
+        Route::get('/{project}', [ApiProjectController::class, 'show'])->name('show');
+        Route::put('/{project}', [ApiProjectController::class, 'update'])
             ->middleware('role:admin|hr|project_manager|site_manager')
             ->name('update');
-        Route::delete('/{project}', [ProjectController::class, 'apiDestroy'])
+        Route::delete('/{project}', [ApiProjectController::class, 'destroy'])
             ->middleware('role:admin|hr')
             ->name('destroy');
-        
+
         // Project Actions
-        Route::post('/{project}/assign-employee', [ProjectController::class, 'apiAssignEmployee'])
+        Route::post('/{project}/assign-employee', [ApiProjectController::class, 'assignEmployee'])
             ->middleware('role:admin|hr|project_manager|site_manager')
             ->name('assign-employee');
-        Route::delete('/{project}/remove-employee/{employee}', [ProjectController::class, 'apiRemoveEmployee'])
+        Route::post('/{project}/remove-employee', [ApiProjectController::class, 'removeEmployee'])
             ->middleware('role:admin|hr|project_manager|site_manager')
             ->name('remove-employee');
-        Route::patch('/{project}/status', [ProjectController::class, 'apiUpdateStatus'])
+        Route::post('/{project}/assign-subcontractor', [ApiProjectController::class, 'assignSubcontractor'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('assign-subcontractor');
+        Route::post('/{project}/remove-subcontractor', [ApiProjectController::class, 'removeSubcontractor'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('remove-subcontractor');
+        Route::patch('/{project}/status', [ApiProjectController::class, 'updateStatus'])
             ->middleware('role:admin|hr|project_manager|site_manager')
             ->name('update-status');
-        
-        // Project Data
-        Route::get('/{project}/employees', [ProjectController::class, 'apiProjectEmployees'])->name('employees');
-        Route::get('/{project}/departments', [ProjectController::class, 'apiProjectDepartments'])->name('departments');
-        Route::get('/{project}/timesheets', [ProjectController::class, 'apiProjectTimesheets'])->name('timesheets');
-        Route::get('/{project}/statistics', [ProjectController::class, 'apiProjectStatistics'])->name('statistics');
-        
-        // Search and Filters
-        Route::get('/search/{query}', [ProjectController::class, 'apiSearch'])->name('search');
-        Route::get('/active', [ProjectController::class, 'apiActive'])->name('active');
-        Route::get('/my-projects', [ProjectController::class, 'apiMyProjects'])->name('my-projects');
+
+        // Project Dashboard
+        Route::get('/{project}/dashboard', [ApiProjectController::class, 'dashboard'])->name('dashboard');
     });
-    
-    // Department API
-    Route::prefix('departments')->name('departments.')->group(function () {
-        Route::get('/', [DepartmentController::class, 'apiIndex'])->name('index');
-        Route::post('/', [DepartmentController::class, 'apiStore'])
-            ->middleware('role:admin|hr|project_manager|site_manager')
+
+    // Subcontractor API
+    Route::prefix('subcontractors')->name('subcontractors.')->group(function () {
+        Route::get('/', [ApiSubcontractorController::class, 'index'])->name('index');
+        Route::post('/', [ApiSubcontractorController::class, 'store'])
+            ->middleware('role:admin|hr|project_manager|purchasing_manager')
             ->name('store');
-        Route::get('/{department}', [DepartmentController::class, 'apiShow'])->name('show');
-        Route::put('/{department}', [DepartmentController::class, 'apiUpdate'])
-            ->middleware('role:admin|hr|project_manager|site_manager')
+        Route::get('/stats', [ApiSubcontractorController::class, 'stats'])->name('stats');
+        Route::get('/categories', [ApiSubcontractorController::class, 'categories'])->name('categories');
+        Route::get('/category/{categoryId}', [ApiSubcontractorController::class, 'byCategory'])->name('by-category');
+        Route::get('/{subcontractor}', [ApiSubcontractorController::class, 'show'])->name('show');
+        Route::put('/{subcontractor}', [ApiSubcontractorController::class, 'update'])
+            ->middleware('role:admin|hr|project_manager|purchasing_manager')
             ->name('update');
-        Route::delete('/{department}', [DepartmentController::class, 'apiDestroy'])
+        Route::delete('/{subcontractor}', [ApiSubcontractorController::class, 'destroy'])
             ->middleware('role:admin|hr|project_manager')
             ->name('destroy');
-        
+
+        // Subcontractor Actions
+        Route::post('/{subcontractor}/approve', [ApiSubcontractorController::class, 'approve'])
+            ->middleware('role:admin|project_manager')
+            ->name('approve');
+        Route::post('/{subcontractor}/blacklist', [ApiSubcontractorController::class, 'blacklist'])
+            ->middleware('role:admin|project_manager')
+            ->name('blacklist');
+        Route::post('/{subcontractor}/activate', [ApiSubcontractorController::class, 'activate'])
+            ->middleware('role:admin|project_manager')
+            ->name('activate');
+    });
+
+    // Material API
+    Route::prefix('materials')->name('materials.')->group(function () {
+        Route::get('/', [ApiMaterialController::class, 'index'])->name('index');
+        Route::post('/', [ApiMaterialController::class, 'store'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('store');
+        Route::get('/categories', [ApiMaterialController::class, 'categories'])->name('categories');
+        Route::get('/active', [ApiMaterialController::class, 'active'])->name('active');
+        Route::get('/category/{category}', [ApiMaterialController::class, 'byCategory'])->name('by-category');
+        Route::get('/{material}', [ApiMaterialController::class, 'show'])->name('show');
+        Route::put('/{material}', [ApiMaterialController::class, 'update'])
+            ->middleware('role:admin|project_manager|purchasing_manager')
+            ->name('update');
+        Route::delete('/{material}', [ApiMaterialController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Department API
+    Route::prefix('departments')->name('departments.')->group(function () {
+        Route::get('/', [ApiDepartmentController::class, 'index'])->name('index');
+        Route::post('/', [ApiDepartmentController::class, 'store'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('store');
+        Route::get('/stats', [ApiDepartmentController::class, 'stats'])->name('stats');
+        Route::get('/by-project/{project}', [ApiDepartmentController::class, 'byProject'])->name('by-project');
+        Route::get('/{department}', [ApiDepartmentController::class, 'show'])->name('show');
+        Route::put('/{department}', [ApiDepartmentController::class, 'update'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{department}', [ApiDepartmentController::class, 'destroy'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('destroy');
+
         // Department Actions
-        Route::patch('/{department}/status', [DepartmentController::class, 'apiUpdateStatus'])->name('update-status');
-        Route::post('/{department}/assign-supervisor', [DepartmentController::class, 'apiAssignSupervisor'])->name('assign-supervisor');
-        
-        // Department Data
-        Route::get('/by-project/{project}', [DepartmentController::class, 'apiByProject'])->name('by-project');
-        Route::get('/{department}/employees', [DepartmentController::class, 'apiDepartmentEmployees'])->name('employees');
+        Route::patch('/{department}/status', [ApiDepartmentController::class, 'updateStatus'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('update-status');
+        Route::post('/{department}/assign-supervisor', [ApiDepartmentController::class, 'assignSupervisor'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('assign-supervisor');
     });
     
     // Leave Request API
@@ -627,5 +679,110 @@ Route::middleware(['auth:sanctum'])->prefix('v1/purchasing')->name('api.v1.purch
         Route::get('/pending', [\App\Http\Controllers\Api\DeliveryController::class, 'pending'])->name('pending');
         Route::get('/statistics', [\App\Http\Controllers\Api\DeliveryController::class, 'statistics'])->name('statistics');
         Route::get('/purchase-order/{purchaseOrderId}', [\App\Http\Controllers\Api\DeliveryController::class, 'byPurchaseOrder'])->name('by-purchase-order');
+    });
+});
+
+// Project Structure & Work Management API Routes (Faz 1)
+Route::middleware(['auth:sanctum'])->prefix('v1/project-management')->name('api.v1.pm.')->group(function () {
+
+    // Project Structures (Bloklar/Binalar)
+    Route::prefix('structures')->name('structures.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ProjectStructureController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\ProjectStructureController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{structure}', [\App\Http\Controllers\Api\ProjectStructureController::class, 'show'])->name('show');
+        Route::put('/{structure}', [\App\Http\Controllers\Api\ProjectStructureController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{structure}', [\App\Http\Controllers\Api\ProjectStructureController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Structure Progress
+        Route::get('/{structure}/progress', [\App\Http\Controllers\Api\ProjectStructureController::class, 'progress'])->name('progress');
+    });
+
+    // Project Floors (Katlar)
+    Route::prefix('floors')->name('floors.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ProjectFloorController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\ProjectFloorController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{floor}', [\App\Http\Controllers\Api\ProjectFloorController::class, 'show'])->name('show');
+        Route::put('/{floor}', [\App\Http\Controllers\Api\ProjectFloorController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{floor}', [\App\Http\Controllers\Api\ProjectFloorController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Project Units (Daireler/Birimler)
+    Route::prefix('units')->name('units.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ProjectUnitController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\ProjectUnitController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{unit}', [\App\Http\Controllers\Api\ProjectUnitController::class, 'show'])->name('show');
+        Route::put('/{unit}', [\App\Http\Controllers\Api\ProjectUnitController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{unit}', [\App\Http\Controllers\Api\ProjectUnitController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Work Categories (İş Kategorileri)
+    Route::prefix('work-categories')->name('work-categories.')->group(function () {
+        Route::get('/', function () {
+            $categories = \App\Models\WorkCategory::active()->with('workItems')->get();
+            return response()->json(['success' => true, 'data' => $categories]);
+        })->name('index');
+    });
+
+    // Work Items (İş Kalemleri)
+    Route::prefix('work-items')->name('work-items.')->group(function () {
+        Route::get('/', function () {
+            $items = \App\Models\WorkItem::active()->with('category')->get();
+            return response()->json(['success' => true, 'data' => $items]);
+        })->name('index');
+
+        Route::get('/by-category/{categoryId}', function ($categoryId) {
+            $items = \App\Models\WorkItem::active()->where('category_id', $categoryId)->get();
+            return response()->json(['success' => true, 'data' => $items]);
+        })->name('by-category');
+    });
+
+    // Work Item Assignments (İş Atamaları)
+    Route::prefix('work-assignments')->name('work-assignments.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\WorkItemAssignmentController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\WorkItemAssignmentController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{assignment}', [\App\Http\Controllers\Api\WorkItemAssignmentController::class, 'show'])->name('show');
+        Route::put('/{assignment}', [\App\Http\Controllers\Api\WorkItemAssignmentController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{assignment}', [\App\Http\Controllers\Api\WorkItemAssignmentController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Work Progress (İlerleme Raporları)
+    Route::prefix('work-progress')->name('work-progress.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\WorkProgressController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\WorkProgressController::class, 'store'])->name('store');
+        Route::get('/{progress}', [\App\Http\Controllers\Api\WorkProgressController::class, 'show'])->name('show');
+        Route::put('/{progress}', [\App\Http\Controllers\Api\WorkProgressController::class, 'update'])->name('update');
+        Route::delete('/{progress}', [\App\Http\Controllers\Api\WorkProgressController::class, 'destroy'])->name('destroy');
+
+        // Approval Actions
+        Route::post('/{progress}/approve', [\App\Http\Controllers\Api\WorkProgressController::class, 'approve'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('approve');
+        Route::post('/{progress}/reject', [\App\Http\Controllers\Api\WorkProgressController::class, 'reject'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('reject');
     });
 });

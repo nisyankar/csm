@@ -295,18 +295,64 @@
 
                 <!-- Item Fields -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <!-- Malzeme Adı -->
+                  <!-- Malzeme Seçimi -->
                   <div class="lg:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Malzeme Adı <span class="text-red-500">*</span>
+                      Malzeme <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex gap-2">
+                      <select
+                        v-model="item.material_id"
+                        class="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        @change="onMaterialSelect(index, item.material_id)"
+                      >
+                        <option value="">Malzeme Seçin veya Manuel Girin</option>
+                        <optgroup label="Kayıtlı Malzemeler">
+                          <option v-for="material in materials" :key="material.id" :value="material.id">
+                            {{ material.name }} ({{ material.material_code }})
+                          </option>
+                        </optgroup>
+                      </select>
+                      <Link
+                        :href="route('materials.create')"
+                        target="_blank"
+                        class="flex-shrink-0 inline-flex items-center px-3 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                        title="Yeni Malzeme Ekle"
+                      >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </Link>
+                    </div>
+                  </div>
+
+                  <!-- Malzeme Adı (Manuel Giriş) -->
+                  <div class="lg:col-span-2" v-if="!item.material_id">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Malzeme Adı (Manuel) <span class="text-red-500">*</span>
                     </label>
                     <input
                       v-model="item.item_name"
                       type="text"
                       class="block w-full px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       placeholder="Örn: C25 Beton"
-                      required
+                      :required="!item.material_id"
                     />
+                  </div>
+
+                  <!-- Seçili Malzeme Bilgisi -->
+                  <div class="lg:col-span-3" v-if="item.material_id && item.item_name">
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                      <div class="flex items-start">
+                        <svg class="w-5 h-5 text-indigo-600 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="text-sm text-indigo-800">
+                          <span class="font-medium">Seçili Malzeme:</span> {{ item.item_name }}
+                          <span v-if="item.category" class="ml-2 text-indigo-600">({{ item.category }})</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Alt Kategori -->
@@ -481,6 +527,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  materials: {
+    type: Array,
+    default: () => []
+  },
   errors: {
     type: Object,
     default: () => ({})
@@ -521,6 +571,7 @@ onMounted(() => {
   if (props.purchasingRequest.items && props.purchasingRequest.items.length > 0) {
     form.value.items = props.purchasingRequest.items.map(item => ({
       id: item.id,
+      material_id: item.material_id || '',
       item_name: item.item_name || '',
       description: item.description || '',
       specification: item.specification || '',
@@ -534,6 +585,7 @@ onMounted(() => {
 
 const addItem = () => {
   form.value.items.push({
+    material_id: '',
     item_name: '',
     description: '',
     specification: '',
@@ -547,6 +599,28 @@ const addItem = () => {
 const removeItem = (index) => {
   if (confirm('Bu kalemi silmek istediğinizden emin misiniz?')) {
     form.value.items.splice(index, 1)
+  }
+}
+
+// Malzeme seçildiğinde bilgileri otomatik doldur
+const onMaterialSelect = (index, materialId) => {
+  if (!materialId) {
+    // Malzeme seçimi kaldırıldıysa, sadece material_id'yi temizle
+    form.value.items[index].material_id = ''
+    return
+  }
+
+  const material = props.materials.find(m => m.id === parseInt(materialId))
+  if (material) {
+    form.value.items[index].item_name = material.name
+    form.value.items[index].description = material.description || ''
+    form.value.items[index].specification = material.specification || ''
+    form.value.items[index].category = material.category || ''
+    form.value.items[index].unit = material.unit || ''
+    form.value.items[index].estimated_unit_price = parseFloat(material.estimated_unit_price) || 0
+
+    // Toplam fiyatı yeniden hesapla
+    calculateItemTotal(index)
   }
 }
 

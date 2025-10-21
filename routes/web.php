@@ -23,6 +23,10 @@ use App\Http\Controllers\SystemController;
 use App\Http\Controllers\PurchasingRequestController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\SubcontractorController;
+use App\Http\Controllers\ProjectStructureController;
+use App\Http\Controllers\ProjectFloorController;
+use App\Http\Controllers\ProjectUnitController;
+use App\Http\Controllers\WorkItemAssignmentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -679,6 +683,94 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/faq', function () {
             return Inertia::render('Help/FAQ');
         })->name('faq');
+    });
+});
+
+// Project Management Routes (Faz 1)
+Route::middleware(['auth', 'verified'])->prefix('projects')->name('projects.')->group(function () {
+
+    // Project Structures (Bloklar/Binalar)
+    Route::prefix('{project}/structures')->name('structures.')->group(function () {
+        Route::get('/', [ProjectStructureController::class, 'index'])->name('index');
+        Route::get('/create', [ProjectStructureController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('create');
+        Route::post('/', [ProjectStructureController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{structure}', [ProjectStructureController::class, 'show'])->name('show');
+        Route::get('/{structure}/edit', [ProjectStructureController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('edit');
+        Route::put('/{structure}', [ProjectStructureController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{structure}', [ProjectStructureController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Project Floors (Katlar)
+    Route::prefix('structures/{structure}/floors')->name('structures.floors.')->group(function () {
+        Route::get('/', [ProjectFloorController::class, 'index'])->name('index');
+        Route::get('/create', [ProjectFloorController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('create');
+        Route::post('/', [ProjectFloorController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{floor}', [ProjectFloorController::class, 'show'])->name('show');
+        Route::get('/{floor}/edit', [ProjectFloorController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('edit');
+        Route::put('/{floor}', [ProjectFloorController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{floor}', [ProjectFloorController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Project Units (Daireler/Birimler)
+    Route::prefix('floors/{floor}/units')->name('floors.units.')->group(function () {
+        Route::get('/', [ProjectUnitController::class, 'index'])->name('index');
+        Route::get('/create', [ProjectUnitController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('create');
+        Route::post('/', [ProjectUnitController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{unit}', [ProjectUnitController::class, 'show'])->name('show');
+        Route::get('/{unit}/edit', [ProjectUnitController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('edit');
+        Route::put('/{unit}', [ProjectUnitController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{unit}', [ProjectUnitController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Work Item Assignments (İş Atamaları)
+    Route::prefix('{project}/work-assignments')->name('work-assignments.')->group(function () {
+        Route::get('/', [WorkItemAssignmentController::class, 'index'])->name('index');
+        Route::get('/create', [WorkItemAssignmentController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('create');
+        Route::post('/', [WorkItemAssignmentController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{assignment}', [WorkItemAssignmentController::class, 'show'])->name('show');
+        Route::get('/{assignment}/edit', [WorkItemAssignmentController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('edit');
+        Route::put('/{assignment}', [WorkItemAssignmentController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{assignment}', [WorkItemAssignmentController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
     });
 });
 

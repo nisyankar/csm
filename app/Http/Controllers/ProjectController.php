@@ -156,6 +156,30 @@ class ProjectController extends Controller
             'client_contact' => 'nullable|string|max:255',
             'estimated_employees' => 'nullable|integer|min:1',
             'notes' => 'nullable|string',
+            'structures' => 'nullable|array',
+            'structures.*.code' => 'required|string|max:50',
+            'structures.*.name' => 'required|string|max:255',
+            'structures.*.structure_type' => 'required|in:residential_block,office_block,commercial,villa,infrastructure,mixed_use,other',
+            'structures.*.status' => 'required|in:not_started,in_progress,completed,on_hold,cancelled',
+            'structures.*.total_floors' => 'nullable|integer|min:0',
+            'structures.*.total_units' => 'nullable|integer|min:0',
+            'structures.*.total_area' => 'nullable|numeric|min:0',
+            'structures.*.description' => 'nullable|string',
+            'structures.*.floors' => 'nullable|array',
+            'structures.*.floors.*.floor_number' => 'required|integer',
+            'structures.*.floors.*.name' => 'nullable|string|max:255',
+            'structures.*.floors.*.floor_type' => 'required|in:basement,ground,standard,roof,technical',
+            'structures.*.floors.*.status' => 'required|in:not_started,in_progress,completed,on_hold,cancelled',
+            'structures.*.floors.*.description' => 'nullable|string',
+            'structures.*.floors.*.units' => 'nullable|array',
+            'structures.*.floors.*.units.*.unit_code' => 'required|string|max:50',
+            'structures.*.floors.*.units.*.unit_type' => 'required|in:apartment,office,shop,storage,parking,other',
+            'structures.*.floors.*.units.*.room_count' => 'nullable|string|max:20',
+            'structures.*.floors.*.units.*.gross_area' => 'nullable|numeric|min:0',
+            'structures.*.floors.*.units.*.net_area' => 'nullable|numeric|min:0',
+            'structures.*.floors.*.units.*.balcony_area' => 'nullable|numeric|min:0',
+            'structures.*.floors.*.units.*.status' => 'required|in:not_started,in_progress,completed,on_hold,cancelled',
+            'structures.*.floors.*.units.*.description' => 'nullable|string',
         ]);
 
         // Generate project code
@@ -163,10 +187,42 @@ class ProjectController extends Controller
         $validated['status'] = 'planning';
         $validated['spent_amount'] = 0;
 
-        $project = Project::create($validated);
+        DB::beginTransaction();
+        try {
+            // Create project
+            $structures = $validated['structures'] ?? [];
+            unset($validated['structures']);
 
-        return redirect()->route('projects.show', $project)
-            ->with('success', 'Proje başarıyla oluşturuldu.');
+            $project = Project::create($validated);
+
+            // Create structures, floors, and units
+            foreach ($structures as $structureData) {
+                $floors = $structureData['floors'] ?? [];
+                unset($structureData['floors']);
+
+                $structure = $project->structures()->create($structureData);
+
+                foreach ($floors as $floorData) {
+                    $units = $floorData['units'] ?? [];
+                    unset($floorData['units']);
+
+                    $floor = $structure->floors()->create($floorData);
+
+                    foreach ($units as $unitData) {
+                        $floor->units()->create($unitData);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('projects.show', $project)
+                ->with('success', 'Proje başarıyla oluşturuldu.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()
+                ->with('error', 'Proje oluşturulurken bir hata oluştu: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -186,7 +242,8 @@ class ProjectController extends Controller
                 $query->with('category')
                     ->orderBy('project_subcontractor.status')
                     ->orderBy('project_subcontractor.assigned_date', 'desc');
-            }
+            },
+            'structures.floors.units'
         ]);
 
         // Check authorization
@@ -234,6 +291,11 @@ class ProjectController extends Controller
     {
         $this->authorizeEditProject($project);
 
+        // Load project with structures, floors, and units
+        $project->load([
+            'structures.floors.units'
+        ]);
+
         $managers = Employee::whereIn('category', ['manager', 'engineer'])
             ->select('id', 'first_name', 'last_name', 'position')
             ->get();
@@ -276,12 +338,178 @@ class ProjectController extends Controller
             'client_contact' => 'nullable|string|max:255',
             'estimated_employees' => 'nullable|integer|min:1',
             'notes' => 'nullable|string',
+            'structures' => 'nullable|array',
+            'structures.*.id' => 'nullable|exists:project_structures,id',
+            'structures.*.code' => 'required|string|max:50',
+            'structures.*.name' => 'required|string|max:255',
+            'structures.*.structure_type' => 'required|in:residential_block,office_block,commercial,villa,infrastructure,mixed_use,other',
+            'structures.*.status' => 'required|in:not_started,in_progress,completed,on_hold,cancelled',
+            'structures.*.total_floors' => 'nullable|integer|min:0',
+            'structures.*.total_units' => 'nullable|integer|min:0',
+            'structures.*.total_area' => 'nullable|numeric|min:0',
+            'structures.*.description' => 'nullable|string',
+            'structures.*._destroy' => 'nullable|boolean',
+            'structures.*.floors' => 'nullable|array',
+            'structures.*.floors.*.id' => 'nullable|exists:project_floors,id',
+            'structures.*.floors.*.floor_number' => 'required|integer',
+            'structures.*.floors.*.name' => 'nullable|string|max:255',
+            'structures.*.floors.*.floor_type' => 'required|in:basement,ground,standard,roof,technical',
+            'structures.*.floors.*.status' => 'required|in:not_started,in_progress,completed,on_hold,cancelled',
+            'structures.*.floors.*.description' => 'nullable|string',
+            'structures.*.floors.*._destroy' => 'nullable|boolean',
+            'structures.*.floors.*.units' => 'nullable|array',
+            'structures.*.floors.*.units.*.id' => 'nullable|exists:project_units,id',
+            'structures.*.floors.*.units.*.unit_code' => 'required|string|max:50',
+            'structures.*.floors.*.units.*.unit_type' => 'required|in:apartment,office,shop,storage,parking,other',
+            'structures.*.floors.*.units.*.room_count' => 'nullable|string|max:20',
+            'structures.*.floors.*.units.*.gross_area' => 'nullable|numeric|min:0',
+            'structures.*.floors.*.units.*.net_area' => 'nullable|numeric|min:0',
+            'structures.*.floors.*.units.*.balcony_area' => 'nullable|numeric|min:0',
+            'structures.*.floors.*.units.*.status' => 'required|in:not_started,in_progress,completed,on_hold,cancelled',
+            'structures.*.floors.*.units.*.description' => 'nullable|string',
+            'structures.*.floors.*.units.*._destroy' => 'nullable|boolean',
         ]);
 
-        $project->update($validated);
+        DB::beginTransaction();
+        try {
+            // Update project basic info
+            $structures = $validated['structures'] ?? [];
+            // Ensure structures is an array, not a Collection
+            if (!is_array($structures)) {
+                $structures = collect($structures)->toArray();
+            }
+            unset($validated['structures']);
 
-        return redirect()->route('projects.show', $project)
-            ->with('success', 'Proje bilgileri başarıyla güncellendi.');
+            \Log::info('Updating project', [
+                'project_id' => $project->id,
+                'structures_count' => count($structures),
+                'structures' => $structures
+            ]);
+
+            $project->update($validated);
+
+            // Get existing structure IDs
+            $existingStructureIds = $project->structures()->pluck('id')->toArray();
+            $processedStructureIds = [];
+
+            // Process structures
+            foreach ($structures as $structureData) {
+                \Log::info('Processing structure', ['structure' => $structureData]);
+                // Handle deletion
+                if (isset($structureData['_destroy']) && $structureData['_destroy']) {
+                    if (isset($structureData['id'])) {
+                        $project->structures()->where('id', $structureData['id'])->delete();
+                    }
+                    continue;
+                }
+
+                $floors = $structureData['floors'] ?? [];
+                unset($structureData['floors'], $structureData['_destroy']);
+
+                if (isset($structureData['id'])) {
+                    // Update existing structure
+                    $structure = $project->structures()->find($structureData['id']);
+                    $structure->update($structureData);
+                    $processedStructureIds[] = $structure->id;
+                } else {
+                    // Create new structure
+                    $structure = $project->structures()->create($structureData);
+                    $processedStructureIds[] = $structure->id;
+                }
+
+                // Get existing floor IDs
+                $existingFloorIds = $structure->floors()->pluck('id')->toArray();
+                $processedFloorIds = [];
+
+                // Process floors
+                foreach ($floors as $floorData) {
+                    // Handle deletion
+                    if (isset($floorData['_destroy']) && $floorData['_destroy']) {
+                        if (isset($floorData['id'])) {
+                            $structure->floors()->where('id', $floorData['id'])->delete();
+                        }
+                        continue;
+                    }
+
+                    $units = $floorData['units'] ?? [];
+                    unset($floorData['units'], $floorData['_destroy']);
+
+                    if (isset($floorData['id'])) {
+                        // Update existing floor
+                        $floor = $structure->floors()->find($floorData['id']);
+                        $floor->update($floorData);
+                        $processedFloorIds[] = $floor->id;
+                    } else {
+                        // Create new floor
+                        $floor = $structure->floors()->create($floorData);
+                        $processedFloorIds[] = $floor->id;
+                    }
+
+                    // Get existing unit IDs
+                    $existingUnitIds = $floor->units()->pluck('id')->toArray();
+                    $processedUnitIds = [];
+
+                    // Process units
+                    foreach ($units as $unitData) {
+                        // Handle deletion
+                        if (isset($unitData['_destroy']) && $unitData['_destroy']) {
+                            if (isset($unitData['id'])) {
+                                $floor->units()->where('id', $unitData['id'])->delete();
+                            }
+                            continue;
+                        }
+
+                        unset($unitData['_destroy']);
+
+                        // Add structure_id to unit data
+                        $unitData['structure_id'] = $structure->id;
+
+                        if (isset($unitData['id'])) {
+                            // Update existing unit
+                            $unit = $floor->units()->find($unitData['id']);
+                            $unit->update($unitData);
+                            $processedUnitIds[] = $unit->id;
+                        } else {
+                            // Create new unit
+                            $unit = $floor->units()->create($unitData);
+                            $processedUnitIds[] = $unit->id;
+                        }
+                    }
+
+                    // Delete units that were not processed (removed from frontend)
+                    $unitsToDelete = array_diff($existingUnitIds, $processedUnitIds);
+                    if (!empty($unitsToDelete)) {
+                        $floor->units()->whereIn('id', $unitsToDelete)->delete();
+                    }
+                }
+
+                // Delete floors that were not processed
+                $floorsToDelete = array_diff($existingFloorIds, $processedFloorIds);
+                if (!empty($floorsToDelete)) {
+                    $structure->floors()->whereIn('id', $floorsToDelete)->delete();
+                }
+            }
+
+            // Delete structures that were not processed
+            $structuresToDelete = array_diff($existingStructureIds, $processedStructureIds);
+            if (!empty($structuresToDelete)) {
+                $project->structures()->whereIn('id', $structuresToDelete)->delete();
+            }
+
+            DB::commit();
+
+            return redirect()->route('projects.show', $project)
+                ->with('success', 'Proje bilgileri başarıyla güncellendi.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Project update failed', [
+                'project_id' => $project->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withInput()
+                ->with('error', 'Proje güncellenirken bir hata oluştu: ' . $e->getMessage());
+        }
     }
 
     /**

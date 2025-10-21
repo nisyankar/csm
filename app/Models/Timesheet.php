@@ -137,6 +137,46 @@ class Timesheet extends Model
         return $this->hasMany(Timesheet::class, 'original_timesheet_id');
     }
 
+    /**
+     * Puantaja ait yapı (Blok) - Faz 1
+     */
+    public function structure(): BelongsTo
+    {
+        return $this->belongsTo(ProjectStructure::class, 'structure_id');
+    }
+
+    /**
+     * Puantaja ait kat - Faz 1
+     */
+    public function floor(): BelongsTo
+    {
+        return $this->belongsTo(ProjectFloor::class, 'floor_id');
+    }
+
+    /**
+     * Puantaja ait birim (Daire/Ofis) - Faz 1
+     */
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(ProjectUnit::class, 'unit_id');
+    }
+
+    /**
+     * Puantaja ait iş kalemi - Faz 1
+     */
+    public function workItem(): BelongsTo
+    {
+        return $this->belongsTo(WorkItem::class, 'work_item_id');
+    }
+
+    /**
+     * Puantaja ait iş ataması - Faz 1
+     */
+    public function assignment(): BelongsTo
+    {
+        return $this->belongsTo(WorkItemAssignment::class, 'assignment_id');
+    }
+
     // Accessor ve Mutator'lar
 
     /**

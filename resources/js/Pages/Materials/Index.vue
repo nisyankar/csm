@@ -288,10 +288,11 @@
               kayıt
             </div>
             <div class="flex space-x-2">
-              <Link
+              <component
+                :is="link.url ? Link : 'span'"
                 v-for="(link, index) in materialsData.links"
                 :key="index"
-                :href="link.url"
+                :href="link.url || undefined"
                 :class="[
                   'px-3 py-2 text-sm font-medium rounded-md transition-colors',
                   link.active
@@ -300,7 +301,6 @@
                     ? 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 ]"
-                :disabled="!link.url"
                 v-html="link.label"
               />
             </div>

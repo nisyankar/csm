@@ -98,30 +98,30 @@ const getCertStatusColor = (status) => {
 
                     <!-- Stats -->
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
-                            <p class="text-purple-100 text-sm">Genel Puan</p>
+                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">
+                            <p class="text-white text-sm font-medium">Genel Puan</p>
                             <div class="flex items-center mt-2">
-                                <p :class="['text-3xl font-bold text-white mr-2', getRatingColor(subcontractor.rating)]">
+                                <p class="text-3xl font-bold text-yellow-300 mr-2">
                                     {{ subcontractor.rating ? Number(subcontractor.rating).toFixed(2) : '0.00' }}
                                 </p>
-                                <p class="text-sm text-purple-100">/ 5.00</p>
+                                <p class="text-sm text-white">/ 5.00</p>
                             </div>
-                            <p class="text-xs text-purple-200 mt-1">{{ subcontractor.rating_stars || '☆☆☆☆☆' }}</p>
+                            <p class="text-xs text-yellow-200 mt-1">{{ subcontractor.rating_stars || '☆☆☆☆☆' }}</p>
                         </div>
-                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
-                            <p class="text-purple-100 text-sm">Tamamlanan Proje</p>
+                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">
+                            <p class="text-white text-sm font-medium">Tamamlanan Proje</p>
                             <p class="text-3xl font-bold text-white mt-2">{{ subcontractor.completed_projects || 0 }}</p>
                         </div>
-                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
-                            <p class="text-purple-100 text-sm">Toplam Belge</p>
+                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">
+                            <p class="text-white text-sm font-medium">Toplam Belge</p>
                             <p class="text-3xl font-bold text-white mt-2">{{ certificationStats?.total || 0 }}</p>
                         </div>
-                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
-                            <p class="text-purple-100 text-sm">Geçerli Belge</p>
+                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">
+                            <p class="text-white text-sm font-medium">Geçerli Belge</p>
                             <p class="text-3xl font-bold text-white mt-2">{{ certificationStats?.valid || 0 }}</p>
                         </div>
-                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
-                            <p class="text-purple-100 text-sm">Değerlendirme</p>
+                        <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-20">
+                            <p class="text-white text-sm font-medium">Değerlendirme</p>
                             <p class="text-3xl font-bold text-white mt-2">{{ ratingStats?.count || 0 }}</p>
                         </div>
                     </div>

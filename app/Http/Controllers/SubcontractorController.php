@@ -161,7 +161,7 @@ class SubcontractorController extends Controller
             },
             'ratings' => function ($query) {
                 $query->with(['project', 'rater'])
-                    ->orderBy('rating_date', 'desc');
+                    ->orderBy('rated_at', 'desc');
             },
             'approver',
         ]);

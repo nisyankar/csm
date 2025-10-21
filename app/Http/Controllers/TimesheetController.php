@@ -23,7 +23,17 @@ class TimesheetController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Timesheet::with(['employee', 'project', 'department', 'enteredBy']);
+        $query = Timesheet::with([
+            'employee',
+            'project',
+            'department',
+            'enteredBy',
+            'structure',
+            'floor',
+            'unit',
+            'workItem.category',
+            'assignment'
+        ]);
 
         // Filter by date range
         if ($request->filled('start_date') && $request->filled('end_date')) {

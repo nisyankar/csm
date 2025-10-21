@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Project extends Model
@@ -42,9 +43,9 @@ class Project extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'planned_end_date' => 'date',
-        'actual_end_date' => 'date',
+        'start_date' => 'date:Y-m-d',
+        'planned_end_date' => 'date:Y-m-d',
+        'actual_end_date' => 'date:Y-m-d',
         'budget' => 'decimal:2',
         'labor_budget' => 'decimal:2',
         'spent_amount' => 'decimal:2',
@@ -139,6 +140,46 @@ class Project extends Model
     public function activeSubcontractors(): BelongsToMany
     {
         return $this->subcontractors()->wherePivot('status', 'active');
+    }
+
+    /**
+     * Proje yapıları (Bloklar/Binalar) - Faz 1
+     */
+    public function structures(): HasMany
+    {
+        return $this->hasMany(ProjectStructure::class);
+    }
+
+    /**
+     * Proje katları (Tüm yapılardaki katlar) - Faz 1
+     */
+    public function floors(): HasManyThrough
+    {
+        return $this->hasManyThrough(ProjectFloor::class, ProjectStructure::class);
+    }
+
+    /**
+     * Proje birimleri (Tüm yapılardaki daireler/ofisler) - Faz 1
+     */
+    public function units(): HasManyThrough
+    {
+        return $this->hasManyThrough(ProjectUnit::class, ProjectStructure::class);
+    }
+
+    /**
+     * İş atamaları - Faz 1
+     */
+    public function workAssignments(): HasMany
+    {
+        return $this->hasMany(WorkItemAssignment::class);
+    }
+
+    /**
+     * İş ilerleme raporları - Faz 1
+     */
+    public function workProgressReports(): HasManyThrough
+    {
+        return $this->hasManyThrough(WorkProgress::class, WorkItemAssignment::class, 'project_id', 'assignment_id');
     }
 
     // Accessor ve Mutator'lar
