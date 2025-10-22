@@ -12,28 +12,24 @@ class LeaveBalanceLog extends Model
     use HasFactory;
 
     protected $fillable = [
+        'leave_balance_id',
         'employee_id',
-        'leave_type_id',
-        'calculation_id',
         'leave_request_id',
-        'action_type',
-        'previous_balance',
-        'change_amount',
-        'new_balance',
-        'reason_category',
+        'action',
+        'amount',
+        'balance_before',
+        'balance_after',
         'reason',
-        'reference_number',
-        'notes',
-        'effective_date',
-        'adjusted_by',
+        'description',
         'metadata',
+        'created_by',
+        'source',
     ];
 
     protected $casts = [
-        'previous_balance' => 'decimal:2',
-        'change_amount' => 'decimal:2',
-        'new_balance' => 'decimal:2',
-        'effective_date' => 'date',
+        'amount' => 'decimal:2',
+        'balance_before' => 'decimal:2',
+        'balance_after' => 'decimal:2',
         'metadata' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -43,44 +39,24 @@ class LeaveBalanceLog extends Model
      * Relationships
      */
 
-    /**
-     * Employee this log belongs to
-     */
+    public function leaveBalance(): BelongsTo
+    {
+        return $this->belongsTo(LeaveBalance::class);
+    }
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
-    /**
-     * Leave type this log is for
-     */
-    public function leaveType(): BelongsTo
-    {
-        return $this->belongsTo(LeaveType::class);
-    }
-
-    /**
-     * Calculation that triggered this log (if applicable)
-     */
-    public function calculation(): BelongsTo
-    {
-        return $this->belongsTo(LeaveCalculation::class);
-    }
-
-    /**
-     * Leave request that triggered this log (if applicable)
-     */
     public function leaveRequest(): BelongsTo
     {
         return $this->belongsTo(LeaveRequest::class);
     }
 
-    /**
-     * User who made the adjustment
-     */
-    public function adjustedBy(): BelongsTo
+    public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'adjusted_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -104,11 +80,11 @@ class LeaveBalanceLog extends Model
     }
 
     /**
-     * Scope to get logs by action type
+     * Scope to get logs by action
      */
-    public function scopeByActionType($query, $actionType)
+    public function scopeByAction($query, $action)
     {
-        return $query->where('action_type', $actionType);
+        return $query->where('action', $action);
     }
 
     /**

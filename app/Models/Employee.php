@@ -184,6 +184,22 @@ class Employee extends Model
     }
 
     /**
+     * Personelin izin bakiyeleri
+     */
+    public function leaveBalances(): HasMany
+    {
+        return $this->hasMany(LeaveBalance::class);
+    }
+
+    /**
+     * Personelin bu yılki izin bakiyeleri
+     */
+    public function currentYearLeaveBalances(): HasMany
+    {
+        return $this->leaveBalances()->where('year', now()->year);
+    }
+
+    /**
      * Personelin evrakları
      */
     public function documents(): HasMany

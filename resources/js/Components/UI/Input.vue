@@ -137,7 +137,7 @@ const props = defineProps({
     type: String,
     default: 'text',
     validator: (value) => [
-      'text', 'email', 'password', 'number', 'tel', 'url', 'search', 'date', 'time', 'datetime-local'
+      'text', 'email', 'password', 'number', 'tel', 'url', 'search', 'date', 'time', 'datetime-local', 'month', 'week'
     ].includes(value)
   },
   label: {

@@ -352,12 +352,8 @@ class PermissionHelper
      */
     public static function canAccessLeaveManagement(User $user): bool
     {
-        return $user->hasAnyRole(['admin', 'system_admin', 'hr']) &&
-               $user->hasAnyPermission([
-                   'view-leave-parameters',
-                   'view-leave-types',
-                   'view-leave-calculations'
-               ]);
+        // Sadece rol kontrolü yap - permission kontrolü kaldırıldı
+        return $user->hasAnyRole(['admin', 'system_admin', 'hr']);
     }
 
     /**

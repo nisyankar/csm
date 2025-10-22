@@ -5,6 +5,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeProjectAssignmentController;
 use App\Http\Controllers\TimesheetController;
+use App\Http\Controllers\TimesheetV2Controller;
+use App\Http\Controllers\TimesheetV3Controller;
+use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\TimesheetApprovalController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\DepartmentController;
@@ -27,6 +30,7 @@ use App\Http\Controllers\ProjectStructureController;
 use App\Http\Controllers\ProjectFloorController;
 use App\Http\Controllers\ProjectUnitController;
 use App\Http\Controllers\WorkItemAssignmentController;
+use App\Http\Controllers\DailyReportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -219,6 +223,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/export', [TimesheetController::class, 'export'])->name('export');
     });
 
+    // Timesheet V3 Management Routes (Puantaj Sistemi - İzin Entegrasyonlu)
+    Route::prefix('timesheets-v3')->name('timesheets-v3.')->group(function () {
+        // Toplu Giriş (Ana Ekran)
+        Route::get('/bulk-entry', [TimesheetV3Controller::class, 'bulkEntry'])
+            ->middleware('role:admin|hr|project_manager|site_manager|foreman')
+            ->name('bulk-entry');
+        Route::post('/bulk-store', [TimesheetV3Controller::class, 'bulkStore'])
+            ->middleware('role:admin|hr|project_manager|site_manager|foreman')
+            ->name('bulk-store');
+
+        // Kayıt Silme
+        Route::delete('/{timesheet}', [TimesheetV3Controller::class, 'destroy'])->name('destroy');
+
+        // Raporlar
+        Route::get('/reports/monthly', [TimesheetV3Controller::class, 'monthlyReport'])
+            ->name('reports.monthly');
+    });
+
+    // Shift Management Routes (Vardiya Yönetimi)
+    Route::prefix('shifts')->name('shifts.')
+        ->middleware('role:admin|hr|project_manager')
+        ->group(function () {
+            Route::get('/', [ShiftController::class, 'index'])->name('index');
+            Route::get('/create', [ShiftController::class, 'create'])->name('create');
+            Route::post('/', [ShiftController::class, 'store'])->name('store');
+            Route::get('/{shift}', [ShiftController::class, 'show'])->name('show');
+            Route::get('/{shift}/edit', [ShiftController::class, 'edit'])->name('edit');
+            Route::patch('/{shift}', [ShiftController::class, 'update'])->name('update');
+            Route::delete('/{shift}', [ShiftController::class, 'destroy'])->name('destroy');
+
+            // API
+            Route::get('/api/active', [ShiftController::class, 'getActive'])->name('api.active');
+        });
+
     // Timesheet Approval Management Routes
     Route::prefix('timesheet-approvals')->name('timesheet-approvals.')->group(function () {
         Route::get('/', [TimesheetApprovalController::class, 'index'])->name('index');
@@ -384,6 +422,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{subcontractor}', [SubcontractorController::class, 'destroy'])
             ->middleware('role:admin|hr|project_manager')
             ->name('destroy');
+    });
+
+    // Daily Report Management Routes
+    Route::prefix('daily-reports')->name('daily-reports.')->group(function () {
+        Route::get('/', [DailyReportController::class, 'index'])->name('index');
+        Route::get('/create', [DailyReportController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager|foreman')
+            ->name('create');
+        Route::post('/', [DailyReportController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager|foreman')
+            ->name('store');
+        Route::get('/{dailyReport}', [DailyReportController::class, 'show'])->name('show');
+        Route::get('/{dailyReport}/edit', [DailyReportController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager|foreman')
+            ->name('edit');
+        Route::put('/{dailyReport}', [DailyReportController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager|foreman')
+            ->name('update');
+        Route::delete('/{dailyReport}', [DailyReportController::class, 'destroy'])
+            ->middleware('role:admin|project_manager|site_manager|foreman')
+            ->name('destroy');
+
+        // Daily Report Actions
+        Route::post('/{dailyReport}/submit', [DailyReportController::class, 'submit'])
+            ->middleware('role:admin|project_manager|site_manager|foreman')
+            ->name('submit');
+        Route::post('/{dailyReport}/approve', [DailyReportController::class, 'approve'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('approve');
+        Route::post('/{dailyReport}/reject', [DailyReportController::class, 'reject'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('reject');
     });
 
     // Leave Request Management Routes

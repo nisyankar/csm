@@ -59,8 +59,8 @@
             label="Puantaj Sistemi"
             icon="clock"
             :items="[
-              { href: route('timesheets.index'), label: 'Puantajlar', active: route().current('timesheets.index') },
-              { href: route('timesheets.bulk-entry'), label: 'Toplu Giriş', active: route().current('timesheets.bulk-entry') },
+              { href: route('timesheets-v3.bulk-entry'), label: 'Puantaj Girişi', active: route().current('timesheets-v3.*'), badge: 'v3' },
+              { href: route('shifts.index'), label: 'Vardiya Tanımları', active: route().current('shifts.*') },
               { href: route('dashboard'), label: 'QR Tarayıcı', active: false, mobile: true }
             ]"
           />
@@ -73,6 +73,17 @@
             :items="[
               { href: route('projects.index'), label: 'Projeler', active: route().current('projects.*') },
               { href: route('projects.create'), label: 'Yeni Proje', active: route().current('projects.create') }
+            ]"
+          />
+
+          <!-- Daily Reports -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'site_manager', 'foreman'])"
+            label="Günlük Raporlar"
+            icon="clipboard-document-list"
+            :items="[
+              { href: route('daily-reports.index'), label: 'Tüm Raporlar', active: route().current('daily-reports.index') },
+              { href: route('daily-reports.create'), label: 'Yeni Rapor', active: route().current('daily-reports.create') }
             ]"
           />
 

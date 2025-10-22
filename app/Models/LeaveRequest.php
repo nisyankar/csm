@@ -380,23 +380,38 @@ class LeaveRequest extends Model
      */
     public function approve(Employee $approver, string $notes = null): void
     {
-        $this->update([
-            'status' => 'approved',
-            'approver_id' => $approver->id,
-            'approved_at' => now(),
-            'reviewed_at' => now(),
-            'approval_notes' => $notes,
-            'approval_duration_hours' => $this->submitted_at->diffInHours(now()),
-        ]);
+        \DB::beginTransaction();
 
-        // İzin bakiyesini güncelle
-        $this->updateEmployeeLeaveBalance();
-        
-        // Puantaja otomatik yansıt
-        $this->applyToTimesheet();
-        
-        // Bildirimleri gönder
-        $this->sendNotifications();
+        try {
+            $this->update([
+                'status' => 'approved',
+                'approver_id' => $approver->id,
+                'approved_at' => now(),
+                'reviewed_at' => now(),
+                'approval_notes' => $notes,
+                'approval_duration_hours' => $this->submitted_at->diffInHours(now()),
+            ]);
+
+            // YENİ: LeaveBalanceService ile bakiyeyi güncelle
+            $balanceService = app(\App\Services\Leave\LeaveBalanceService::class);
+
+            // Önce planned'dan çıkar (varsa)
+            $balanceService->unmarkAsPlanned($this);
+
+            // Sonra bakiyeden düş
+            $balanceService->deductLeaveFromBalance($this, $approver->user);
+
+            // Puantaja otomatik yansıt (v3)
+            $this->applyToTimesheet();
+
+            // Bildirimleri gönder
+            $this->sendNotifications();
+
+            \DB::commit();
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            throw $e;
+        }
     }
 
     /**
@@ -420,15 +435,31 @@ class LeaveRequest extends Model
      */
     public function cancel(string $reason = null): void
     {
-        $this->update([
-            'status' => 'cancelled',
-            'rejection_reason' => $reason,
-        ]);
+        \DB::beginTransaction();
 
-        // Eğer onaylanmış ise bakiyeyi geri ver
-        if ($this->is_approved) {
-            $this->restoreEmployeeLeaveBalance();
-            $this->removeFromTimesheet();
+        try {
+            $previousStatus = $this->status;
+
+            $this->update([
+                'status' => 'cancelled',
+                'rejection_reason' => $reason,
+            ]);
+
+            $balanceService = app(\App\Services\Leave\LeaveBalanceService::class);
+
+            // Eğer onaylanmış ise bakiyeyi geri ver ve puantajdan kaldır
+            if ($previousStatus === 'approved') {
+                $balanceService->restoreLeaveToBalance($this, auth()->user());
+                $this->removeFromTimesheet();
+            } elseif ($previousStatus === 'pending') {
+                // Beklemedeyse planlıdan çıkar
+                $balanceService->unmarkAsPlanned($this);
+            }
+
+            \DB::commit();
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            throw $e;
         }
     }
 
@@ -519,7 +550,7 @@ class LeaveRequest extends Model
     }
 
     /**
-     * Puantaja otomatik yansıt
+     * Puantaja otomatik yansıt (v3 kullanarak)
      */
     public function applyToTimesheet(): void
     {
@@ -527,44 +558,19 @@ class LeaveRequest extends Model
             return;
         }
 
-        $timesheetEntries = [];
-        $current = $this->start_date->copy();
-        
-        while ($current->lte($this->end_date)) {
-            // Sadece çalışma günlerinde puantaj oluştur
-            if (!in_array($current->dayOfWeek, [0, 6])) {
-                $timesheet = Timesheet::updateOrCreate([
-                    'employee_id' => $this->employee_id,
-                    'work_date' => $current,
-                ], [
-                    'project_id' => $this->employee->current_project_id,
-                    'attendance_type' => $this->getTimesheetAttendanceType(),
-                    'entry_method' => 'system',
-                    'approval_status' => 'approved',
-                    'is_paid' => $this->is_paid,
-                    'notes' => "İzin: {$this->leave_type_display}",
-                ]);
-                
-                $timesheetEntries[] = $timesheet->id;
-            }
-            $current->addDay();
-        }
-        
-        $this->update([
-            'auto_applied_to_timesheet' => true,
-            'applied_to_timesheet_at' => now(),
-            'timesheet_entries' => $timesheetEntries,
-        ]);
+        // Yeni v3 servisi kullan
+        $syncService = app(\App\Services\Timesheet\LeaveTimesheetSyncService::class);
+        $syncService->syncApprovedLeave($this);
     }
 
     /**
-     * Puantajdan kaldır
+     * Puantajdan kaldır (v3 kullanarak)
      */
     private function removeFromTimesheet(): void
     {
-        if (!empty($this->timesheet_entries)) {
-            Timesheet::whereIn('id', $this->timesheet_entries)->delete();
-        }
+        // Yeni v3 servisi kullan
+        $syncService = app(\App\Services\Timesheet\LeaveTimesheetSyncService::class);
+        $syncService->removeLeaveFromTimesheet($this);
     }
 
     /**
@@ -628,22 +634,35 @@ class LeaveRequest extends Model
      */
     public function submit(): void
     {
-        // Çakışmaları kontrol et
-        $this->checkConflicts();
-        
-        // Çalışma günlerini hesapla
-        $this->calculateWorkingDays();
-        
-        // Yöneticiyi belirle
-        if (!$this->approver_id) {
-            $this->approver_id = $this->employee->manager?->id;
+        \DB::beginTransaction();
+
+        try {
+            // Çakışmaları kontrol et
+            $this->checkConflicts();
+
+            // Çalışma günlerini hesapla
+            $this->calculateWorkingDays();
+
+            // Yöneticiyi belirle
+            if (!$this->approver_id) {
+                $this->approver_id = $this->employee->manager?->id;
+            }
+
+            $this->update([
+                'status' => 'pending',
+                'submitted_at' => now(),
+            ]);
+
+            // YENİ: Bakiyeden planned olarak işaretle
+            $balanceService = app(\App\Services\Leave\LeaveBalanceService::class);
+            $balanceService->markAsPlanned($this);
+
+            $this->sendNotifications();
+
+            \DB::commit();
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            throw $e;
         }
-        
-        $this->update([
-            'status' => 'pending',
-            'submitted_at' => now(),
-        ]);
-        
-        $this->sendNotifications();
     }
 }
