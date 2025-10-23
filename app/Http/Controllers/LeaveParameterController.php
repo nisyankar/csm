@@ -35,7 +35,7 @@ class LeaveParameterController extends Controller
 
         // Filter by status
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->where('is_active', $request->status === 'active' ? true : false);
         }
 
         // Filter by category (parameter_group in database)
