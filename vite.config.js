@@ -21,6 +21,11 @@ export default defineConfig({
         vueJsx(), // JSX desteği
         tailwindcss(), // Tailwind 4.x için
     ],
+    server: {
+        hmr: {
+            host: 'localhost',
+        },
+    },
     resolve: {
         alias: {
             // Vue runtime compilation alias - Bu satır önemli!
