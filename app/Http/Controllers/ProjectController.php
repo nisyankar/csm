@@ -256,10 +256,12 @@ class ProjectController extends Controller
             'completed_departments' => $project->departments->where('status', 'completed')->count(),
             'total_hours_worked' => $project->timesheets()
                 ->where('approval_status', 'approved')
-                ->sum('total_minutes') / 60,
+                ->sum('hours_worked'),
             'this_month_expenses' => $project->timesheets()
+                ->with('employee')
                 ->where('approval_status', 'approved')
                 ->whereMonth('work_date', now()->month)
+                ->get()
                 ->sum('calculated_wage'),
             'completion_percentage' => $this->calculateProjectCompletion($project),
             'days_remaining' => $project->planned_end_date->diffInDays(now(), false),
@@ -886,8 +888,10 @@ class ProjectController extends Controller
             'remaining_budget' => $project->remaining_budget,
             'budget_usage_percentage' => $project->budget_usage_percentage,
             'this_month_expenses' => $project->timesheets()
+                ->with('employee')
                 ->where('approval_status', 'approved')
                 ->whereMonth('work_date', now()->month)
+                ->get()
                 ->sum('calculated_wage'),
             'labor_cost' => $project->calculateTotalLaborCost(),
         ];
@@ -936,10 +940,12 @@ class ProjectController extends Controller
         
         for ($date = $startDate->copy(); $date <= now(); $date->addDay()) {
             $dailyExpense = $project->timesheets()
+                ->with('employee')
                 ->where('work_date', $date->toDateString())
                 ->where('approval_status', 'approved')
+                ->get()
                 ->sum('calculated_wage');
-                
+
             $data[] = [
                 'date' => $date->format('M d'),
                 'amount' => $dailyExpense,

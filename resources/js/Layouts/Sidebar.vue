@@ -59,7 +59,7 @@
             label="Puantaj Sistemi"
             icon="clock"
             :items="[
-              { href: route('timesheets-v3.bulk-entry'), label: 'Puantaj Girişi', active: route().current('timesheets-v3.*'), badge: 'v3' },
+              { href: route('timesheets.bulk.entry'), label: 'Puantaj Girişi', active: route().current('timesheets.bulk.*') },
               { href: route('shifts.index'), label: 'Vardiya Tanımları', active: route().current('shifts.*') },
               { href: route('dashboard'), label: 'QR Tarayıcı', active: false, mobile: true }
             ]"

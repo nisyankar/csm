@@ -298,7 +298,7 @@ class DashboardController extends Controller
                 ->count(),
             'this_week_hours' => Timesheet::whereIn('project_id', $managedProjects)
                 ->whereBetween('work_date', [now()->startOfWeek(), now()->endOfWeek()])
-                ->sum('total_minutes') / 60,
+                ->sum('hours_worked'),
             'budget_utilized' => Project::whereIn('id', $managedProjects)
                 ->sum('spent_amount'),
         ];
@@ -338,11 +338,11 @@ class DashboardController extends Controller
             'this_month_hours' => $employee->timesheets()
                 ->where('work_date', '>=', $thisMonth)
                 ->where('approval_status', 'approved')
-                ->sum('total_minutes') / 60,
+                ->sum('hours_worked'),
             'this_month_overtime' => $employee->timesheets()
                 ->where('work_date', '>=', $thisMonth)
                 ->where('approval_status', 'approved')
-                ->sum('overtime_minutes') / 60,
+                ->sum('overtime_hours'),
             'pending_timesheets' => $employee->timesheets()
                 ->where('approval_status', 'pending')
                 ->count(),
@@ -740,7 +740,7 @@ class DashboardController extends Controller
         $plannedHours = count($departmentIds) * 40 * 8; // Assuming 40 hours per department per week
         $actualHours = Timesheet::whereIn('department_id', $departmentIds)
             ->whereBetween('work_date', [$weekStart, $weekEnd])
-            ->sum('total_minutes') / 60;
+            ->sum('hours_worked');
 
         return $plannedHours > 0 ? round(($actualHours / $plannedHours) * 100, 1) : 0;
     }

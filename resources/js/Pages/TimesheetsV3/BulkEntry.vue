@@ -871,7 +871,7 @@ const loadData = () => {
     params.department_id = selectedDepartmentId.value
   }
 
-  router.get('/timesheets-v3/bulk-entry', params, {
+  router.get('/timesheets/bulk/entry', params, {
     preserveState: true,
     preserveScroll: true,
     only: ['employees', 'existingTimesheets', 'leaveDays'],
@@ -1019,7 +1019,7 @@ const saveAll = async () => {
   console.log('📤 Backend\'e gönderilecek:', timesheets.length, 'timesheet')
   console.log('📦 Gönderilen data:', { timesheets, month: selectedMonth.value, project_id: selectedProjectId.value })
 
-  router.post('/timesheets-v3/bulk-store', {
+  router.post('/timesheets/bulk/store', {
     timesheets,
     month: selectedMonth.value,
     project_id: selectedProjectId.value
