@@ -591,21 +591,12 @@ class LeaveRequestController extends Controller
         ];
     }
 
-    private function getLeaveTypes(): array
+    private function getLeaveTypes()
     {
-        return [
-            'annual' => 'Yıllık İzin',
-            'sick' => 'Hastalık İzni',
-            'maternity' => 'Doğum İzni',
-            'paternity' => 'Babalık İzni',
-            'marriage' => 'Evlilik İzni',
-            'funeral' => 'Cenaze İzni',
-            'military' => 'Askerlik İzni',
-            'unpaid' => 'Ücretsiz İzin',
-            'emergency' => 'Acil Durum İzni',
-            'study' => 'Eğitim İzni',
-            'other' => 'Diğer',
-        ];
+        return \App\Models\LeaveType::active()
+            ->select('id', 'name', 'code', 'description')
+            ->orderBy('name')
+            ->get();
     }
 
     private function calculateWorkingDays(Carbon $startDate, Carbon $endDate): int
