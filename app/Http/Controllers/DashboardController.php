@@ -156,8 +156,10 @@ class DashboardController extends Controller
             'active_projects' => Project::active()->count(),
             'pending_timesheets' => Timesheet::where('approval_status', 'pending')->count(),
             'pending_leaves' => LeaveRequest::where('status', 'pending')->count(),
-            'this_month_expenses' => Timesheet::whereMonth('work_date', now()->month)
+            'this_month_expenses' => Timesheet::with('employee')
+                ->whereMonth('work_date', now()->month)
                 ->where('approval_status', 'approved')
+                ->get()
                 ->sum('calculated_wage'),
             'departments_count' => Department::count(),
         ];
@@ -172,9 +174,11 @@ class DashboardController extends Controller
         $monthlyExpenses = [];
         for ($i = 11; $i >= 0; $i--) {
             $date = now()->subMonths($i);
-            $amount = Timesheet::whereYear('work_date', $date->year)
+            $amount = Timesheet::with('employee')
+                ->whereYear('work_date', $date->year)
                 ->whereMonth('work_date', $date->month)
                 ->where('approval_status', 'approved')
+                ->get()
                 ->sum('calculated_wage');
 
             $monthlyExpenses[] = [
@@ -343,8 +347,10 @@ class DashboardController extends Controller
                 ->where('approval_status', 'pending')
                 ->count(),
             'this_month_earnings' => $employee->timesheets()
+                ->with('employee')
                 ->where('work_date', '>=', $thisMonth)
                 ->where('approval_status', 'approved')
+                ->get()
                 ->sum('calculated_wage'),
             'attendance_rate' => $this->calculateAttendanceRate($employee),
         ];
