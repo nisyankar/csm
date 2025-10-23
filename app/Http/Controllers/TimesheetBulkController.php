@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TimesheetV3;
+use App\Models\Timesheet;
 use App\Models\Employee;
 use App\Models\Project;
 use App\Models\Shift;
@@ -13,7 +13,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-class TimesheetV3Controller extends Controller
+class TimesheetBulkController extends Controller
 {
     protected WeeklyOvertimeCalculator $overtimeCalculator;
     protected LeaveTimesheetSyncService $leaveSyncService;
@@ -68,7 +68,7 @@ class TimesheetV3Controller extends Controller
             $employees = $employeesQuery->with(['department'])->get();
 
             // Mevcut puantaj kayıtlarını getir
-            $existingTimesheets = TimesheetV3::where('project_id', $projectId)
+            $existingTimesheets = Timesheet::where('project_id', $projectId)
                 ->whereBetween('work_date', [$startDate, $endDate])
                 ->whereIn('employee_id', $employees->pluck('id'))
                 ->with(['shift', 'leaveRequest'])
@@ -145,7 +145,7 @@ class TimesheetV3Controller extends Controller
                 }
 
                 // Mevcut kaydı kontrol et
-                $existing = TimesheetV3::where('employee_id', $timesheetData['employee_id'])
+                $existing = Timesheet::where('employee_id', $timesheetData['employee_id'])
                     ->where('work_date', $timesheetData['work_date'])
                     ->where('project_id', $timesheetData['project_id'])
                     ->first();
@@ -158,14 +158,14 @@ class TimesheetV3Controller extends Controller
                 $data = [
                     ...$timesheetData,
                     'entry_method' => 'bulk',
-                    'entered_by' => auth()->id(),
+                    'entered_by' => auth()?->id(),
                 ];
 
                 if ($existing) {
                     $existing->update($data);
                     $updatedCount++;
                 } else {
-                    TimesheetV3::create($data);
+                    Timesheet::create($data);
                     $createdCount++;
                 }
             }
@@ -203,7 +203,7 @@ class TimesheetV3Controller extends Controller
     /**
      * Tek bir puantaj kaydını sil
      */
-    public function destroy(TimesheetV3 $timesheet)
+    public function destroy(Timesheet $timesheet)
     {
         if ($timesheet->auto_generated_from_leave) {
             return back()->withErrors([

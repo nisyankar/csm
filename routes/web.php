@@ -5,7 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeProjectAssignmentController;
 use App\Http\Controllers\TimesheetController;
-use App\Http\Controllers\TimesheetV3Controller;
+use App\Http\Controllers\TimesheetBulkController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\TimesheetApprovalController;
 use App\Http\Controllers\ProjectController;
@@ -222,21 +222,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/export', [TimesheetController::class, 'export'])->name('export');
     });
 
-    // Timesheet V3 Management Routes (Puantaj Sistemi - İzin Entegrasyonlu)
-    Route::prefix('timesheets-v3')->name('timesheets-v3.')->group(function () {
+    // Timesheet Bulk Entry Routes (Toplu Puantaj Giriş Sistemi)
+    Route::prefix('timesheets/bulk')->name('timesheets.bulk.')->group(function () {
         // Toplu Giriş (Ana Ekran)
-        Route::get('/bulk-entry', [TimesheetV3Controller::class, 'bulkEntry'])
+        Route::get('/entry', [TimesheetBulkController::class, 'bulkEntry'])
             ->middleware('role:admin|hr|project_manager|site_manager|foreman')
-            ->name('bulk-entry');
-        Route::post('/bulk-store', [TimesheetV3Controller::class, 'bulkStore'])
+            ->name('entry');
+        Route::post('/store', [TimesheetBulkController::class, 'bulkStore'])
             ->middleware('role:admin|hr|project_manager|site_manager|foreman')
-            ->name('bulk-store');
+            ->name('store');
 
         // Kayıt Silme
-        Route::delete('/{timesheet}', [TimesheetV3Controller::class, 'destroy'])->name('destroy');
+        Route::delete('/{timesheet}', [TimesheetBulkController::class, 'destroy'])->name('destroy');
 
         // Raporlar
-        Route::get('/reports/monthly', [TimesheetV3Controller::class, 'monthlyReport'])
+        Route::get('/reports/monthly', [TimesheetBulkController::class, 'monthlyReport'])
             ->name('reports.monthly');
     });
 

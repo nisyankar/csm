@@ -79,6 +79,10 @@ class Timesheet extends Model
         'week_calculation_done' => 'boolean',
     ];
 
+    protected $appends = [
+        'calculated_wage',
+    ];
+
     /**
      * Relationships
      */
@@ -444,6 +448,83 @@ class Timesheet extends Model
     public function scopeLeaveDays($query)
     {
         return $query->where('is_leave_day', true);
+    }
+
+    /**
+     * Accessor: Hesaplanan ücreti getir
+     */
+    public function getCalculatedWageAttribute(): float
+    {
+        if (!$this->employee) {
+            return 0;
+        }
+
+        // Çalışan ücret bilgisi yoksa 0 döndür
+        if (!$this->employee->daily_wage && !$this->employee->hourly_wage && !$this->employee->monthly_salary) {
+            return 0;
+        }
+
+        // İzin günleri için ücret hesabı
+        if ($this->is_leave_day) {
+            return $this->employee->calculateDailyRate();
+        }
+
+        // Normal çalışma saatleri ücreti
+        $regularWage = 0;
+        $overtimeWage = 0;
+
+        // Çalışan ücret tipine göre hesapla
+        switch ($this->employee->wage_type) {
+            case 'hourly':
+                $regularWage = ($this->hours_worked ?? 0) * ($this->employee->hourly_wage ?? 0);
+
+                // Fazla mesai hesabı (overtime_type'a göre)
+                if ($this->overtime_hours > 0) {
+                    $overtimeMultiplier = match($this->overtime_type) {
+                        'weekday' => 1.5,  // Hafta içi %50
+                        'weekend' => 2.0,  // Hafta sonu %100
+                        'holiday' => 3.0,  // Tatil %200
+                        default => 1.5
+                    };
+                    $overtimeWage = $this->overtime_hours * ($this->employee->hourly_wage ?? 0) * $overtimeMultiplier;
+                }
+                break;
+
+            case 'daily':
+                $regularWage = ($this->employee->daily_wage ?? 0);
+
+                // Fazla mesai için saatlik hesap (günlük ücret / 8 saat)
+                if ($this->overtime_hours > 0) {
+                    $hourlyRate = ($this->employee->daily_wage ?? 0) / 8;
+                    $overtimeMultiplier = match($this->overtime_type) {
+                        'weekday' => 1.5,
+                        'weekend' => 2.0,
+                        'holiday' => 3.0,
+                        default => 1.5
+                    };
+                    $overtimeWage = $this->overtime_hours * $hourlyRate * $overtimeMultiplier;
+                }
+                break;
+
+            case 'monthly':
+                // Aylık maaşlılar için günlük hesap (maaş / 30 gün)
+                $regularWage = ($this->employee->monthly_salary ?? 0) / 30;
+
+                // Fazla mesai için saatlik hesap
+                if ($this->overtime_hours > 0) {
+                    $hourlyRate = ($this->employee->monthly_salary ?? 0) / 30 / 8;
+                    $overtimeMultiplier = match($this->overtime_type) {
+                        'weekday' => 1.5,
+                        'weekend' => 2.0,
+                        'holiday' => 3.0,
+                        default => 1.5
+                    };
+                    $overtimeWage = $this->overtime_hours * $hourlyRate * $overtimeMultiplier;
+                }
+                break;
+        }
+
+        return round($regularWage + $overtimeWage, 2);
     }
 
     /**

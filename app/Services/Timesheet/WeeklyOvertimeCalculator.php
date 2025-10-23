@@ -2,7 +2,7 @@
 
 namespace App\Services\Timesheet;
 
-use App\Models\TimesheetV3;
+use App\Models\Timesheet;
 use App\Models\Shift;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -24,7 +24,7 @@ class WeeklyOvertimeCalculator
     public function calculateForWeek(int $projectId, int $year, int $weekNumber): array
     {
         // O haftanın tüm puantaj kayıtlarını getir
-        $timesheets = TimesheetV3::where('project_id', $projectId)
+        $timesheets = Timesheet::where('project_id', $projectId)
             ->where('year', $year)
             ->where('week_number', $weekNumber)
             ->with(['employee', 'shift'])
@@ -213,7 +213,7 @@ class WeeklyOvertimeCalculator
     /**
      * Tek bir puantaj kaydı eklendiğinde haftasını yeniden hesapla
      */
-    public function recalculateWeekForTimesheet(TimesheetV3 $timesheet): array
+    public function recalculateWeekForTimesheet(Timesheet $timesheet): array
     {
         return $this->calculateForWeek(
             $timesheet->project_id,

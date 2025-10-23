@@ -3,7 +3,7 @@
 namespace App\Services\Timesheet;
 
 use App\Models\LeaveRequest;
-use App\Models\TimesheetV3;
+use App\Models\Timesheet;
 use App\Models\Shift;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -104,9 +104,9 @@ class LeaveTimesheetSyncService
         LeaveRequest $leaveRequest,
         Carbon $date,
         Shift $shift
-    ): TimesheetV3 {
+    ): Timesheet {
         // Varolan kaydı kontrol et
-        $existing = TimesheetV3::where('employee_id', $leaveRequest->employee_id)
+        $existing = Timesheet::where('employee_id', $leaveRequest->employee_id)
             ->where('work_date', $date)
             ->first();
 
@@ -155,7 +155,7 @@ class LeaveTimesheetSyncService
             return $existing;
         }
 
-        return TimesheetV3::create($data);
+        return Timesheet::create($data);
     }
 
     /**
@@ -178,7 +178,7 @@ class LeaveTimesheetSyncService
 
             // KRİTİK KONTROL: Onaylanmış puantaj varsa İK onayı gerekli
             if (!$hrOverride) {
-                $approvedTimesheets = TimesheetV3::whereIn('id', $timesheetIds)
+                $approvedTimesheets = Timesheet::whereIn('id', $timesheetIds)
                     ->where('is_approved', true)
                     ->count();
 
@@ -191,7 +191,7 @@ class LeaveTimesheetSyncService
             }
 
             // İzinden oluşturulan kayıtları sil
-            $deletedCount = TimesheetV3::whereIn('id', $timesheetIds)
+            $deletedCount = Timesheet::whereIn('id', $timesheetIds)
                 ->where('auto_generated_from_leave', true)
                 ->where('leave_request_id', $leaveRequest->id)
                 ->delete();
@@ -257,7 +257,7 @@ class LeaveTimesheetSyncService
      */
     public function isLeaveDay(int $employeeId, Carbon $date): bool
     {
-        return TimesheetV3::where('employee_id', $employeeId)
+        return Timesheet::where('employee_id', $employeeId)
             ->where('work_date', $date)
             ->where('is_leave_day', true)
             ->where('auto_generated_from_leave', true)
@@ -269,7 +269,7 @@ class LeaveTimesheetSyncService
      */
     public function getLeaveDaysInRange(int $employeeId, Carbon $startDate, Carbon $endDate): array
     {
-        $leaveDays = TimesheetV3::where('employee_id', $employeeId)
+        $leaveDays = Timesheet::where('employee_id', $employeeId)
             ->where('is_leave_day', true)
             ->where('auto_generated_from_leave', true)
             ->whereBetween('work_date', [$startDate, $endDate])
