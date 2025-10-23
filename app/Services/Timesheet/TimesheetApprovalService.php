@@ -2,7 +2,7 @@
 
 namespace App\Services\Timesheet;
 
-use App\Models\TimesheetV2;
+use App\Models\Timesheet;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -41,7 +41,7 @@ class TimesheetApprovalService
 
         try {
             // Onaylanacak puantajları bul
-            $query = TimesheetV2::query()
+            $query = Timesheet::query()
                 ->whereYear('work_date', $year)
                 ->whereMonth('work_date', $month)
                 ->where('approval_status', '!=', 'approved') // Zaten onaylı olanları hariç tut
@@ -159,7 +159,7 @@ class TimesheetApprovalService
      * Tekil puantaj onayı
      */
     public function approveSingle(
-        TimesheetV2 $timesheet,
+        Timesheet $timesheet,
         User $approver,
         ?string $notes = null
     ): array {
@@ -198,7 +198,7 @@ class TimesheetApprovalService
      * Puantajı reddet
      */
     public function reject(
-        TimesheetV2 $timesheet,
+        Timesheet $timesheet,
         User $rejector,
         string $reason
     ): array {
@@ -229,7 +229,7 @@ class TimesheetApprovalService
      * İK müdahalesi - onaylanmış puantajı düzelt
      */
     public function hrOverride(
-        TimesheetV2 $timesheet,
+        Timesheet $timesheet,
         User $hrUser,
         array $changes,
         string $reason
@@ -262,7 +262,7 @@ class TimesheetApprovalService
      */
     public function getApprovalStats(int $year, int $month, ?int $projectId = null): array
     {
-        $query = TimesheetV2::query()
+        $query = Timesheet::query()
             ->whereYear('work_date', $year)
             ->whereMonth('work_date', $month);
 
@@ -291,7 +291,7 @@ class TimesheetApprovalService
      */
     public function getPendingApprovals(?int $projectId = null, ?int $employeeId = null)
     {
-        $query = TimesheetV2::query()
+        $query = Timesheet::query()
             ->with(['employee', 'project', 'shift'])
             ->where('approval_status', 'submitted')
             ->orderBy('work_date', 'desc');

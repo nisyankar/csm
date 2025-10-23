@@ -1,61 +1,115 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SPT - Şantiye Proje Takip Sistemi
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+İnşaat şantiyelerinin yönetimi için geliştirilmiş kapsamlı proje takip sistemi.
 
-## About Laravel
+## Özellikler
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Puantaj Yönetimi
+- **Gelişmiş Onay Sistemi**: Çok aşamalı onay süreci (draft, submitted, approved, rejected)
+- **Onay Logları**: Tüm onay işlemlerinin detaylı kayıtları
+- **İK Müdahale Sistemi**: İK'nın onaylanmış puantajlara müdahale edebilmesi
+- **İzin Entegrasyonu**: İzin taleplerinin otomatik puantaja yansıması
+- **Fazla Mesai Takibi**: Hafta içi (%50), hafta sonu (%100), resmi tatil (%200)
+- **Haftalık Hesaplamalar**: Otomatik haftalık özet ve fazla mesai hesaplamaları
+- **Toplu Giriş**: Aylık veya haftalık toplu puantaj girişi
+- **Proje Detay Takibi**: Yapı, kat, daire ve iş kalemi bazında detaylı kayıt
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Çalışan Yönetimi
+- Çalışan bilgileri ve departman atamaları
+- Vardiya yönetimi
+- Maaş geçmişi takibi
+- Proje atamaları
+- Taşeron çalışan desteği
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### İzin Yönetimi
+- Yıllık izin, hastalık izni, ücretsiz izin vb. tüm izin tipleri
+- Otomatik izin bakiyesi hesaplama
+- İzin onay süreci
+- İzin-puantaj senkronizasyonu
+- Detaylı izin bakiyesi logları
 
-## Learning Laravel
+### Proje Yönetimi
+- Proje yapı ve kat tanımlamaları
+- İş kalemleri ve metraj takibi
+- Proje-departman ilişkileri
+- Taşeron firma yönetimi
+- Proje dokümantasyonu
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Satın Alma Modülü
+- Satın alma talepleri
+- Tedarikçi yönetimi
+- Teklif karşılaştırma
+- Sipariş takibi
+- Teslimat yönetimi
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Teknoloji Stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Backend**: Laravel 11
+- **Frontend**: Vue.js 3 + Inertia.js
+- **Veritabanı**: MariaDB / MySQL
+- **Authentication**: Laravel Sanctum
+- **Yetkilendirme**: Spatie Laravel Permission
 
-## Laravel Sponsors
+## Kurulum
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Gereksinimler
+- PHP 8.2+
+- Composer
+- Node.js 18+
+- MariaDB 10.6+ veya MySQL 8.0+
 
-### Premium Partners
+### Adımlar
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+1. Bağımlılıkları yükleyin:
+```bash
+composer install
+npm install
+```
 
-## Contributing
+2. Environment dosyasını yapılandırın:
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3. Veritabanını oluşturun ve migration'ları çalıştırın:
+```bash
+php artisan migrate --seed
+```
 
-## Code of Conduct
+4. Frontend asset'lerini derleyin:
+```bash
+npm run build
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+5. Uygulamayı çalıştırın:
+```bash
+php artisan serve
+```
 
-## Security Vulnerabilities
+## Veritabanı Yapısı
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Ana Tablolar
+- `timesheets`: Puantaj kayıtları (gelişmiş onay sistemi ile)
+- `employees`: Çalışan bilgileri
+- `projects`: Proje tanımları
+- `leave_requests`: İzin talepleri
+- `timesheet_approval_logs`: Puantaj onay geçmişi
+- `shifts`: Vardiya tanımları
+- `departments`: Departman tanımları
 
-## License
+### Yedek Tablolar
+- `timesheets_old_backup`: Eski puantaj sistemi (referans için)
+- `timesheets_v3_backup`: V3 puantaj sistemi (referans için)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Geliştirme Notları
+
+### Son Güncellemeler
+- Tüm puantaj versiyonları (`timesheets_v2`, `timesheets_v3`) tek bir `timesheets` tablosunda birleştirildi
+- Model isimleri standartlaştırıldı (`TimesheetV2` → `Timesheet`)
+- Gelişmiş onay sistemi ve haftalık hesaplama özellikleri eklendi
+- İzin-puantaj entegrasyonu tamamlandı
+
+## Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır.

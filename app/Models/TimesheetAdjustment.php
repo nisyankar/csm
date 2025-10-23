@@ -33,7 +33,7 @@ class TimesheetAdjustment extends Model
      */
     public function timesheet(): BelongsTo
     {
-        return $this->belongsTo(TimesheetV2::class, 'timesheet_id');
+        return $this->belongsTo(Timesheet::class, 'timesheet_id');
     }
 
     public function employee(): BelongsTo

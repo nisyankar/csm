@@ -55,7 +55,7 @@ class Shift extends Model
      */
     public function timesheets(): HasMany
     {
-        return $this->hasMany(TimesheetV2::class, 'shift_id');
+        return $this->hasMany(Timesheet::class, 'shift_id');
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\TimesheetV2;
+use App\Models\Timesheet;
 use App\Models\TimesheetCarryover;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -23,7 +23,7 @@ class TimesheetCalculatorService
     ): array {
         $weekEnd = $weekStart->copy()->endOfWeek();
         
-        $timesheets = TimesheetV2::forEmployee($employeeId)
+        $timesheets = Timesheet::forEmployee($employeeId)
             ->inDateRange($weekStart, $weekEnd)
             ->with('shift')
             ->orderBy('work_date')
@@ -45,7 +45,7 @@ class TimesheetCalculatorService
         int $month,
         ?TimesheetCarryover $carryover = null
     ): array {
-        $timesheets = TimesheetV2::forEmployee($employeeId)
+        $timesheets = Timesheet::forEmployee($employeeId)
             ->forMonth($year, $month)
             ->with('shift')
             ->orderBy('work_date')

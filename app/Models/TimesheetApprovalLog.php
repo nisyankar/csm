@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TimesheetApprovalLog extends Model
 {
     protected $fillable = [
-        'timesheet_v2_id',
+        'timesheet_id',
         'user_id',
         'action',
         'old_values',
@@ -29,7 +29,7 @@ class TimesheetApprovalLog extends Model
      */
     public function timesheet(): BelongsTo
     {
-        return $this->belongsTo(TimesheetV2::class, 'timesheet_v2_id');
+        return $this->belongsTo(Timesheet::class, 'timesheet_id');
     }
 
     /**
@@ -44,7 +44,7 @@ class TimesheetApprovalLog extends Model
      * Log kaydı oluştur (static helper)
      */
     public static function logAction(
-        TimesheetV2 $timesheet,
+        Timesheet $timesheet,
         string $action,
         ?array $oldValues = null,
         ?array $newValues = null,
@@ -64,7 +64,7 @@ class TimesheetApprovalLog extends Model
      * Log kaydı oluştur - belirli kullanıcı ile
      */
     public static function logActionWithUser(
-        TimesheetV2 $timesheet,
+        Timesheet $timesheet,
         int $userId,
         string $action,
         ?array $oldValues = null,
@@ -72,7 +72,7 @@ class TimesheetApprovalLog extends Model
         ?string $notes = null
     ): self {
         return self::create([
-            'timesheet_v2_id' => $timesheet->id,
+            'timesheet_id' => $timesheet->id,
             'user_id' => $userId,
             'action' => $action,
             'old_values' => $oldValues,
