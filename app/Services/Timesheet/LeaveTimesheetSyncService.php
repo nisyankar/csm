@@ -110,8 +110,18 @@ class LeaveTimesheetSyncService
             ->where('work_date', $date)
             ->first();
 
-        // Eğer izinden gelmeyen bir kayıt varsa, uyarı ver
+        // KRİTİK KONTROL: Onaylanmış manuel puantaj varsa İK müdahalesi gerekli
         if ($existing && !$existing->auto_generated_from_leave) {
+            // V3'te approval_status kontrolü (eğer varsa)
+            $isApproved = $existing->is_approved ?? false;
+
+            if ($isApproved) {
+                throw new \Exception(
+                    "Bu tarihte ({$date->format('d.m.Y')}) onaylanmış puantaj kaydı bulunmaktadır. " .
+                    "İzin girişi için İK onayı gereklidir."
+                );
+            }
+
             Log::warning('Overwriting manual timesheet entry with leave', [
                 'timesheet_id' => $existing->id,
                 'employee_id' => $leaveRequest->employee_id,
@@ -151,7 +161,7 @@ class LeaveTimesheetSyncService
     /**
      * İptal edilen/reddedilen izni puantajdan kaldır
      */
-    public function removeLeaveFromTimesheet(LeaveRequest $leaveRequest): array
+    public function removeLeaveFromTimesheet(LeaveRequest $leaveRequest, bool $hrOverride = false): array
     {
         if (!$leaveRequest->auto_applied_to_timesheet) {
             return [
@@ -165,6 +175,20 @@ class LeaveTimesheetSyncService
 
         try {
             $timesheetIds = $leaveRequest->timesheet_entries ?? [];
+
+            // KRİTİK KONTROL: Onaylanmış puantaj varsa İK onayı gerekli
+            if (!$hrOverride) {
+                $approvedTimesheets = TimesheetV3::whereIn('id', $timesheetIds)
+                    ->where('is_approved', true)
+                    ->count();
+
+                if ($approvedTimesheets > 0) {
+                    throw new \Exception(
+                        "İzne ait {$approvedTimesheets} adet onaylanmış puantaj kaydı bulunmaktadır. " .
+                        "İzin iptal etmek için İK onayı gereklidir."
+                    );
+                }
+            }
 
             // İzinden oluşturulan kayıtları sil
             $deletedCount = TimesheetV3::whereIn('id', $timesheetIds)

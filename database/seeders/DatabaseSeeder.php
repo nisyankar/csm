@@ -12,10 +12,39 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            ConstructionSeeder::class,
+            // Temel veriler
+            ShiftSeeder::class, // Vardiya tanımları (GN, GC, HS, RT, vb.)
+            ConstructionSeeder::class, // Projeler, çalışanlar, temel veriler
+
+            // İzin sistemi
+            LeaveTypesSeeder::class, // İzin türleri (yıllık, hastalık, vb.)
+            LeaveParametersSeeder::class, // İzin parametreleri ve kuralları
+
+            // Proje atamaları
+            EmployeeProjectAssignmentSeeder::class, // Çalışan-proje atamaları
+
+            // Puantaj ve raporlar
             TimesheetDemoSeeder::class, // Demo puantaj verileri
+            DailyReportSeeder::class, // Günlük rapor verileri
+
+            // Malzeme ve stok
+            MaterialSeeder::class, // İnşaat malzemeleri
+
+            // Satınalma modülü
             PurchasingModuleSeeder::class, // Satınalma modülü demo verileri
+
+            // Yetki ve roller
+            PermissionSeeder::class, // İzinler ve roller
+            SystemAdminRoleSeeder::class, // Sistem admin rolü
+
+            // İş kalemleri ve taşeronlar
+            WorkCategorySeeder::class, // İş kategorileri
+            WorkItemSeeder::class, // İş kalemleri
             SubcontractorSeeder::class, // Taşeron verileri
+
+            // Proje yapısı ve taşeron atamaları
+            ProjectStructureSeeder::class, // Blok, kat, daire yapıları
+            ProjectSubcontractorSeeder::class, // Proje-taşeron atamaları
         ]);
     }
 }

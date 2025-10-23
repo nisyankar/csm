@@ -38,13 +38,13 @@ class LeaveParameterController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Filter by category
+        // Filter by category (parameter_group in database)
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $query->where('parameter_group', $request->category);
         }
 
-        $parameters = $query->orderBy('category')
-            ->orderBy('name')
+        $parameters = $query->orderBy('parameter_group')
+            ->orderBy('parameter_name')
             ->paginate(20)
             ->withQueryString();
 
@@ -242,14 +242,10 @@ class LeaveParameterController extends Controller
     private function getParameterCategories(): array
     {
         return [
-            'annual_leave' => 'Yıllık İzin',
-            'sick_leave' => 'Hastalık İzni',
-            'maternity_leave' => 'Doğum İzni',
-            'paternity_leave' => 'Babalık İzni',
-            'unpaid_leave' => 'Ücretsiz İzin',
-            'calculation' => 'Hesaplama',
-            'eligibility' => 'Uygunluk',
-            'restrictions' => 'Kısıtlamalar',
+            'basic' => 'Temel İzin Süreleri',
+            'special' => 'Özel Durumlar',
+            'business' => 'İş Kuralları',
+            'calculation' => 'Hesaplama Parametreleri',
         ];
     }
 

@@ -6,7 +6,6 @@ use Illuminate\Database\Seeder;
 use App\Models\EmployeeProjectAssignment;
 use App\Models\Project;
 use App\Models\Employee;
-use App\Models\Department;
 use Carbon\Carbon;
 
 class EmployeeProjectAssignmentSeeder extends Seeder
@@ -18,11 +17,11 @@ class EmployeeProjectAssignmentSeeder extends Seeder
     {
         $this->command->info('🔄 Creating employee-project assignments...');
 
-        // Demo projeyi bul
-        $project = Project::where('project_code', 'KON-2025-001')->first();
+        // Demo projeyi bul (herhangi bir proje varsa kullan)
+        $project = Project::first();
 
         if (!$project) {
-            $this->command->error('❌ Demo project not found! Run Phase1TestDataSeeder first.');
+            $this->command->error('❌ No projects found! Run ConstructionSeeder first.');
             return;
         }
 

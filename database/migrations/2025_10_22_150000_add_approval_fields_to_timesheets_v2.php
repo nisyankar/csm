@@ -12,47 +12,77 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('timesheets_v2', function (Blueprint $table) {
-            // Onay durumu: draft (taslak), submitted (gönderildi), approved (onaylı), rejected (reddedildi)
-            $table->enum('approval_status', ['draft', 'submitted', 'approved', 'rejected'])
-                  ->default('draft')
-                  ->after('notes');
+            // Kolonları sadece yoksa ekle
+            if (!Schema::hasColumn('timesheets_v2', 'approval_status')) {
+                $table->enum('approval_status', ['draft', 'submitted', 'approved', 'rejected'])
+                      ->default('draft')
+                      ->after('notes');
+            }
 
-            // Kim onayladı
-            $table->foreignId('approved_by')
-                  ->nullable()
-                  ->after('approval_status')
-                  ->constrained('users')
-                  ->nullOnDelete();
+            if (!Schema::hasColumn('timesheets_v2', 'is_approved')) {
+                $table->boolean('is_approved')
+                      ->default(false)
+                      ->after('notes')
+                      ->index();
+            }
 
-            // Ne zaman onaylandı
-            $table->timestamp('approved_at')
-                  ->nullable()
-                  ->after('approved_by');
+            if (!Schema::hasColumn('timesheets_v2', 'approved_by')) {
+                $table->foreignId('approved_by')
+                      ->nullable()
+                      ->after('notes')
+                      ->constrained('users')
+                      ->nullOnDelete();
+            }
 
-            // Onay notları (red nedeni vs.)
-            $table->text('approval_notes')
-                  ->nullable()
-                  ->after('approved_at');
+            if (!Schema::hasColumn('timesheets_v2', 'approved_at')) {
+                $table->timestamp('approved_at')
+                      ->nullable()
+                      ->after('notes');
+            }
 
-            // İK müdahalesi flag (izin girişi/iptali için)
-            $table->boolean('hr_override')
-                  ->default(false)
-                  ->after('approval_notes');
+            if (!Schema::hasColumn('timesheets_v2', 'approval_notes')) {
+                $table->text('approval_notes')
+                      ->nullable()
+                      ->after('notes');
+            }
 
-            $table->foreignId('hr_approved_by')
-                  ->nullable()
-                  ->after('hr_override')
-                  ->constrained('users')
-                  ->nullOnDelete();
+            if (!Schema::hasColumn('timesheets_v2', 'hr_override')) {
+                $table->boolean('hr_override')
+                      ->default(false)
+                      ->after('notes');
+            }
 
-            $table->timestamp('hr_approved_at')
-                  ->nullable()
-                  ->after('hr_approved_by');
+            if (!Schema::hasColumn('timesheets_v2', 'hr_approved_by')) {
+                $table->foreignId('hr_approved_by')
+                      ->nullable()
+                      ->after('notes')
+                      ->constrained('users')
+                      ->nullOnDelete();
+            }
 
-            // Index'ler
-            $table->index(['approval_status', 'work_date']);
-            $table->index(['approved_by', 'approved_at']);
+            if (!Schema::hasColumn('timesheets_v2', 'hr_approved_at')) {
+                $table->timestamp('hr_approved_at')
+                      ->nullable()
+                      ->after('notes');
+            }
         });
+
+        // Index'leri ayrı bir blokta ekle - hata vermemesi için try-catch kullan
+        try {
+            Schema::table('timesheets_v2', function (Blueprint $table) {
+                $table->index(['approval_status', 'work_date'], 'timesheets_v2_approval_status_work_date_index');
+            });
+        } catch (\Exception $e) {
+            // Index zaten varsa devam et
+        }
+
+        try {
+            Schema::table('timesheets_v2', function (Blueprint $table) {
+                $table->index(['approved_by', 'approved_at'], 'timesheets_v2_approved_by_approved_at_index');
+            });
+        } catch (\Exception $e) {
+            // Index zaten varsa devam et
+        }
     }
 
     /**
@@ -69,6 +99,7 @@ return new class extends Migration
 
             $table->dropColumn([
                 'approval_status',
+                'is_approved',
                 'approved_by',
                 'approved_at',
                 'approval_notes',

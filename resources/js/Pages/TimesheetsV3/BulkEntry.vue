@@ -21,6 +21,17 @@
               </svg>
               Ana Sayfa
             </Button>
+            <Button
+              v-if="selectedMonth && selectedProjectId"
+              variant="primary"
+              size="sm"
+              @click="openApprovalModal"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Aylık Onay
+            </Button>
             <Button variant="success" size="sm" @click="saveAll" :disabled="!hasChanges || saving">
               <Spinner v-if="saving" class="w-4 h-4 mr-2" />
               <svg v-else class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,13 +211,25 @@
                 <!-- Normal Vardiya -->
                 <div v-else
                   :class="[
-                    'w-full h-12 flex flex-col items-center justify-center rounded transition-all',
+                    'w-full h-12 flex flex-col items-center justify-center rounded transition-all relative',
                     getShiftCellClass(employee.id, day.date),
                     'cursor-pointer hover:ring-2 hover:ring-blue-400',
-                    getOvertime(employee.id, day.date) ? 'ring-2 ring-orange-400' : ''
+                    getOvertime(employee.id, day.date) ? 'ring-2 ring-orange-400' : '',
+                    isApproved(employee.id, day.date) ? 'ring-2 ring-green-500' : ''
                   ]"
                   :title="getShiftTooltip(employee.id, day.date)"
                 >
+                  <!-- Onay Badge'i -->
+                  <div
+                    v-if="isApproved(employee.id, day.date)"
+                    class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm"
+                    title="Onaylanmış"
+                  >
+                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+
                   <span class="text-sm font-bold">{{ getShiftLabel(employee.id, day.date) }}</span>
                   <div class="flex items-center gap-1 text-[9px]">
                     <span v-if="getShiftHours(employee.id, day.date)" class="text-gray-600">
@@ -309,6 +332,122 @@
 
     <!-- Click outside to close context menu -->
     <div v-if="contextMenu.show" class="fixed inset-0 z-[9998]" @click="closeContextMenu"></div>
+
+    <!-- Aylık Onay Modal -->
+    <div
+      v-if="showApprovalModal"
+      class="fixed inset-0 z-[9999] overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div
+          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          aria-hidden="true"
+          @click="showApprovalModal = false"
+        ></div>
+
+        <!-- Center helper -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full relative z-[10000]">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                  Aylık Toplu Onay
+                </h3>
+                <div class="mt-4 space-y-4">
+                  <div>
+                    <p class="text-sm text-gray-700 font-semibold">Seçili Dönem:</p>
+                    <p class="text-sm text-gray-900 mt-1">
+                      {{ format(parseISO(selectedMonth + '-01'), 'MMMM yyyy', { locale: tr }) }}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-700 font-semibold">Proje:</p>
+                    <p class="text-sm text-gray-900 mt-1">{{ selectedProject?.name }}</p>
+                  </div>
+                  <!-- Tüm puantajlar onaylıysa -->
+                  <div v-if="approvalStats && approvalStats.total > 0 && approvalStats.pending === 0" class="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div class="flex items-center">
+                      <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p class="text-sm text-green-800 font-semibold">
+                        Tüm puantajlar onaylanmış! İşlem yapmanıza gerek yok.
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Hiç puantaj yoksa -->
+                  <div v-else-if="approvalStats && approvalStats.total === 0" class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p class="text-sm text-gray-600 text-center">
+                      Bu ay ve proje için henüz puantaj girilmemiş.
+                    </p>
+                  </div>
+
+                  <!-- Bekleyen puantaj varsa -->
+                  <div v-else-if="approvalStats && approvalStats.pending > 0" class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p class="text-sm text-yellow-800">
+                      <strong>Uyarı:</strong> Bu işlem, seçili ay ve projedeki {{ approvalStats.pending }} onaylanmamış puantajı onaylayacaktır.
+                    </p>
+                  </div>
+
+                  <!-- İstatistikler -->
+                  <div v-if="approvalStats" class="bg-blue-50 rounded-lg p-4">
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div class="text-2xl font-bold text-gray-900">{{ approvalStats.total }}</div>
+                        <div class="text-xs text-gray-600">Toplam</div>
+                      </div>
+                      <div>
+                        <div class="text-2xl font-bold text-green-600">{{ approvalStats.approved }}</div>
+                        <div class="text-xs text-gray-600">Onaylı</div>
+                      </div>
+                      <div>
+                        <div class="text-2xl font-bold text-yellow-600">{{ approvalStats.pending }}</div>
+                        <div class="text-xs text-gray-600">Bekleyen</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 flex flex-col-reverse sm:flex-row-reverse gap-2">
+            <Button
+              v-if="approvalStats && approvalStats.pending > 0"
+              @click="approveMonthly"
+              variant="success"
+              size="sm"
+              :disabled="approvalLoading"
+              class="w-full sm:w-auto"
+            >
+              <Spinner v-if="approvalLoading" class="w-4 h-4 mr-2" />
+              <span v-else>{{ approvalStats.pending }} Puantajı Onayla</span>
+            </Button>
+            <Button
+              @click="showApprovalModal = false"
+              :variant="approvalStats?.pending > 0 ? 'outline' : 'primary'"
+              size="sm"
+              :disabled="approvalLoading"
+              class="w-full sm:w-auto"
+            >
+              {{ approvalStats?.pending > 0 ? 'İptal' : 'Kapat' }}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   </AppLayout>
 </template>
 
@@ -322,6 +461,7 @@ import Select from '@/Components/UI/Select.vue'
 import Spinner from '@/Components/UI/Spinner.vue'
 import { format, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isWeekend } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import axios from 'axios'
 
 // Props
 const props = defineProps({
@@ -350,6 +490,9 @@ const overtimeData = ref([])
 const saving = ref(false)
 const hasChanges = ref(false)
 const contextMenu = ref({ show: false, x: 0, y: 0, employeeId: null, date: null, overtimeType: 'weekday', hours: null })
+const showApprovalModal = ref(false)
+const approvalLoading = ref(false)
+const approvalStats = ref(null)
 
 // Initialize shift data from existing timesheets
 const initializeShiftData = () => {
@@ -440,6 +583,15 @@ const getLeaveDayInfo = (employeeId, date) => {
   return leaves?.find(l => l.date === date) || null
 }
 
+// Onay kontrolü
+const isApproved = (employeeId, date) => {
+  const existing = props.existingTimesheets.find(
+    ts => ts.employee_id === employeeId &&
+          ts.work_date.split('T')[0] === date
+  )
+  return existing?.is_approved === true
+}
+
 // Shift management (COMPUTED MAP kullanarak - GARANTİLİ REACTIVE)
 const getShift = (employeeId, date) => {
   const key = `${employeeId}_${date}`
@@ -449,6 +601,12 @@ const getShift = (employeeId, date) => {
 const setShift = (employeeId, date, shiftId) => {
   if (isLeaveDay(employeeId, date)) {
     alert('Bu gün izinli! Manuel puantaj girilemez.')
+    return
+  }
+
+  // Onaylı puantajlar düzenlenemez
+  if (isApproved(employeeId, date)) {
+    alert('Bu puantaj onaylanmış! Değiştirmek için İK onayı gereklidir.')
     return
   }
 
@@ -498,9 +656,14 @@ const getShiftTooltip = (employeeId, date) => {
   if (!shiftId) return 'Boş - Vardiya atamak için tıklayın'
   const shift = props.shifts.find(s => s.id === shiftId)
   const overtime = getOvertime(employeeId, date)
+  const approved = isApproved(employeeId, date)
+
   let tooltip = shift ? `${shift.name} (${shift.code}) - ${shift.daily_hours} saat` : ''
   if (overtime) {
     tooltip += `\nFM: ${overtime.hours} saat (${overtime.type})`
+  }
+  if (approved) {
+    tooltip += `\n✓ ONAYLANMIŞ - Düzenlemek için İK onayı gerekir`
   }
   return tooltip
 }
@@ -598,6 +761,12 @@ const handleRowHeaderClick = (employee) => {
 // Right click for overtime
 const handleRightClick = (employeeId, date, event) => {
   if (isLeaveDay(employeeId, date)) return
+
+  // Onaylı puantajlar düzenlenemez
+  if (isApproved(employeeId, date)) {
+    alert('Bu puantaj onaylanmış! Fazla mesai değiştirmek için İK onayı gereklidir.')
+    return
+  }
 
   const existing = overtimeData.value.find(o => o.employeeId === employeeId && o.date === date)
   contextMenu.value = {
@@ -710,6 +879,96 @@ const loadData = () => {
       initializeShiftData()
     }
   })
+}
+
+// Approval functions
+const loadApprovalStats = async () => {
+  if (!selectedMonth.value || !selectedProjectId.value) {
+    console.log('❌ loadApprovalStats: Ay veya proje seçilmemiş', {
+      month: selectedMonth.value,
+      projectId: selectedProjectId.value
+    })
+    return
+  }
+
+  console.log('🔄 loadApprovalStats başlıyor...', {
+    month: selectedMonth.value,
+    projectId: selectedProjectId.value
+  })
+
+  try {
+    const [year, month] = selectedMonth.value.split('-')
+    const params = {
+      year: parseInt(year),
+      month: parseInt(month),
+      project_id: selectedProjectId.value
+    }
+
+    console.log('📤 API çağrısı yapılıyor:', params)
+
+    const response = await axios.get('/timesheets-v2/approval-stats', { params })
+
+    console.log('✅ API yanıtı:', response.data)
+    approvalStats.value = response.data
+  } catch (error) {
+    console.error('❌ İstatistikler yüklenemedi:', error)
+    console.error('Hata detayı:', error.response?.data)
+    approvalStats.value = null
+    alert('İstatistikler yüklenirken hata oluştu: ' + (error.response?.data?.message || error.message))
+  }
+}
+
+// Modal açma fonksiyonu
+const openApprovalModal = () => {
+  showApprovalModal.value = true
+  loadApprovalStats()
+}
+
+const approveMonthly = async () => {
+  if (!selectedMonth.value || !selectedProjectId.value) return
+
+  const pendingCount = approvalStats.value?.pending || 0
+  if (pendingCount === 0) {
+    alert('Onaylanacak puantaj bulunmamaktadır.')
+    return
+  }
+
+  if (!confirm(`${pendingCount} puantajı onaylamak istediğinizden emin misiniz?`)) {
+    return
+  }
+
+  approvalLoading.value = true
+
+  try {
+    const [year, month] = selectedMonth.value.split('-')
+    const response = await axios.post('/timesheets-v2/approve-monthly', {
+      year: parseInt(year),
+      month: parseInt(month),
+      project_id: selectedProjectId.value
+    })
+
+    console.log('✅ Onay başarılı:', response.data)
+
+    // Modal'ı kapat
+    showApprovalModal.value = false
+    approvalLoading.value = false
+
+    // Başarı mesajı
+    alert(`${pendingCount} puantaj başarıyla onaylandı!`)
+
+    // Sayfayı tam yenile (Inertia reload)
+    router.reload({
+      only: ['employees', 'existingTimesheets', 'leaveDays'],
+      onSuccess: () => {
+        console.log('📄 Sayfa verileri yenilendi')
+        initializeShiftData()
+      }
+    })
+  } catch (error) {
+    approvalLoading.value = false
+    console.error('❌ Onay hatası:', error)
+    alert('Onay işlemi başarısız: ' + (error.response?.data?.message || error.message))
+  }
 }
 
 // Save all

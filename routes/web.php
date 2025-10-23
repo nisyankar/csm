@@ -241,6 +241,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('reports.monthly');
     });
 
+    // Timesheet V2 Approval Routes (Puantaj Onay Sistemi)
+    Route::prefix('timesheets-v2')->name('timesheets-v2.')->middleware('auth')->group(function () {
+        // Onay bekleyen puantajlar
+        Route::get('/pending-approvals', [TimesheetV2Controller::class, 'pendingApprovals'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('pending-approvals');
+
+        // Onay istatistikleri (API)
+        Route::get('/approval-stats', [TimesheetV2Controller::class, 'approvalStats'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('approval-stats');
+
+        // Aylık toplu onay
+        Route::post('/approve-monthly', [TimesheetV2Controller::class, 'approveMonthly'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('approve-monthly');
+
+        // Tekil işlemler
+        Route::post('/{timesheet}/submit', [TimesheetV2Controller::class, 'submit'])
+            ->name('submit');
+
+        Route::post('/{timesheet}/approve', [TimesheetV2Controller::class, 'approve'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('approve');
+
+        Route::post('/{timesheet}/reject', [TimesheetV2Controller::class, 'reject'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('reject');
+
+        // İK müdahalesi (sadece admin ve hr)
+        Route::post('/{timesheet}/hr-override', [TimesheetV2Controller::class, 'hrOverride'])
+            ->middleware('role:admin|hr')
+            ->name('hr-override');
+    });
+
     // Shift Management Routes (Vardiya Yönetimi)
     Route::prefix('shifts')->name('shifts.')
         ->middleware('role:admin|hr|project_manager')

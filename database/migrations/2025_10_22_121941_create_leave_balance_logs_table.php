@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Tablo zaten varsa atla
+        if (Schema::hasTable('leave_balance_logs')) {
+            return;
+        }
+
         Schema::create('leave_balance_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('leave_balance_id')->constrained()->cascadeOnDelete();

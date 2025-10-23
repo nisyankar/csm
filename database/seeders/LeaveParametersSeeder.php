@@ -8,14 +8,11 @@ use Carbon\Carbon;
 
 class LeaveParametersSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $now = Carbon::now();
-        $currentYear = $now->year;
-        
+        $year = $now->year;
+
         $parameters = [
             // Temel İzin Süreleri
             [
@@ -27,9 +24,10 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'gün',
                 'description' => 'Hizmet süresi 1-5 yıl arası personel için yıllık izin gün sayısı (İş Kanunu md. 53)',
                 'help_text' => 'Türk İş Kanunu 53. maddesine göre belirlenen asgari izin süresi',
+                'validation_rules' => json_encode(['min' => 14, 'max' => 30]),
+                'is_active' => true,
                 'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 14, 'max' => 30])
+                'effective_from' => "{$year}-01-01",
             ],
             [
                 'parameter_group' => 'basic',
@@ -40,9 +38,10 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'gün',
                 'description' => 'Hizmet süresi 5-15 yıl arası personel için yıllık izin gün sayısı',
                 'help_text' => 'Beş yıldan fazla on beş yıldan az hizmet süresi için geçerli',
+                'validation_rules' => json_encode(['min' => 20, 'max' => 35]),
+                'is_active' => true,
                 'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 20, 'max' => 35])
+                'effective_from' => "{$year}-01-01",
             ],
             [
                 'parameter_group' => 'basic',
@@ -53,11 +52,12 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'gün',
                 'description' => 'Hizmet süresi 15 yıl ve üzeri personel için yıllık izin gün sayısı',
                 'help_text' => 'On beş yıl ve daha fazla hizmet süresi için geçerli',
+                'validation_rules' => json_encode(['min' => 26, 'max' => 40]),
+                'is_active' => true,
                 'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 26, 'max' => 40])
+                'effective_from' => "{$year}-01-01",
             ],
-            
+
             // Özel Yaş Grupları
             [
                 'parameter_group' => 'special',
@@ -68,9 +68,10 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'gün',
                 'description' => '18 yaşında veya daha küçük işçiler için minimum yıllık izin süresi',
                 'help_text' => 'Kıdem ne olursa olsun minimum 20 gün izin hakkı',
+                'validation_rules' => json_encode(['min' => 20]),
+                'is_active' => true,
                 'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 20])
+                'effective_from' => "{$year}-01-01",
             ],
             [
                 'parameter_group' => 'special',
@@ -81,24 +82,12 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'gün',
                 'description' => '50 yaşında veya daha büyük işçiler için minimum yıllık izin süresi',
                 'help_text' => 'Kıdem ne olursa olsun minimum 20 gün izin hakkı',
+                'validation_rules' => json_encode(['min' => 20]),
+                'is_active' => true,
                 'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 20])
+                'effective_from' => "{$year}-01-01",
             ],
-            [
-                'parameter_group' => 'special',
-                'parameter_key' => 'underground_additional_leave',
-                'parameter_name' => 'Yer Altı İşçisi Ek İzin',
-                'parameter_value' => '4',
-                'data_type' => 'integer',
-                'unit' => 'gün',
-                'description' => 'Yer altı işlerinde çalışan işçiler için ek yıllık izin',
-                'help_text' => 'Normal izin günlerine ek olarak verilir',
-                'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 4, 'max' => 10])
-            ],
-            
+
             // İş Kuralları
             [
                 'parameter_group' => 'business',
@@ -109,22 +98,10 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'gün',
                 'description' => 'İzin bölündüğünde bir bölümün minimum gün sayısı',
                 'help_text' => 'Yasal zorunluluk: Bir bölüm 10 günden az olamaz',
+                'validation_rules' => json_encode(['min' => 10]),
+                'is_active' => true,
                 'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 10])
-            ],
-            [
-                'parameter_group' => 'business',
-                'parameter_key' => 'max_road_leave_days',
-                'parameter_name' => 'Maksimum Yol İzni',
-                'parameter_value' => '4',
-                'data_type' => 'integer',
-                'unit' => 'gün',
-                'description' => 'Verilecek maksimum ücretsiz yol izni gün sayısı',
-                'help_text' => 'Yollarda geçecek süre için ücretsiz izin',
-                'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 0, 'max' => 4])
+                'effective_from' => "{$year}-01-01",
             ],
             [
                 'parameter_group' => 'business',
@@ -135,37 +112,12 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'gün',
                 'description' => 'İzin talebinin en az kaç gün önceden yapılması gerektiği',
                 'help_text' => 'Yasal zorunluluk: En az 1 ay önceden bildirim',
+                'validation_rules' => json_encode(['min' => 1, 'max' => 90]),
+                'is_active' => true,
                 'is_system_parameter' => false,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 1, 'max' => 90])
+                'effective_from' => "{$year}-01-01",
             ],
-            [
-                'parameter_group' => 'business',
-                'parameter_key' => 'collective_leave_start_month',
-                'parameter_name' => 'Toplu İzin Başlangıç Ayı',
-                'parameter_value' => '4',
-                'data_type' => 'integer',
-                'unit' => 'ay',
-                'description' => 'Toplu izin uygulamasının başlayabileceği en erken ay (Nisan)',
-                'help_text' => 'Yasal kısıt: Nisan ayı başı ile Ekim ayı sonu arası',
-                'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 1, 'max' => 12])
-            ],
-            [
-                'parameter_group' => 'business',
-                'parameter_key' => 'collective_leave_end_month',
-                'parameter_name' => 'Toplu İzin Bitiş Ayı',
-                'parameter_value' => '10',
-                'data_type' => 'integer',
-                'unit' => 'ay',
-                'description' => 'Toplu izin uygulamasının bitebileceği en geç ay (Ekim)',
-                'help_text' => 'Yasal kısıt: Nisan ayı başı ile Ekim ayı sonu arası',
-                'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 1, 'max' => 12])
-            ],
-            
+
             // Hesaplama Parametreleri
             [
                 'parameter_group' => 'calculation',
@@ -175,8 +127,9 @@ class LeaveParametersSeeder extends Seeder
                 'data_type' => 'boolean',
                 'description' => 'İzin hesaplamasında hafta sonları dahil edilsin mi?',
                 'help_text' => 'Yasal kural: Hafta sonları izin süresinden sayılmaz',
+                'is_active' => true,
                 'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01"
+                'effective_from' => "{$year}-01-01",
             ],
             [
                 'parameter_group' => 'calculation',
@@ -186,8 +139,9 @@ class LeaveParametersSeeder extends Seeder
                 'data_type' => 'boolean',
                 'description' => 'İzin hesaplamasında genel tatil günleri dahil edilsin mi?',
                 'help_text' => 'Yasal kural: Genel tatiller izin süresinden sayılmaz',
+                'is_active' => true,
                 'is_system_parameter' => true,
-                'effective_from' => "{$currentYear}-01-01"
+                'effective_from' => "{$year}-01-01",
             ],
             [
                 'parameter_group' => 'calculation',
@@ -198,9 +152,10 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'ay',
                 'description' => 'İzin yılının başladığı ay (1=Ocak)',
                 'help_text' => 'Şirket politikası: İzin yılı Ocak-Aralık veya işe giriş tarihi bazlı',
+                'validation_rules' => json_encode(['min' => 1, 'max' => 12]),
+                'is_active' => true,
                 'is_system_parameter' => false,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 1, 'max' => 12])
+                'effective_from' => "{$year}-01-01",
             ],
             [
                 'parameter_group' => 'calculation',
@@ -211,30 +166,20 @@ class LeaveParametersSeeder extends Seeder
                 'unit' => 'gün',
                 'description' => 'Bir sonraki yıla devredilebilecek maksimum izin gün sayısı',
                 'help_text' => 'Şirket politikası ile belirlenir',
+                'validation_rules' => json_encode(['min' => 0, 'max' => 15]),
+                'is_active' => true,
                 'is_system_parameter' => false,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 0, 'max' => 15])
+                'effective_from' => "{$year}-01-01",
             ],
-            [
-                'parameter_group' => 'calculation',
-                'parameter_key' => 'carry_forward_expiry_months',
-                'parameter_name' => 'Devir İzni Süre Dolumu',
-                'parameter_value' => '4',
-                'data_type' => 'integer',
-                'unit' => 'ay',
-                'description' => 'Devreden izinlerin kaç ay içinde kullanılması gerektiği',
-                'help_text' => 'Devir izinleri için son kullanma süresi',
-                'is_system_parameter' => false,
-                'effective_from' => "{$currentYear}-01-01",
-                'validation_rules' => json_encode(['min' => 3, 'max' => 12])
-            ]
         ];
-        
+
         foreach ($parameters as $parameter) {
             DB::table('leave_parameters')->insert(array_merge($parameter, [
                 'created_at' => $now,
-                'updated_at' => $now
+                'updated_at' => $now,
             ]));
         }
+
+        $this->command->info('✅ ' . count($parameters) . ' izin parametresi oluşturuldu');
     }
 }

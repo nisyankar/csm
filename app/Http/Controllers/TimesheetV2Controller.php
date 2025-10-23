@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Project;
 use App\Models\TimesheetCarryover;
 use App\Services\TimesheetCalculatorService;
+use App\Services\Timesheet\TimesheetApprovalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -412,5 +413,177 @@ class TimesheetV2Controller extends Controller
         if ($updated > 0) $message[] = "{$updated} kayıt güncellendi";
 
         return back()->with('success', implode(', ', $message) ?: 'Hiçbir değişiklik yapılmadı.');
+    }
+
+    // ==========================================
+    // ONAY SİSTEMİ ENDPOINT'LERİ
+    // ==========================================
+
+    /**
+     * Aylık puantajları toplu onayla
+     */
+    public function approveMonthly(Request $request, TimesheetApprovalService $approvalService)
+    {
+        $validated = $request->validate([
+            'year' => 'required|integer|min:2020|max:2100',
+            'month' => 'required|integer|min:1|max:12',
+            'employee_ids' => 'nullable|array',
+            'employee_ids.*' => 'exists:employees,id',
+            'project_id' => 'nullable|exists:projects,id',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $result = $approvalService->approveMonthlyTimesheets(
+                $validated['year'],
+                $validated['month'],
+                $validated['employee_ids'] ?? null,
+                $validated['project_id'] ?? null,
+                auth()->user(),
+                $validated['notes'] ?? null
+            );
+
+            if ($result['success']) {
+                return back()->with('success', $result['message']);
+            }
+
+            return back()->with('error', $result['message']);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Onay işlemi başarısız: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Tekil puantaj onayı
+     */
+    public function approve(TimesheetV2 $timesheet, TimesheetApprovalService $approvalService)
+    {
+        try {
+            $result = $approvalService->approveSingle(
+                $timesheet,
+                auth()->user(),
+                request('notes')
+            );
+
+            if ($result['success']) {
+                return back()->with('success', $result['message']);
+            }
+
+            return back()->with('error', $result['message']);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Onay işlemi başarısız: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Puantajı reddet
+     */
+    public function reject(Request $request, TimesheetV2 $timesheet, TimesheetApprovalService $approvalService)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        try {
+            $result = $approvalService->reject(
+                $timesheet,
+                auth()->user(),
+                $validated['reason']
+            );
+
+            if ($result['success']) {
+                return back()->with('success', $result['message']);
+            }
+
+            return back()->with('error', $result['message']);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Red işlemi başarısız: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * İK müdahalesi - onaylanmış puantajı düzelt
+     */
+    public function hrOverride(Request $request, TimesheetV2 $timesheet, TimesheetApprovalService $approvalService)
+    {
+        $validated = $request->validate([
+            'changes' => 'required|array',
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        try {
+            $result = $approvalService->hrOverride(
+                $timesheet,
+                auth()->user(),
+                $validated['changes'],
+                $validated['reason']
+            );
+
+            if ($result['success']) {
+                return back()->with('success', $result['message']);
+            }
+
+            return back()->with('error', $result['message']);
+        } catch (\Exception $e) {
+            return back()->with('error', 'İK müdahalesi başarısız: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Onay istatistikleri
+     */
+    public function approvalStats(Request $request, TimesheetApprovalService $approvalService)
+    {
+        $validated = $request->validate([
+            'year' => 'required|integer',
+            'month' => 'required|integer|min:1|max:12',
+            'project_id' => 'nullable|exists:projects,id',
+        ]);
+
+        $stats = $approvalService->getApprovalStats(
+            $validated['year'],
+            $validated['month'],
+            $validated['project_id'] ?? null
+        );
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Onay bekleyen puantajlar
+     */
+    public function pendingApprovals(Request $request, TimesheetApprovalService $approvalService)
+    {
+        $projectId = $request->input('project_id');
+        $employeeId = $request->input('employee_id');
+
+        $pending = $approvalService->getPendingApprovals($projectId, $employeeId);
+
+        return Inertia::render('Timesheets/PendingApprovals', [
+            'pending' => $pending,
+            'filters' => $request->only(['project_id', 'employee_id']),
+        ]);
+    }
+
+    /**
+     * Puantajı onaya gönder
+     */
+    public function submit(TimesheetV2 $timesheet)
+    {
+        try {
+            if ($timesheet->leave_request_id) {
+                return back()->with('error', 'İzin kayıtları onaya gönderilemez.');
+            }
+
+            if ($timesheet->isSubmitted() || $timesheet->isApprovedNew()) {
+                return back()->with('error', 'Bu puantaj zaten onaya gönderilmiş veya onaylanmış.');
+            }
+
+            $timesheet->submitForApproval(request('notes'));
+
+            return back()->with('success', 'Puantaj onaya gönderildi.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Onaya gönderme başarısız: ' . $e->getMessage());
+        }
     }
 }
