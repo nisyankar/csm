@@ -4,9 +4,12 @@ import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
-    leaveRequests: Object,
+    leave_requests: Object,
     filters: Object,
     leaveTypes: Array,
+    employees: Array,
+    stats: Object,
+    leave_types: Array,
 });
 
 const filters = ref({
@@ -165,7 +168,7 @@ const getStatusLabel = (status) => {
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <tr
-                                    v-for="request in leaveRequests.data"
+                                    v-for="request in leave_requests.data"
                                     :key="request.id"
                                     class="hover:bg-gray-50"
                                 >
@@ -212,7 +215,7 @@ const getStatusLabel = (status) => {
                                         </a>
                                     </td>
                                 </tr>
-                                <tr v-if="leaveRequests.data.length === 0">
+                                <tr v-if="leave_requests.data.length === 0">
                                     <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
                                         İzin talebi bulunamadı.
                                     </td>
@@ -222,13 +225,13 @@ const getStatusLabel = (status) => {
                     </div>
 
                     <!-- Pagination -->
-                    <div v-if="leaveRequests.links.length > 3" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                    <div v-if="leave_requests.links.length > 3" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
                         <div class="flex items-center justify-between">
                             <div class="text-sm text-gray-700">
-                                Toplam <span class="font-medium">{{ leaveRequests.total }}</span> kayıt
+                                Toplam <span class="font-medium">{{ leave_requests.total }}</span> kayıt
                             </div>
                             <div class="flex space-x-2">
-                                <template v-for="(link, index) in leaveRequests.links" :key="index">
+                                <template v-for="(link, index) in leave_requests.links" :key="index">
                                     <a
                                         v-if="link.url"
                                         :href="link.url"

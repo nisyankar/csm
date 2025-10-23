@@ -225,13 +225,13 @@ class LeaveParameterController extends Controller
     {
         return [
             'total' => LeaveParameter::count(),
-            'active' => LeaveParameter::where('status', 'active')->count(),
-            'inactive' => LeaveParameter::where('status', 'inactive')->count(),
-            'system' => LeaveParameter::where('is_system', true)->count(),
-            'custom' => LeaveParameter::where('is_system', false)->count(),
-            'by_category' => LeaveParameter::selectRaw('category, COUNT(*) as count')
-                ->groupBy('category')
-                ->pluck('count', 'category')
+            'active' => LeaveParameter::where('is_active', true)->count(),
+            'inactive' => LeaveParameter::where('is_active', false)->count(),
+            'system' => LeaveParameter::where('is_system_parameter', true)->count(),
+            'custom' => LeaveParameter::where('is_system_parameter', false)->count(),
+            'by_category' => LeaveParameter::selectRaw('parameter_group, COUNT(*) as count')
+                ->groupBy('parameter_group')
+                ->pluck('count', 'parameter_group')
                 ->toArray(),
         ];
     }
