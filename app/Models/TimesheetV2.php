@@ -19,9 +19,9 @@ class TimesheetV2 extends Model
         'project_id',
         'shift_id',
         'work_date',
-        'daily_hours',
-        'overtime_hours',
         'hours_worked',
+        'overtime_hours',
+        'overtime_type',
         'start_time',
         'end_time',
         'break_duration',
@@ -32,13 +32,30 @@ class TimesheetV2 extends Model
         'is_locked',
         'metadata',
         'entered_by',
+        'entry_method',
         // Yeni onay sistemi alanları
         'approval_status',
         'approval_notes',
         'hr_override',
         'hr_approved_by',
         'hr_approved_at',
+        // İzin entegrasyonu
         'leave_request_id',
+        'auto_generated_from_leave',
+        'is_leave_day',
+        'leave_type',
+        // Haftalık hesaplama cache
+        'week_number',
+        'year',
+        'weekly_total_hours',
+        'weekly_required_hours',
+        'weekly_overtime_hours',
+        'week_calculation_done',
+        // Proje detayları
+        'structure_id',
+        'floor_id',
+        'unit_id',
+        'work_item_id',
     ];
 
     protected $casts = [
@@ -46,6 +63,7 @@ class TimesheetV2 extends Model
         'start_time' => 'datetime',
         'end_time' => 'datetime',
         'hours_worked' => 'decimal:2',
+        'overtime_hours' => 'decimal:2',
         'break_duration' => 'decimal:2',
         'is_approved' => 'boolean',
         'approved_at' => 'datetime',
@@ -53,6 +71,12 @@ class TimesheetV2 extends Model
         'metadata' => 'array',
         'hr_override' => 'boolean',
         'hr_approved_at' => 'datetime',
+        'auto_generated_from_leave' => 'boolean',
+        'is_leave_day' => 'boolean',
+        'weekly_total_hours' => 'decimal:2',
+        'weekly_required_hours' => 'decimal:2',
+        'weekly_overtime_hours' => 'decimal:2',
+        'week_calculation_done' => 'boolean',
     ];
 
     /**
@@ -350,5 +374,104 @@ class TimesheetV2 extends Model
             $this->only(array_keys($changes)),
             $reason
         );
+    }
+
+    /**
+     * V3'ten gelen helper metodlar
+     */
+
+    /**
+     * İzinden mi geldi?
+     */
+    public function isGeneratedFromLeave(): bool
+    {
+        return $this->auto_generated_from_leave;
+    }
+
+    /**
+     * İzin günü mü?
+     */
+    public function isLeaveDay(): bool
+    {
+        return $this->is_leave_day;
+    }
+
+    /**
+     * Hafta numarasını hesapla
+     */
+    public function setWeekInfo(): void
+    {
+        $date = Carbon::parse($this->work_date);
+        $this->year = $date->year;
+        $this->week_number = $date->weekOfYear;
+    }
+
+    /**
+     * Hafta sonunu getir (Pazar)
+     */
+    public function getWeekEnd(): Carbon
+    {
+        return Carbon::parse($this->work_date)->endOfWeek();
+    }
+
+    /**
+     * Scope: Hafta ile sorgulama
+     */
+    public function scopeForWeekNumber($query, int $year, int $weekNumber)
+    {
+        return $query->where('year', $year)->where('week_number', $weekNumber);
+    }
+
+    /**
+     * Scope: Manuel girişler
+     */
+    public function scopeManualEntry($query)
+    {
+        return $query->where('auto_generated_from_leave', false);
+    }
+
+    /**
+     * Scope: İzinden oluşturulanlar
+     */
+    public function scopeLeaveGenerated($query)
+    {
+        return $query->where('auto_generated_from_leave', true);
+    }
+
+    /**
+     * Scope: İzin günleri
+     */
+    public function scopeLeaveDays($query)
+    {
+        return $query->where('is_leave_day', true);
+    }
+
+    /**
+     * Boot method - otomatik hafta bilgilerini set et
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($timesheet) {
+            // Hafta bilgilerini otomatik set et
+            $date = Carbon::parse($timesheet->work_date);
+            $timesheet->year = $date->year;
+            $timesheet->week_number = $date->weekOfYear;
+
+            // entry_method yoksa default'u set et
+            if (empty($timesheet->entry_method)) {
+                $timesheet->entry_method = 'manual';
+            }
+        });
+
+        static::updating(function ($timesheet) {
+            // work_date değiştiyse hafta bilgilerini güncelle
+            if ($timesheet->isDirty('work_date')) {
+                $date = Carbon::parse($timesheet->work_date);
+                $timesheet->year = $date->year;
+                $timesheet->week_number = $date->weekOfYear;
+            }
+        });
     }
 }
