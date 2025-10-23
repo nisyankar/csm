@@ -4,8 +4,6 @@ namespace App\Services\Timesheet;
 
 use App\Models\TimesheetV2;
 use App\Models\User;
-use App\Models\TimesheetApprovalLog;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -25,18 +23,18 @@ class TimesheetApprovalService
      *
      * @param int $year Yıl
      * @param int $month Ay (1-12)
+     * @param User $approver Onaylayan kullanıcı
      * @param array|null $employeeIds Belirli çalışanlar (null = hepsi)
      * @param int|null $projectId Belirli proje (null = hepsi)
-     * @param User $approver Onaylayan kullanıcı
      * @param string|null $notes Onay notları
      * @return array
      */
     public function approveMonthlyTimesheets(
         int $year,
         int $month,
+        User $approver,
         ?array $employeeIds = null,
         ?int $projectId = null,
-        User $approver,
         ?string $notes = null
     ): array {
         DB::beginTransaction();
@@ -130,9 +128,9 @@ class TimesheetApprovalService
         return $this->approveMonthlyTimesheets(
             $year,
             $month,
+            $approver,
             [$employeeId],
             null,
-            $approver,
             $notes
         );
     }
@@ -150,9 +148,9 @@ class TimesheetApprovalService
         return $this->approveMonthlyTimesheets(
             $year,
             $month,
+            $approver,
             null,
             $projectId,
-            $approver,
             $notes
         );
     }

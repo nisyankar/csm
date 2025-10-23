@@ -301,8 +301,9 @@ class TimesheetV2 extends Model
             'approval_notes' => $notes,
         ]);
 
-        TimesheetApprovalLog::logAction(
+        TimesheetApprovalLog::logActionWithUser(
             $this,
+            $user->id,
             'approved',
             $oldValues,
             $this->only(['approval_status', 'approved_by', 'approved_at']),
@@ -320,8 +321,9 @@ class TimesheetV2 extends Model
             'approval_notes' => $reason,
         ]);
 
-        TimesheetApprovalLog::logAction(
+        TimesheetApprovalLog::logActionWithUser(
             $this,
+            $user->id,
             'rejected',
             $oldValues,
             $this->only(['approval_status', 'approved_by', 'approval_notes']),
@@ -340,8 +342,9 @@ class TimesheetV2 extends Model
             'approval_notes' => $reason,
         ]));
 
-        TimesheetApprovalLog::logAction(
+        TimesheetApprovalLog::logActionWithUser(
             $this,
+            $hrUser->id,
             'hr_override',
             $oldValues,
             $this->only(array_keys($changes)),

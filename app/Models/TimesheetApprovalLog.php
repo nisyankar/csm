@@ -50,14 +50,35 @@ class TimesheetApprovalLog extends Model
         ?array $newValues = null,
         ?string $notes = null
     ): self {
+        return self::logActionWithUser(
+            $timesheet,
+            auth()->id() ?? 0,
+            $action,
+            $oldValues,
+            $newValues,
+            $notes
+        );
+    }
+
+    /**
+     * Log kaydı oluştur - belirli kullanıcı ile
+     */
+    public static function logActionWithUser(
+        TimesheetV2 $timesheet,
+        int $userId,
+        string $action,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+        ?string $notes = null
+    ): self {
         return self::create([
             'timesheet_v2_id' => $timesheet->id,
-            'user_id' => auth()->id(),
+            'user_id' => $userId,
             'action' => $action,
             'old_values' => $oldValues,
             'new_values' => $newValues,
             'notes' => $notes,
-            'ip_address' => request()->ip(),
+            'ip_address' => request()->ip() ?? '127.0.0.1',
         ]);
     }
 }
