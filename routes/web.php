@@ -516,6 +516,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/bulk-approve', [LeaveRequestController::class, 'bulkApprove'])
             ->middleware('role:admin|hr|project_manager')
             ->name('bulk-approve');
+
+        // API - Get employee project settings
+        Route::get('/api/employee-project-settings', [LeaveRequestController::class, 'getEmployeeProjectSettings'])
+            ->name('api.employee-project-settings');
     });
 
     // İzin Yönetimi Rotaları (System Admin + HR)

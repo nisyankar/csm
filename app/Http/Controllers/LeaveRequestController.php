@@ -861,4 +861,29 @@ class LeaveRequestController extends Controller
 
         return false;
     }
+
+    /**
+     * Get employee's project weekend settings
+     */
+    public function getEmployeeProjectSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+        ]);
+
+        $employee = Employee::with('currentProject')->find($validated['employee_id']);
+
+        if (!$employee || !$employee->currentProject) {
+            return response()->json([
+                'weekend_days' => ['saturday', 'sunday'], // Default
+                'project_name' => null,
+            ]);
+        }
+
+        return response()->json([
+            'weekend_days' => $employee->currentProject->weekend_days ?? ['saturday', 'sunday'],
+            'project_name' => $employee->currentProject->name,
+            'project_id' => $employee->currentProject->id,
+        ]);
+    }
 }

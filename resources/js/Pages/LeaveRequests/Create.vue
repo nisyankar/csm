@@ -240,7 +240,8 @@
                 </svg>
                 <div>
                   <span class="font-medium">Hesaplama:</span>
-                  {{ leaveDaysCalculation.totalDays }} gün - {{ leaveDaysCalculation.weekendDays }} hafta sonu - {{ leaveDaysCalculation.holidayDays }} resmi tatil =
+                  {{ leaveDaysCalculation.totalDays }} gün - {{ leaveDaysCalculation.weekendDays }} hafta sonu - {{ leaveDaysCalculation.holidayDays }} resmi tatil
+                  <span v-if="leaveDaysCalculation.halfDayHolidays > 0"> - {{ leaveDaysCalculation.halfDayHolidays }} × 0.5 arefe günü</span> =
                   <span class="font-bold text-purple-600">{{ leaveDaysCalculation.workingDays }} iş günü izin kullanılacak</span>
                 </div>
               </div>
@@ -356,6 +357,8 @@ const form = useForm({
 
 const holidays = ref([]);
 const loadingHolidays = ref(false);
+const projectWeekendDays = ref(['saturday', 'sunday']); // Default
+const projectName = ref(null);
 
 // İzin gün hesaplama
 const leaveDaysCalculation = computed(() => {
@@ -364,6 +367,7 @@ const leaveDaysCalculation = computed(() => {
             totalDays: 0,
             weekendDays: 0,
             holidayDays: 0,
+            halfDayHolidays: 0,
             workingDays: 0,
             holidays: [],
         };
@@ -378,6 +382,7 @@ const leaveDaysCalculation = computed(() => {
             totalDays: 0,
             weekendDays: 0,
             holidayDays: 0,
+            halfDayHolidays: 0,
             workingDays: 0,
             holidays: [],
         };
@@ -386,13 +391,27 @@ const leaveDaysCalculation = computed(() => {
     // Toplam gün sayısı (başlangıç ve bitiş dahil)
     const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
-    // Hafta sonu sayısı
+    // Projeye göre hafta sonu günlerini belirle
+    const weekendDayNumbers = projectWeekendDays.value.map(day => {
+        const dayMap = {
+            'monday': 1,
+            'tuesday': 2,
+            'wednesday': 3,
+            'thursday': 4,
+            'friday': 5,
+            'saturday': 6,
+            'sunday': 0,
+        };
+        return dayMap[day];
+    });
+
+    // Hafta sonu sayısı (projeye göre)
     let weekendDays = 0;
     let current = new Date(start);
 
     while (current <= end) {
         const dayOfWeek = current.getDay();
-        if (dayOfWeek === 0 || dayOfWeek === 6) { // Pazar=0, Cumartesi=6
+        if (weekendDayNumbers.includes(dayOfWeek)) {
             weekendDays++;
         }
         current.setDate(current.getDate() + 1);
@@ -403,21 +422,46 @@ const leaveDaysCalculation = computed(() => {
         const holidayDate = new Date(holiday.date);
         const dayOfWeek = holidayDate.getDay();
         // Sadece hafta içi tatilleri say (hafta sonuna denk gelen tatiller zaten sayılmış)
-        return holidayDate >= start && holidayDate <= end && dayOfWeek !== 0 && dayOfWeek !== 6;
+        return holidayDate >= start && holidayDate <= end && !weekendDayNumbers.includes(dayOfWeek);
     });
 
-    const holidayDays = holidaysInRange.length;
+    // Tam gün ve yarım gün tatilleri ayır
+    const fullDayHolidays = holidaysInRange.filter(h => !h.is_half_day);
+    const halfDayHolidays = holidaysInRange.filter(h => h.is_half_day);
 
-    // Çalışma günü = Toplam - Hafta Sonu - Resmi Tatil
-    const workingDays = totalDays - weekendDays - holidayDays;
+    const holidayDays = fullDayHolidays.length;
+    const halfDayHolidaysCount = halfDayHolidays.length;
+
+    // Çalışma günü = Toplam - Hafta Sonu - Tam Gün Tatil - (Yarım Gün Tatil / 2)
+    const workingDays = totalDays - weekendDays - holidayDays - (halfDayHolidaysCount * 0.5);
 
     return {
         totalDays,
         weekendDays,
         holidayDays,
+        halfDayHolidays: halfDayHolidaysCount,
         workingDays: Math.max(0, workingDays), // Negatif olmasın
         holidays: holidaysInRange,
     };
+});
+
+// Çalışan seçildiğinde proje ayarlarını yükle
+watch(() => form.employee_id, async (newEmployeeId) => {
+    if (newEmployeeId) {
+        try {
+            const response = await axios.get('/leave-requests/api/employee-project-settings', {
+                params: {
+                    employee_id: newEmployeeId,
+                },
+            });
+            projectWeekendDays.value = response.data.weekend_days || ['saturday', 'sunday'];
+            projectName.value = response.data.project_name;
+        } catch (error) {
+            console.error('Proje ayarları yüklenirken hata oluştu:', error);
+            projectWeekendDays.value = ['saturday', 'sunday']; // Default
+            projectName.value = null;
+        }
+    }
 });
 
 // Tarihleri izle ve tatilleri yükle

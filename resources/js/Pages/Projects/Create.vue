@@ -98,6 +98,86 @@
                 ></textarea>
               </div>
 
+              <!-- Hafta Tatili Günleri -->
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Hafta Tatili Günleri <span class="text-red-500">*</span>
+                </label>
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        value="monday"
+                        v-model="form.weekend_days"
+                        class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                      <span class="text-sm text-gray-700">Pazartesi</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        value="tuesday"
+                        v-model="form.weekend_days"
+                        class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                      <span class="text-sm text-gray-700">Salı</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        value="wednesday"
+                        v-model="form.weekend_days"
+                        class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                      <span class="text-sm text-gray-700">Çarşamba</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        value="thursday"
+                        v-model="form.weekend_days"
+                        class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                      <span class="text-sm text-gray-700">Perşembe</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        value="friday"
+                        v-model="form.weekend_days"
+                        class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                      <span class="text-sm text-gray-700">Cuma</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        value="saturday"
+                        v-model="form.weekend_days"
+                        class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                      <span class="text-sm text-gray-700">Cumartesi</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        value="sunday"
+                        v-model="form.weekend_days"
+                        class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                      />
+                      <span class="text-sm text-gray-700">Pazar</span>
+                    </label>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-3">
+                    Bu projede çalışan personellerin hafta tatili günlerini seçin. Bu, izin hesaplamalarında kullanılacaktır.
+                  </p>
+                  <p v-if="form.weekend_days.length === 0" class="text-xs text-red-600 mt-2">
+                    ⚠️ En az bir hafta tatili günü seçmelisiniz
+                  </p>
+                </div>
+              </div>
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Proje Türü <span class="text-red-500">*</span>
@@ -724,6 +804,7 @@ const props = defineProps({
 const form = ref({
   name: '',
   description: '',
+  weekend_days: ['saturday', 'sunday'], // Default hafta tatili günleri
   location: '',
   city: '',
   district: '',

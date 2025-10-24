@@ -18,6 +18,7 @@ class Project extends Model
         'project_code',
         'name',
         'description',
+        'weekend_days',
         'location',
         'city',
         'district',
@@ -50,6 +51,7 @@ class Project extends Model
         'labor_budget' => 'decimal:2',
         'spent_amount' => 'decimal:2',
         'estimated_employees' => 'integer',
+        'weekend_days' => 'array',
     ];
 
     protected $appends = [
@@ -388,10 +390,42 @@ class Project extends Model
         $typeCode = strtoupper(substr($this->type, 0, 3));
         $yearCode = now()->format('y');
         $sequence = Project::whereYear('created_at', now()->year)->count() + 1;
-        
+
         $this->project_code = sprintf('%s-%s-%s-%03d', $cityCode, $typeCode, $yearCode, $sequence);
         $this->save();
-        
+
         return $this->project_code;
+    }
+
+    /**
+     * Belirli bir günün hafta sonu mu olduğunu kontrol et
+     */
+    public function isWeekendDay(\DateTime $date): bool
+    {
+        $dayOfWeek = strtolower($date->format('l')); // 'monday', 'tuesday', etc.
+        $weekendDays = $this->weekend_days ?? ['saturday', 'sunday'];
+
+        return in_array($dayOfWeek, $weekendDays);
+    }
+
+    /**
+     * Hafta sonu günlerinin Türkçe adlarını getir
+     */
+    public function getWeekendDaysDisplayAttribute(): string
+    {
+        $weekendDays = $this->weekend_days ?? ['saturday', 'sunday'];
+        $dayNames = [
+            'monday' => 'Pazartesi',
+            'tuesday' => 'Salı',
+            'wednesday' => 'Çarşamba',
+            'thursday' => 'Perşembe',
+            'friday' => 'Cuma',
+            'saturday' => 'Cumartesi',
+            'sunday' => 'Pazar',
+        ];
+
+        $turkishDays = array_map(fn($day) => $dayNames[$day] ?? $day, $weekendDays);
+
+        return implode(', ', $turkishDays);
     }
 }

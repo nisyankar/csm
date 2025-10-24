@@ -213,6 +213,20 @@
                 <dt class="text-sm font-medium text-gray-500">Öncelik</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ getPriorityLabel(project.priority) }}</dd>
               </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Hafta Tatili Günleri</dt>
+                <dd class="mt-1">
+                  <div class="flex flex-wrap gap-1">
+                    <span
+                      v-for="day in getWeekendDaysDisplay(project.weekend_days)"
+                      :key="day"
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800"
+                    >
+                      {{ day }}
+                    </span>
+                  </div>
+                </dd>
+              </div>
               <div v-if="project.description">
                 <dt class="text-sm font-medium text-gray-500">Açıklama</dt>
                 <dd class="mt-1 text-sm text-gray-900">{{ project.description }}</dd>
@@ -907,6 +921,24 @@ const getPriorityLabel = (priority) => {
     critical: 'Kritik'
   }
   return labels[priority] || priority
+}
+
+const getWeekendDaysDisplay = (weekendDays) => {
+  if (!weekendDays || !Array.isArray(weekendDays)) {
+    return ['Cumartesi', 'Pazar'] // Default
+  }
+
+  const dayNames = {
+    monday: 'Pazartesi',
+    tuesday: 'Salı',
+    wednesday: 'Çarşamba',
+    thursday: 'Perşembe',
+    friday: 'Cuma',
+    saturday: 'Cumartesi',
+    sunday: 'Pazar'
+  }
+
+  return weekendDays.map(day => dayNames[day] || day)
 }
 
 const getSubcontractorStatusLabel = (status) => {
