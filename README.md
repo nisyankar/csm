@@ -23,6 +23,8 @@
 
 ### İzin Yönetimi
 - Yıllık izin, hastalık izni, ücretsiz izin vb. tüm izin tipleri
+- **Resmi Tatil Yönetimi**: Arefe (yarım gün) desteği ile
+- **Akıllı İzin Hesaplama**: Proje bazlı hafta tatili + resmi tatil entegrasyonu
 - Otomatik izin bakiyesi hesaplama
 - İzin onay süreci
 - İzin-puantaj senkronizasyonu
@@ -30,6 +32,7 @@
 
 ### Proje Yönetimi
 - Proje yapı ve kat tanımlamaları
+- **Özelleştirilebilir Hafta Tatili**: Proje bazında hafta sonu günleri
 - İş kalemleri ve metraj takibi
 - Proje-departman ilişkileri
 - Taşeron firma yönetimi
@@ -104,11 +107,19 @@ php artisan serve
 
 ## Geliştirme Notları
 
-### Son Güncellemeler
+### Son Güncellemeler (24 Ekim 2025)
+- **Resmi Tatil Sistemi**: Arefe (yarım gün) desteği ile eklendi
+- **Proje Bazlı Hafta Tatili**: Her proje için özelleştirilebilir hafta sonu günleri
+- **Akıllı İzin Hesaplama**: Proje kuralları + resmi tatiller entegre edildi
 - Tüm puantaj versiyonları (`timesheets_v2`, `timesheets_v3`) tek bir `timesheets` tablosunda birleştirildi
 - Model isimleri standartlaştırıldı (`TimesheetV2` → `Timesheet`)
 - Gelişmiş onay sistemi ve haftalık hesaplama özellikleri eklendi
 - İzin-puantaj entegrasyonu tamamlandı
+
+## Dokümantasyon
+
+Detaylı proje planı ve durum takibi için:
+- **[docs/PROJE_PLANI.md](docs/PROJE_PLANI.md)** - Kapsamlı proje planı, tamamlanan görevler, yapılacaklar listesi
 
 ## Lisans
 
