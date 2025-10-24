@@ -349,6 +349,14 @@ class Employee extends Model
     }
 
     /**
+     * Günlük ücreti hesapla (calculateDailyWage alias)
+     */
+    public function calculateDailyRate(): float
+    {
+        return $this->calculateDailyWage();
+    }
+
+    /**
      * İzin hakkı var mı kontrol et
      */
     public function hasLeaveBalance(int $requestedDays): bool

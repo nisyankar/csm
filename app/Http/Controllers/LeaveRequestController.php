@@ -46,8 +46,8 @@ class LeaveRequestController extends Controller
         }
 
         // Filter by leave type
-        if ($request->filled('leave_type')) {
-            $query->where('leave_type', $request->leave_type);
+        if ($request->filled('leave_type_id')) {
+            $query->where('leave_type_id', $request->leave_type_id);
         }
 
         // Filter by status
@@ -154,18 +154,18 @@ class LeaveRequestController extends Controller
     {
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'leave_type' => 'required|in:annual,sick,maternity,paternity,marriage,funeral,military,unpaid,emergency,study,other',
+            'leave_type_id' => 'required|exists:leave_types,id',
             'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
             'is_half_day' => 'boolean',
             'half_day_period' => 'nullable|in:morning,afternoon',
-            'reason' => 'required|string|max:1000',
+            'reason' => 'nullable|string|max:1000',
             'description' => 'nullable|string|max:2000',
             'emergency_contact' => 'nullable|string|max:255',
             'handover_notes' => 'nullable|string|max:1000',
             'substitute_employee_id' => 'nullable|exists:employees,id',
             'substitute_notes' => 'nullable|string|max:500',
-            'priority' => 'required|in:low,medium,high,urgent',
+            'priority' => 'nullable|in:low,medium,high,urgent',
             'urgency_reason' => 'nullable|in:medical,family,legal,personal,other',
             'attached_documents' => 'nullable|array',
             'attached_documents.*' => 'file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
@@ -175,21 +175,22 @@ class LeaveRequestController extends Controller
         $this->authorizeLeaveRequestCreation($validated['employee_id']);
 
         $employee = Employee::find($validated['employee_id']);
+        $leaveType = \App\Models\LeaveType::find($validated['leave_type_id']);
 
         // Calculate leave duration
         $startDate = Carbon::parse($validated['start_date']);
         $endDate = Carbon::parse($validated['end_date']);
-        
+
         $totalDays = $startDate->diffInDays($endDate) + 1;
         $workingDays = $this->calculateWorkingDays($startDate, $endDate);
 
-        if ($validated['is_half_day']) {
+        if ($validated['is_half_day'] ?? false) {
             $workingDays = 0.5;
             $totalDays = 0.5;
         }
 
         // Check leave balance for annual leave
-        if ($validated['leave_type'] === 'annual') {
+        if ($leaveType && $leaveType->code === 'annual') {
             if (!$employee->hasLeaveBalance($workingDays)) {
                 return back()->with('error', 'Yeterli izin bakiyeniz bulunmamaktadır.');
             }
@@ -197,6 +198,17 @@ class LeaveRequestController extends Controller
 
         // Check for conflicts
         $conflicts = $this->checkLeaveConflicts($employee->id, $startDate, $endDate);
+
+        // Prevent overlapping leave requests
+        if (!empty($conflicts)) {
+            $conflictMessages = [];
+            foreach ($conflicts as $conflict) {
+                $conflictMessages[] = "{$conflict['type']} - {$conflict['start_date']} / {$conflict['end_date']}";
+            }
+            return back()
+                ->withInput()
+                ->with('error', 'Bu tarih aralığında zaten izin kaydınız bulunmaktadır: ' . implode(', ', $conflictMessages));
+        }
 
         // Handle file uploads
         $attachedDocuments = [];
@@ -211,35 +223,37 @@ class LeaveRequestController extends Controller
             }
         }
 
-        // Determine if document is required
-        $requiresDocument = in_array($validated['leave_type'], ['sick', 'maternity', 'military']);
+        // Determine if document is required based on leave type
+        $requiresDocument = $leaveType && in_array($leaveType->code, ['sick', 'maternity', 'military']);
         $documentStatus = $requiresDocument ? 'pending' : 'not_required';
 
         // Create leave request
         $leaveRequest = LeaveRequest::create([
             'employee_id' => $validated['employee_id'],
-            'leave_type' => $validated['leave_type'],
+            'leave_type_id' => $validated['leave_type_id'],
+            'leave_type' => $leaveType ? $leaveType->code : null,
+            'leave_year' => $startDate->year,
             'start_date' => $startDate,
             'end_date' => $endDate,
             'total_days' => $totalDays,
             'working_days' => $workingDays,
             'is_half_day' => $validated['is_half_day'] ?? false,
-            'half_day_period' => $validated['half_day_period'],
-            'reason' => $validated['reason'],
-            'description' => $validated['description'],
-            'emergency_contact' => $validated['emergency_contact'],
-            'handover_notes' => $validated['handover_notes'],
-            'substitute_employee_id' => $validated['substitute_employee_id'],
-            'substitute_notes' => $validated['substitute_notes'],
-            'priority' => $validated['priority'],
-            'urgency_reason' => $validated['urgency_reason'],
+            'half_day_period' => $validated['half_day_period'] ?? null,
+            'reason' => $validated['reason'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'emergency_contact' => $validated['emergency_contact'] ?? null,
+            'handover_notes' => $validated['handover_notes'] ?? null,
+            'substitute_employee_id' => $validated['substitute_employee_id'] ?? null,
+            'substitute_notes' => $validated['substitute_notes'] ?? null,
+            'priority' => $validated['priority'] ?? 'medium',
+            'urgency_reason' => $validated['urgency_reason'] ?? null,
             'attached_documents' => $attachedDocuments,
             'requires_document' => $requiresDocument,
             'document_status' => $documentStatus,
             'conflicting_leaves' => $conflicts,
             'conflict_resolved' => empty($conflicts),
-            'balance_impact' => $validated['leave_type'] === 'annual' ? $workingDays : 0,
-            'is_paid' => $this->isLeaveTypePaid($validated['leave_type']),
+            'balance_impact' => ($leaveType && $leaveType->code === 'annual') ? $workingDays : 0,
+            'is_paid' => $leaveType ? $leaveType->is_paid : false,
             'status' => 'pending',
             'submitted_at' => now(),
             'approver_id' => $this->getApproverForEmployee($employee),
@@ -250,7 +264,7 @@ class LeaveRequestController extends Controller
             $leaveRequest->submit();
         }
 
-        return redirect()->route('leave-requests.show', $leaveRequest)
+        return redirect()->route('leave-requests.index')
             ->with('success', 'İzin talebi başarıyla oluşturuldu.');
     }
 
@@ -261,6 +275,7 @@ class LeaveRequestController extends Controller
     {
         $leaveRequest->load([
             'employee',
+            'leaveType',
             'approver',
             'substituteEmployee',
             'parentRequest',
@@ -425,11 +440,11 @@ class LeaveRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'approval_notes' => 'nullable|string|max:500',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $approver = Auth::user()->employee;
-        $leaveRequest->approve($approver, $validated['approval_notes']);
+        $leaveRequest->approve($approver, $validated['notes'] ?? null);
 
         return back()->with('success', 'İzin talebi başarıyla onaylandı.');
     }

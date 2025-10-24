@@ -16,6 +16,8 @@ class LeaveRequest extends Model
         'employee_id',
         'approver_id',
         'leave_type',
+        'leave_type_id',
+        'leave_year',
         'start_date',
         'end_date',
         'total_days',
@@ -96,6 +98,14 @@ class LeaveRequest extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /**
+     * İzin türü
+     */
+    public function leaveType(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\LeaveType::class, 'leave_type_id');
     }
 
     /**

@@ -292,17 +292,33 @@ class LeaveBalance extends Model
         ?User $user = null,
         string $source = 'system'
     ): void {
+        // Map actions to old schema change_type enum
+        $changeTypeMap = [
+            'earned' => 'grant',
+            'used' => 'use',
+            'adjusted' => 'adjustment',
+            'planned' => 'use', // Planlanan izinler de 'use' olarak kaydedilir
+            'unplanned' => 'return',
+            'cancelled' => 'cancellation',
+            'restored' => 'return',
+        ];
+
         LeaveBalanceLog::create([
-            'leave_balance_id' => $this->id,
             'employee_id' => $this->employee_id,
             'leave_request_id' => $leaveRequest?->id,
-            'action' => $action,
-            'amount' => $amount,
-            'balance_before' => $balanceBefore,
-            'balance_after' => $balanceAfter,
+            'leave_calculation_id' => null,
+            'changed_by' => $user?->id,
+            'change_type' => $changeTypeMap[$action] ?? 'adjustment',
+            'leave_type' => $this->leave_type,
+            'change_amount' => (int) $amount,
+            'change_unit' => 'days',
+            'balance_before' => (int) $balanceBefore,
+            'balance_after' => (int) $balanceAfter,
+            'total_entitled' => (int) $this->total_days,
+            'total_used' => (int) $this->used_days,
+            'effective_date' => now()->toDateString(),
             'reason' => $reason,
-            'created_by' => $user?->id,
-            'source' => $source,
+            'source_system' => $source,
         ]);
     }
 

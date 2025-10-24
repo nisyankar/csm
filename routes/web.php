@@ -21,6 +21,7 @@ use App\Http\Controllers\LeaveBalanceLogController;
 use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\LeaveCalculationController;
 use App\Http\Controllers\LeaveReportController;
+use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\PurchasingRequestController;
 use App\Http\Controllers\MaterialController;
@@ -883,4 +884,14 @@ Route::prefix('public-api')->name('public-api.')->group(function () {
     // These would typically be in api.php but placing here for completeness
     Route::post('/qr-check', [QRCodeController::class, 'publicQrCheck'])->name('qr-check');
     Route::get('/employee-info/{code}', [EmployeeController::class, 'publicInfo'])->name('employee-info');
+});
+
+// HOLIDAY ROUTES - Eklendi
+Route::middleware(['auth'])->prefix('api/holidays')->name('api.holidays.')->group(function () {
+    Route::get('/', [App\Http\Controllers\HolidayController::class, 'index'])->name('index');
+    Route::post('/', [App\Http\Controllers\HolidayController::class, 'store'])->name('store');
+    Route::put('/{holiday}', [App\Http\Controllers\HolidayController::class, 'update'])->name('update');
+    Route::delete('/{holiday}', [App\Http\Controllers\HolidayController::class, 'destroy'])->name('destroy');
+    Route::get('/range', [App\Http\Controllers\HolidayController::class, 'getHolidaysInRange'])->name('range');
+    Route::post('/seed-2025', [App\Http\Controllers\HolidayController::class, 'seed2025Holidays'])->name('seed-2025');
 });

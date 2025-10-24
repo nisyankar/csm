@@ -123,10 +123,17 @@ class TimesheetBulkController extends Controller
         $conflicts = $this->leaveSyncService->validateBulkEntry($validated['timesheets']);
 
         if (!empty($conflicts)) {
+            // Çakışan günleri açıklayıcı mesajlara çevir
+            $conflictMessages = [];
+            foreach ($conflicts as $conflict) {
+                $employee = \App\Models\Employee::find($conflict['employee_id']);
+                $employeeName = $employee ? "{$employee->first_name} {$employee->last_name}" : "Personel #{$conflict['employee_id']}";
+                $conflictMessages[] = "{$employeeName} - " . Carbon::parse($conflict['work_date'])->format('d.m.Y') . ": {$conflict['message']}";
+            }
+
             return back()->withErrors([
-                'leave_conflicts' => 'Bazı günler izinli olduğu için puantaj girilemez.',
-                'conflicts' => $conflicts,
-            ]);
+                'leave_conflicts' => 'Bazı günler izinli olduğu için puantaj girilemez: ' . implode(' | ', $conflictMessages),
+            ])->withInput();
         }
 
         DB::beginTransaction();

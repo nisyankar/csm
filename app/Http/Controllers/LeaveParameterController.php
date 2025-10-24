@@ -48,12 +48,20 @@ class LeaveParameterController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        // Resmi tatilleri de ekle
+        $currentYear = now()->year;
+        $holidays = \App\Models\Holiday::forYear($currentYear)
+            ->orderBy('date')
+            ->get();
+
         return Inertia::render('LeaveManagement/Parameters/Index', [
             'parameters' => $parameters,
             'filters' => $request->only(['search', 'type', 'status', 'category']),
             'stats' => $this->getParameterStats(),
             'categories' => $this->getParameterCategories(),
             'types' => $this->getParameterTypes(),
+            'holidays' => $holidays,
+            'currentYear' => $currentYear,
         ]);
     }
 

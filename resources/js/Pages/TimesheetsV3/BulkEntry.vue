@@ -924,7 +924,7 @@ const openApprovalModal = () => {
   loadApprovalStats()
 }
 
-const approveMonthly = async () => {
+const approveMonthly = () => {
   if (!selectedMonth.value || !selectedProjectId.value) return
 
   const pendingCount = approvalStats.value?.pending || 0
@@ -939,36 +939,28 @@ const approveMonthly = async () => {
 
   approvalLoading.value = true
 
-  try {
-    const [year, month] = selectedMonth.value.split('-')
-    const response = await axios.post('/timesheets-v2/approve-monthly', {
-      year: parseInt(year),
-      month: parseInt(month),
-      project_id: selectedProjectId.value
-    })
+  const [year, month] = selectedMonth.value.split('-')
 
-    console.log('✅ Onay başarılı:', response.data)
+  router.post(route('timesheets-v2.approve-monthly'), {
+    year: parseInt(year),
+    month: parseInt(month),
+    project_id: selectedProjectId.value
+  }, {
+    onSuccess: (page) => {
+      console.log('✅ Onay başarılı')
+      approvalLoading.value = false
+      showApprovalModal.value = false
+      alert(`${pendingCount} puantaj başarıyla onaylandı!`)
 
-    // Modal'ı kapat
-    showApprovalModal.value = false
-    approvalLoading.value = false
-
-    // Başarı mesajı
-    alert(`${pendingCount} puantaj başarıyla onaylandı!`)
-
-    // Sayfayı tam yenile (Inertia reload)
-    router.reload({
-      only: ['employees', 'existingTimesheets', 'leaveDays'],
-      onSuccess: () => {
-        console.log('📄 Sayfa verileri yenilendi')
-        initializeShiftData()
-      }
-    })
-  } catch (error) {
-    approvalLoading.value = false
-    console.error('❌ Onay hatası:', error)
-    alert('Onay işlemi başarısız: ' + (error.response?.data?.message || error.message))
-  }
+      // Verileri yenile
+      setTimeout(() => loadData(), 500)
+    },
+    onError: (errors) => {
+      console.error('❌ Onay hatası:', errors)
+      approvalLoading.value = false
+      alert('Onay işlemi başarısız: ' + (errors.message || JSON.stringify(errors)))
+    }
+  })
 }
 
 // Save all
@@ -984,6 +976,12 @@ const saveAll = async () => {
   const timesheets = []
 
   shiftData.value.forEach(shift => {
+    // İzinden otomatik oluşturulmuş günleri ATLA - bunlara manuel müdahale edilemez
+    if (isLeaveDay(shift.employeeId, shift.date)) {
+      console.log(`⏭️ İzinli gün atlanıyor: Emp=${shift.employeeId}, Date=${shift.date}`)
+      return // Bu günü kaydetme, izinden oluşturulmuş
+    }
+
     const shiftInfo = props.shifts.find(s => s.id === shift.shiftId)
 
     // KRİTİK FİX: employeeId karşılaştırması - number vs string sorununu çöz

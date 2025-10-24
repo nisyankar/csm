@@ -433,13 +433,19 @@ class TimesheetController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
+        // Auth kontrolü
+        $user = auth()->user();
+        if (!$user) {
+            return back()->with('error', 'Oturum bulunamadı. Lütfen tekrar giriş yapın.');
+        }
+
         try {
             $result = $approvalService->approveMonthlyTimesheets(
                 $validated['year'],
                 $validated['month'],
+                $user,  // approver - 3. parametre
                 $validated['employee_ids'] ?? null,
                 $validated['project_id'] ?? null,
-                auth()->user(),
                 $validated['notes'] ?? null
             );
 

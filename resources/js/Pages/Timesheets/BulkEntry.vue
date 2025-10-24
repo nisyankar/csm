@@ -423,6 +423,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  leaveDays: {
+    type: Object,
+    default: () => ({})
+  },
   month: String,
   projectId: Number,
   departmentId: Number
@@ -576,7 +580,7 @@ const loadData = () => {
   router.get(route('timesheets.bulk-entry'), params, {
     preserveState: true,
     preserveScroll: true,
-    only: ['employees', 'existingTimesheets', 'approvedTimesheets'],
+    only: ['employees', 'existingTimesheets', 'approvedTimesheets', 'leaveDays'],
     onSuccess: () => {
       initializeAttendanceData()
       hasChanges.value = false
@@ -855,6 +859,13 @@ const saveAll = async () => {
     Object.keys(attendanceData.value[employeeId]).forEach(date => {
       const attendanceType = attendanceData.value[employeeId][date]
       if (attendanceType) {
+        // İzinden otomatik oluşturulmuş günleri ATLA - bunlara manuel müdahale edilemez
+        const isLeaveDay = props.leaveDays[employeeId]?.some(leave => leave.date === date)
+        if (isLeaveDay) {
+          console.log(`⏭️ Skipping leave day: employee_id=${employeeId}, date=${date}`)
+          return // Bu günü kaydetme, izinden oluşturulmuş
+        }
+
         const overtime = overtimeData.value[employeeId]?.[date]
 
         timesheets.push({

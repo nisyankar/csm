@@ -137,12 +137,14 @@ class LeaveTimesheetSyncService
             'hours_worked' => $shift->daily_hours,
             'overtime_hours' => 0,
             'overtime_type' => null,
+            'attendance_type' => $this->getAttendanceType($leaveRequest->leave_type),
             'leave_request_id' => $leaveRequest->id,
             'auto_generated_from_leave' => true,
             'is_leave_day' => true,
             'leave_type' => $leaveRequest->leave_type,
             'is_locked' => true, // İzinli günler kilitlidir
             'is_approved' => true, // İzin zaten onaylı
+            'approval_status' => 'approved', // İzin kayıtları otomatik onaylı
             'approved_by' => $leaveRequest->approver_id,
             'approved_at' => $leaveRequest->approved_at,
             'notes' => "İzin: {$leaveRequest->leave_type_display}",
@@ -226,6 +228,27 @@ class LeaveTimesheetSyncService
 
             throw $e;
         }
+    }
+
+    /**
+     * İzin türüne göre devamsızlık türünü belirle
+     */
+    private function getAttendanceType(string $leaveType): string
+    {
+        $attendanceTypeMap = [
+            'annual' => 'annual_leave',
+            'sick' => 'sick_leave',
+            'unpaid' => 'unpaid_leave',
+            'maternity' => 'maternity_leave',
+            'paternity' => 'excused_leave',
+            'marriage' => 'excused_leave',
+            'funeral' => 'excused_leave',
+            'emergency' => 'excused_leave',
+            'study' => 'excused_leave',
+            'military' => 'excused_leave',
+        ];
+
+        return $attendanceTypeMap[$leaveType] ?? 'excused_leave';
     }
 
     /**
