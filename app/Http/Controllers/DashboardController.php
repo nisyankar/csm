@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Auth;
@@ -140,7 +139,7 @@ class DashboardController extends Controller
             'stats' => $stats,
             'recent_timesheets' => $recentTimesheets,
             'leave_balance' => $leaveBalance,
-            'current_project' => $current_project,
+            'current_project' => $currentProject,
         ]);
     }
 
@@ -222,7 +221,6 @@ class DashboardController extends Controller
     private function getHRStats(): array
     {
         $thisMonth = now()->startOfMonth();
-        $lastMonth = now()->subMonth()->startOfMonth();
 
         return [
             'total_employees' => Employee::count(),
@@ -318,7 +316,7 @@ class DashboardController extends Controller
                 ->where('work_date', today())
                 ->where('attendance_type', 'present')
                 ->count(),
-            'this_week_productivity' => $this->calculateProductivity($supervisedDepts),
+            'this_week_productivity' => $this->calculateProductivity($supervisedDepts->toArray()),
         ];
     }
 
@@ -361,8 +359,6 @@ class DashboardController extends Controller
      */
     private function getRecentActivities(): array
     {
-        $activities = [];
-
         // Recent timesheets
         $recentTimesheets = Timesheet::with(['employee', 'project'])
             ->orderBy('created_at', 'desc')
@@ -370,10 +366,13 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($timesheet) {
                 return [
+                    'id' => $timesheet->id,
                     'type' => 'timesheet',
                     'message' => "{$timesheet->employee->full_name} puantaj girdi",
+                    'details' => "{$timesheet->project->name} - {$timesheet->total_hours} saat",
                     'time' => $timesheet->created_at->diffForHumans(),
                     'status' => $timesheet->approval_status,
+                    'created_at' => $timesheet->created_at->toISOString(),
                 ];
             });
 
@@ -384,10 +383,13 @@ class DashboardController extends Controller
             ->get()
             ->map(function ($leave) {
                 return [
+                    'id' => $leave->id,
                     'type' => 'leave',
                     'message' => "{$leave->employee->full_name} izin talep etti",
+                    'details' => "{$leave->start_date->format('d.m.Y')} - {$leave->end_date->format('d.m.Y')} ({$leave->total_days} gün)",
                     'time' => $leave->created_at->diffForHumans(),
                     'status' => $leave->status,
+                    'created_at' => $leave->created_at->toISOString(),
                 ];
             });
 
@@ -581,7 +583,7 @@ class DashboardController extends Controller
             ->with('project')
             ->get()
             ->groupBy('project_id')
-            ->map(function ($departments, $projectId) {
+            ->map(function ($departments) {
                 $project = $departments->first()->project;
                 $totalDepartments = $departments->count();
                 $completedDepartments = $departments->where('status', 'completed')->count();

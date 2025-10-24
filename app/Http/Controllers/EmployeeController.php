@@ -57,10 +57,16 @@ class EmployeeController extends Controller
 
             $transformedEmployee = $this->transformDetailedEmployeeRow($employeeData[0]);
 
+            // Get current leave balance from LeaveBalanceService
+            $leaveBalanceService = app(\App\Services\Leave\LeaveBalanceService::class);
+            $leaveBalance = $leaveBalanceService->getBalanceSummary($employee);
+
             return Inertia::render('Employees/Show', [
                 'employee' => $transformedEmployee,
-                'recentTimesheets' => [],
-                'leaveRequests' => [],
+                'leaveBalance' => $leaveBalance,
+                'recentTimesheets' => $this->getRecentTimesheets($employee),
+                'leaveRequests' => $this->getLeaveRequests($employee),
+                'projectHistory' => $this->getProjectHistory($employee),
                 'documents' => [],
                 'performanceMetrics' => [],
             ]);
@@ -1031,5 +1037,182 @@ class EmployeeController extends Controller
         if ($category === 'system_admin') {
             $user->assignRole('admin');
         }
+    }
+
+    /**
+     * Get recent timesheets for employee
+     */
+    private function getRecentTimesheets(Employee $employee): array
+    {
+        return \App\Models\Timesheet::where('employee_id', $employee->id)
+            ->with(['project'])
+            ->orderBy('work_date', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($timesheet) {
+                return [
+                    'id' => $timesheet->id,
+                    'work_date' => $timesheet->work_date->format('d.m.Y'),
+                    'project_name' => $timesheet->project?->name,
+                    'hours_worked' => $timesheet->hours_worked,
+                    'overtime_hours' => $timesheet->overtime_hours,
+                    'total_hours' => $timesheet->total_hours,
+                    'approval_status' => $timesheet->approval_status,
+                    'approval_status_label' => match($timesheet->approval_status) {
+                        'draft' => 'Taslak',
+                        'submitted' => 'Gönderildi',
+                        'approved' => 'Onaylandı',
+                        'rejected' => 'Reddedildi',
+                        default => $timesheet->approval_status,
+                    },
+                ];
+            })
+            ->toArray();
+    }
+
+    /**
+     * Get leave requests for employee
+     */
+    private function getLeaveRequests(Employee $employee): array
+    {
+        return \App\Models\LeaveRequest::where('employee_id', $employee->id)
+            ->with(['leaveType', 'approver'])
+            ->orderBy('start_date', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($leave) {
+                return [
+                    'id' => $leave->id,
+                    'leave_type' => $leave->leaveType?->name,
+                    'start_date' => $leave->start_date->format('d.m.Y'),
+                    'end_date' => $leave->end_date->format('d.m.Y'),
+                    'total_days' => $leave->total_days,
+                    'working_days' => $leave->working_days,
+                    'status' => $leave->status,
+                    'status_label' => match($leave->status) {
+                        'draft' => 'Taslak',
+                        'pending' => 'Beklemede',
+                        'approved' => 'Onaylandı',
+                        'rejected' => 'Reddedildi',
+                        'cancelled' => 'İptal Edildi',
+                        default => $leave->status,
+                    },
+                    'approver_name' => $leave->approver?->name,
+                ];
+            })
+            ->toArray();
+    }
+
+    /**
+     * Get filtered timesheets for employee (API endpoint)
+     */
+    public function getTimesheets(Request $request, Employee $employee)
+    {
+        $query = \App\Models\Timesheet::where('employee_id', $employee->id)
+            ->with(['project']);
+
+        // Year filter
+        if ($request->filled('year')) {
+            $query->whereYear('work_date', $request->year);
+        }
+
+        // Month filter
+        if ($request->filled('month')) {
+            $query->whereMonth('work_date', $request->month);
+        }
+
+        $timesheets = $query->orderBy('work_date', 'desc')
+            ->paginate(15)
+            ->through(function ($timesheet) {
+                return [
+                    'id' => $timesheet->id,
+                    'work_date' => $timesheet->work_date->format('d.m.Y'),
+                    'project_name' => $timesheet->project?->name,
+                    'hours_worked' => $timesheet->hours_worked,
+                    'overtime_hours' => $timesheet->overtime_hours,
+                    'total_hours' => $timesheet->total_hours,
+                    'approval_status' => $timesheet->approval_status,
+                    'approval_status_label' => match($timesheet->approval_status) {
+                        'draft' => 'Taslak',
+                        'submitted' => 'Gönderildi',
+                        'approved' => 'Onaylandı',
+                        'rejected' => 'Reddedildi',
+                        default => $timesheet->approval_status,
+                    },
+                ];
+            });
+
+        return response()->json($timesheets);
+    }
+
+    /**
+     * Get filtered leave requests for employee (API endpoint)
+     */
+    public function getLeaves(Request $request, Employee $employee)
+    {
+        $query = \App\Models\LeaveRequest::where('employee_id', $employee->id)
+            ->with(['leaveType', 'approver']);
+
+        // Year filter
+        if ($request->filled('year')) {
+            $query->whereYear('start_date', $request->year);
+        }
+
+        // Month filter
+        if ($request->filled('month')) {
+            $query->whereMonth('start_date', $request->month);
+        }
+
+        $leaves = $query->orderBy('start_date', 'desc')
+            ->paginate(15)
+            ->through(function ($leave) {
+                return [
+                    'id' => $leave->id,
+                    'leave_type' => $leave->leaveType?->name,
+                    'start_date' => $leave->start_date->format('d.m.Y'),
+                    'end_date' => $leave->end_date->format('d.m.Y'),
+                    'total_days' => $leave->total_days,
+                    'working_days' => $leave->working_days,
+                    'status' => $leave->status,
+                    'status_label' => match($leave->status) {
+                        'draft' => 'Taslak',
+                        'pending' => 'Beklemede',
+                        'approved' => 'Onaylandı',
+                        'rejected' => 'Reddedildi',
+                        'cancelled' => 'İptal Edildi',
+                        default => $leave->status,
+                    },
+                    'approver_name' => $leave->approver?->name,
+                ];
+            });
+
+        return response()->json($leaves);
+    }
+
+    /**
+     * Get project history for employee
+     */
+    private function getProjectHistory(Employee $employee): array
+    {
+        // Get project assignments from timesheets
+        $projectStats = \App\Models\Timesheet::where('employee_id', $employee->id)
+            ->where('approval_status', 'approved')
+            ->with('project')
+            ->select('project_id', DB::raw('MIN(work_date) as first_date'), DB::raw('MAX(work_date) as last_date'), DB::raw('SUM(hours_worked + overtime_hours) as total_hours'), DB::raw('COUNT(*) as days_worked'))
+            ->groupBy('project_id')
+            ->orderBy('last_date', 'desc')
+            ->get()
+            ->map(function ($stat) {
+                return [
+                    'project_name' => $stat->project?->name ?? 'Bilinmeyen Proje',
+                    'first_date' => \Carbon\Carbon::parse($stat->first_date)->format('d.m.Y'),
+                    'last_date' => \Carbon\Carbon::parse($stat->last_date)->format('d.m.Y'),
+                    'total_hours' => round($stat->total_hours, 2),
+                    'days_worked' => $stat->days_worked,
+                ];
+            })
+            ->toArray();
+
+        return $projectStats;
     }
 }

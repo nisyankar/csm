@@ -115,6 +115,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('role:admin|hr|project_manager')
             ->name('store');
         Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show');
+        Route::get('/{employee}/timesheets', [EmployeeController::class, 'getTimesheets'])->name('timesheets');
+        Route::get('/{employee}/leaves', [EmployeeController::class, 'getLeaves'])->name('leaves');
         Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])
             ->middleware('role:admin|hr|project_manager')
             ->name('edit');

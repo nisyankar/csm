@@ -210,7 +210,7 @@
                     </svg>
                   </div>
                   <div>
-                    <div class="text-2xl font-bold text-gray-900">{{ leaveDaysCalculation.holidayDays }}</div>
+                    <div class="text-2xl font-bold text-gray-900">{{ leaveDaysCalculation.holidayDays + (leaveDaysCalculation.halfDayHolidays * 0.5) }}</div>
                     <div class="text-xs text-gray-600">Resmi Tatil</div>
                   </div>
                 </div>
@@ -467,6 +467,21 @@ watch(() => form.employee_id, async (newEmployeeId) => {
 // Tarihleri izle ve tatilleri yükle
 watch([() => form.start_date, () => form.end_date], async ([newStart, newEnd]) => {
     if (newStart && newEnd) {
+        // Tarih kontrolü: Başlangıç tarihi bitiş tarihinden büyük olamaz
+        const start = new Date(newStart);
+        const end = new Date(newEnd);
+
+        if (start > end) {
+            form.errors.end_date = 'Bitiş tarihi, başlangıç tarihinden küçük olamaz.';
+            holidays.value = [];
+            return;
+        } else {
+            // Hata varsa temizle
+            if (form.errors.end_date === 'Bitiş tarihi, başlangıç tarihinden küçük olamaz.') {
+                form.errors.end_date = null;
+            }
+        }
+
         loadingHolidays.value = true;
         try {
             const response = await axios.get('/api/holidays/range', {

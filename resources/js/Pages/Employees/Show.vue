@@ -375,9 +375,15 @@
                   <div>
                     <p class="text-sm font-medium text-blue-900">Yıllık İzin Durumu</p>
                     <p class="text-2xl font-bold text-blue-600 mt-1">
-                      {{ (employee.annual_leave_days || 0) - (employee.used_leave_days || 0) }} / {{ employee.annual_leave_days || 0 }} gün
+                      {{ leaveBalance.annual_leave.remaining }} / {{ leaveBalance.annual_leave.total }} gün
                     </p>
                     <p class="text-xs text-blue-700 mt-1">Kalan / Toplam</p>
+                    <p class="text-xs text-blue-600 mt-1">
+                      Kullanılan: {{ leaveBalance.annual_leave.used }} gün
+                      <span v-if="leaveBalance.annual_leave.planned > 0" class="ml-2">
+                        • Planlı: {{ leaveBalance.annual_leave.planned }} gün
+                      </span>
+                    </p>
                   </div>
                   <div class="w-16 h-16">
                     <div class="relative w-full h-full">
@@ -408,15 +414,289 @@
 
           <!-- Other tabs content -->
           <div v-else-if="activeTab === 'timesheets'" class="space-y-6">
-            <h3 class="text-lg font-semibold text-gray-900">Puantaj bilgileri burada görüntülenecek</h3>
+            <!-- Filters -->
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Select
+                  v-model="timesheetFilters.year"
+                  label="Yıl"
+                  :options="yearOptions"
+                />
+                <Select
+                  v-model="timesheetFilters.month"
+                  label="Ay"
+                  :options="monthOptions"
+                />
+                <div class="flex items-end">
+                  <Button
+                    variant="secondary"
+                    @click="timesheetFilters.month = null"
+                    class="w-full"
+                  >
+                    Filtreleri Temizle
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Loading state -->
+            <div v-if="isLoadingTimesheets" class="text-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p class="mt-2 text-gray-500">Yükleniyor...</p>
+            </div>
+
+            <!-- Table -->
+            <div v-else-if="paginatedTimesheets.data && paginatedTimesheets.data.length > 0" class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proje</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Saat</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fazla Mesai</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Toplam</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="timesheet in paginatedTimesheets.data" :key="timesheet.id">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ timesheet.work_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ timesheet.project_name || '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ timesheet.hours_worked }}h</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ timesheet.overtime_hours }}h</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ timesheet.total_hours }}h</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span :class="{
+                        'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
+                        'bg-green-100 text-green-800': timesheet.approval_status === 'approved',
+                        'bg-yellow-100 text-yellow-800': timesheet.approval_status === 'pending' || timesheet.approval_status === 'submitted',
+                        'bg-gray-100 text-gray-800': timesheet.approval_status === 'draft',
+                        'bg-red-100 text-red-800': timesheet.approval_status === 'rejected'
+                      }">
+                        {{ timesheet.approval_status_label }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Pagination -->
+              <div v-if="paginatedTimesheets.meta.last_page > 1" class="mt-4 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                <div class="flex flex-1 justify-between sm:hidden">
+                  <Button
+                    variant="secondary"
+                    @click="fetchTimesheets(paginatedTimesheets.meta.current_page - 1)"
+                    :disabled="paginatedTimesheets.meta.current_page === 1"
+                  >
+                    Önceki
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    @click="fetchTimesheets(paginatedTimesheets.meta.current_page + 1)"
+                    :disabled="paginatedTimesheets.meta.current_page === paginatedTimesheets.meta.last_page"
+                  >
+                    Sonraki
+                  </Button>
+                </div>
+                <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                  <div>
+                    <p class="text-sm text-gray-700">
+                      Toplam <span class="font-medium">{{ paginatedTimesheets.meta.total }}</span> kayıttan
+                      <span class="font-medium">{{ paginatedTimesheets.meta.from }}</span> -
+                      <span class="font-medium">{{ paginatedTimesheets.meta.to }}</span> arası gösteriliyor
+                    </p>
+                  </div>
+                  <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                      <button
+                        @click="fetchTimesheets(paginatedTimesheets.meta.current_page - 1)"
+                        :disabled="paginatedTimesheets.meta.current_page === 1"
+                        class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span class="sr-only">Önceki</span>
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                      <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300">
+                        {{ paginatedTimesheets.meta.current_page }} / {{ paginatedTimesheets.meta.last_page }}
+                      </span>
+                      <button
+                        @click="fetchTimesheets(paginatedTimesheets.meta.current_page + 1)"
+                        :disabled="paginatedTimesheets.meta.current_page === paginatedTimesheets.meta.last_page"
+                        class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span class="sr-only">Sonraki</span>
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div v-else class="text-center py-8 text-gray-500">
+              Henüz puantaj kaydı bulunmamaktadır.
+            </div>
           </div>
 
           <div v-else-if="activeTab === 'projects'" class="space-y-6">
-            <h3 class="text-lg font-semibold text-gray-900">Proje bilgileri burada görüntülenecek</h3>
+            <div v-if="projectHistory && projectHistory.length > 0" class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Proje Adı</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İlk Tarih</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Son Tarih</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Toplam Saat</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Çalışılan Gün</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="(project, index) in projectHistory" :key="index">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ project.project_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ project.first_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ project.last_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ project.total_hours }}h</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ project.days_worked }} gün</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-else class="text-center py-8 text-gray-500">
+              Henüz proje geçmişi bulunmamaktadır.
+            </div>
           </div>
 
           <div v-else-if="activeTab === 'leaves'" class="space-y-6">
-            <h3 class="text-lg font-semibold text-gray-900">İzin bilgileri burada görüntülenecek</h3>
+            <!-- Filters -->
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Select
+                  v-model="leaveFilters.year"
+                  label="Yıl"
+                  :options="yearOptions"
+                />
+                <Select
+                  v-model="leaveFilters.month"
+                  label="Ay"
+                  :options="monthOptions"
+                />
+                <div class="flex items-end">
+                  <Button
+                    variant="secondary"
+                    @click="leaveFilters.month = null"
+                    class="w-full"
+                  >
+                    Filtreleri Temizle
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Loading state -->
+            <div v-if="isLoadingLeaves" class="text-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p class="mt-2 text-gray-500">Yükleniyor...</p>
+            </div>
+
+            <!-- Table -->
+            <div v-else-if="paginatedLeaves.data && paginatedLeaves.data.length > 0" class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İzin Türü</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Başlangıç</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bitiş</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gün Sayısı</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="leave in paginatedLeaves.data" :key="leave.id">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ leave.leave_type }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ leave.start_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ leave.end_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ leave.working_days }} gün</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span :class="{
+                        'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
+                        'bg-green-100 text-green-800': leave.status === 'approved',
+                        'bg-yellow-100 text-yellow-800': leave.status === 'pending',
+                        'bg-gray-100 text-gray-800': leave.status === 'draft',
+                        'bg-red-100 text-red-800': leave.status === 'rejected' || leave.status === 'cancelled'
+                      }">
+                        {{ leave.status_label }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Pagination -->
+              <div v-if="paginatedLeaves.meta.last_page > 1" class="mt-4 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                <div class="flex flex-1 justify-between sm:hidden">
+                  <Button
+                    variant="secondary"
+                    @click="fetchLeaves(paginatedLeaves.meta.current_page - 1)"
+                    :disabled="paginatedLeaves.meta.current_page === 1"
+                  >
+                    Önceki
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    @click="fetchLeaves(paginatedLeaves.meta.current_page + 1)"
+                    :disabled="paginatedLeaves.meta.current_page === paginatedLeaves.meta.last_page"
+                  >
+                    Sonraki
+                  </Button>
+                </div>
+                <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                  <div>
+                    <p class="text-sm text-gray-700">
+                      Toplam <span class="font-medium">{{ paginatedLeaves.meta.total }}</span> kayıttan
+                      <span class="font-medium">{{ paginatedLeaves.meta.from }}</span> -
+                      <span class="font-medium">{{ paginatedLeaves.meta.to }}</span> arası gösteriliyor
+                    </p>
+                  </div>
+                  <div>
+                    <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                      <button
+                        @click="fetchLeaves(paginatedLeaves.meta.current_page - 1)"
+                        :disabled="paginatedLeaves.meta.current_page === 1"
+                        class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span class="sr-only">Önceki</span>
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                      <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300">
+                        {{ paginatedLeaves.meta.current_page }} / {{ paginatedLeaves.meta.last_page }}
+                      </span>
+                      <button
+                        @click="fetchLeaves(paginatedLeaves.meta.current_page + 1)"
+                        :disabled="paginatedLeaves.meta.current_page === paginatedLeaves.meta.last_page"
+                        class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <span class="sr-only">Sonraki</span>
+                        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                        </svg>
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div v-else class="text-center py-8 text-gray-500">
+              Henüz izin kaydı bulunmamaktadır.
+            </div>
           </div>
 
           <div v-else-if="activeTab === 'documents'" class="space-y-6">
@@ -475,13 +755,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { router, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/UI/Button.vue'
 import Card from '@/Components/UI/Card.vue'
 import Badge from '@/Components/UI/Badge.vue'
 import Modal from '@/Components/UI/Modal.vue'
+import Select from '@/Components/UI/Select.vue'
 
 // Heroicons
 import {
@@ -509,6 +790,30 @@ const props = defineProps({
   stats: {
     type: Object,
     default: () => ({})
+  },
+  recentTimesheets: {
+    type: Array,
+    default: () => []
+  },
+  leaveRequests: {
+    type: Array,
+    default: () => []
+  },
+  leaveBalance: {
+    type: Object,
+    default: () => ({
+      annual_leave: {
+        total: 14,
+        used: 0,
+        planned: 0,
+        remaining: 14,
+        percentage_used: 0
+      }
+    })
+  },
+  projectHistory: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -517,6 +822,22 @@ const activeTab = ref('personal')
 const showQRModal = ref(false)
 const generatedQrCode = ref('')
 const imageLoadFailed = ref(false)
+
+// Filters for timesheets and leaves
+const timesheetFilters = ref({
+  year: new Date().getFullYear(),
+  month: null
+})
+const leaveFilters = ref({
+  year: new Date().getFullYear(),
+  month: null
+})
+
+// Paginated data
+const paginatedTimesheets = ref({ data: [], meta: {} })
+const paginatedLeaves = ref({ data: [], meta: {} })
+const isLoadingTimesheets = ref(false)
+const isLoadingLeaves = ref(false)
 
 // Breadcrumbs
 const breadcrumbs = [
@@ -535,11 +856,119 @@ const tabs = [
 
 // Computed
 const leavePercentage = computed(() => {
-  const annual = props.employee.annual_leave_days || 0
-  const used = props.employee.used_leave_days || 0
-  const remaining = annual - used
-  if (annual === 0) return 0
-  return (remaining / annual) * 100
+  const total = props.leaveBalance?.annual_leave?.total || 0
+  const remaining = props.leaveBalance?.annual_leave?.remaining || 0
+  if (total === 0) return 0
+  return (remaining / total) * 100
+})
+
+// Year options for filters
+const yearOptions = computed(() => {
+  const currentYear = new Date().getFullYear()
+  const years = []
+  for (let i = currentYear; i >= currentYear - 5; i--) {
+    years.push({ value: i, label: i.toString() })
+  }
+  return years
+})
+
+// Month options
+const monthOptions = [
+  { value: null, label: 'Tüm Aylar' },
+  { value: 1, label: 'Ocak' },
+  { value: 2, label: 'Şubat' },
+  { value: 3, label: 'Mart' },
+  { value: 4, label: 'Nisan' },
+  { value: 5, label: 'Mayıs' },
+  { value: 6, label: 'Haziran' },
+  { value: 7, label: 'Temmuz' },
+  { value: 8, label: 'Ağustos' },
+  { value: 9, label: 'Eylül' },
+  { value: 10, label: 'Ekim' },
+  { value: 11, label: 'Kasım' },
+  { value: 12, label: 'Aralık' }
+]
+
+// Fetch timesheets with filters
+const fetchTimesheets = async (page = 1) => {
+  isLoadingTimesheets.value = true
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      year: timesheetFilters.value.year.toString()
+    })
+    if (timesheetFilters.value.month) {
+      params.append('month', timesheetFilters.value.month.toString())
+    }
+
+    const response = await fetch(route('employees.timesheets', props.employee.id) + '?' + params)
+    const data = await response.json()
+    paginatedTimesheets.value = {
+      data: data.data,
+      meta: {
+        current_page: data.current_page,
+        last_page: data.last_page,
+        per_page: data.per_page,
+        total: data.total,
+        from: data.from,
+        to: data.to
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching timesheets:', error)
+  } finally {
+    isLoadingTimesheets.value = false
+  }
+}
+
+// Fetch leaves with filters
+const fetchLeaves = async (page = 1) => {
+  isLoadingLeaves.value = true
+  try {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      year: leaveFilters.value.year.toString()
+    })
+    if (leaveFilters.value.month) {
+      params.append('month', leaveFilters.value.month.toString())
+    }
+
+    const response = await fetch(route('employees.leaves', props.employee.id) + '?' + params)
+    const data = await response.json()
+    paginatedLeaves.value = {
+      data: data.data,
+      meta: {
+        current_page: data.current_page,
+        last_page: data.last_page,
+        per_page: data.per_page,
+        total: data.total,
+        from: data.from,
+        to: data.to
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching leaves:', error)
+  } finally {
+    isLoadingLeaves.value = false
+  }
+}
+
+// Watch for filter changes
+watch(() => timesheetFilters.value, () => {
+  fetchTimesheets()
+}, { deep: true })
+
+watch(() => leaveFilters.value, () => {
+  fetchLeaves()
+}, { deep: true })
+
+// Watch for active tab changes
+watch(activeTab, (newTab) => {
+  if (newTab === 'timesheets' && paginatedTimesheets.value.data.length === 0) {
+    fetchTimesheets()
+  } else if (newTab === 'leaves' && paginatedLeaves.value.data.length === 0) {
+    fetchLeaves()
+  }
 })
 
 // Utility methods
