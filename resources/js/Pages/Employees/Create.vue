@@ -1,31 +1,64 @@
 <template>
-  <AppLayout
-    :breadcrumbs="breadcrumbs"
-    title="Yeni Çalışan Ekle - SPT İnşaat Puantaj Sistemi"
-  >
-    <template #header>
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Yeni Çalışan Ekle</h1>
-          <p class="mt-1 text-sm text-gray-600">
-            Adım {{ currentStep }} / {{ totalSteps }} - {{ stepTitles[currentStep - 1] }}
-          </p>
+  <AppLayout title="Yeni Çalışan Ekle - SPT İnşaat Puantaj Sistemi" :full-width="true">
+    <!-- Full-width header -->
+    <template #fullWidthHeader>
+      <div class="bg-gradient-to-r from-indigo-600 via-purple-700 to-pink-800 border-b border-indigo-900/20 w-full">
+        <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <UserPlusIcon class="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 class="text-2xl lg:text-3xl font-bold text-white">Yeni Çalışan Ekle</h1>
+                <p class="text-indigo-100 text-sm mt-1">
+                  Adım {{ currentStep }} / {{ totalSteps }} - {{ stepTitles[currentStep - 1] }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          :href="route('employees.index')"
-          :left-icon="ArrowLeftIcon"
-        >
-          Geri Dön
-        </Button>
+
+        <!-- Breadcrumb -->
+        <div class="bg-black/10 border-t border-white/10">
+          <div class="w-full px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center space-x-2 py-2">
+              <ol class="flex items-center space-x-2">
+                <li>
+                  <Link :href="route('dashboard')" class="text-indigo-100 hover:text-white transition-colors">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>
+                    <span class="sr-only">Ana Sayfa</span>
+                  </Link>
+                </li>
+                <li class="flex items-center">
+                  <svg class="h-3 w-3 text-indigo-200 mx-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <Link :href="route('employees.index')" class="text-indigo-100 hover:text-white text-xs">
+                    Çalışan Yönetimi
+                  </Link>
+                </li>
+                <li class="flex items-center">
+                  <svg class="h-3 w-3 text-indigo-200 mx-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <span class="text-xs font-medium text-white">Yeni Çalışan</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 
-    <div class="max-w-4xl mx-auto">
+    <!-- Main Content -->
+    <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
       <!-- Progress Steps -->
-      <div class="mb-8">
+      <div class="mb-6">
         <nav class="flex items-center justify-center">
-          <ol class="flex items-center w-full max-w-2xl">
+          <ol class="flex items-center w-full max-w-4xl">
             <li
               v-for="(step, index) in steps"
               :key="index"
@@ -37,35 +70,26 @@
               <!-- Step Circle -->
               <div
                 :class="[
-                  'flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium transition-colors',
+                  'flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium transition-all duration-200',
                   currentStep > index + 1
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-green-600 text-white shadow-lg'
                     : currentStep === index + 1
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-lg'
                     : 'bg-gray-200 text-gray-500'
                 ]"
               >
-                <svg
-                  v-if="currentStep > index + 1"
-                  class="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
+                <CheckIcon v-if="currentStep > index + 1" class="w-5 h-5" />
                 <span v-else>{{ index + 1 }}</span>
               </div>
 
               <!-- Step Title -->
               <div class="ml-3 hidden sm:block">
                 <p :class="[
-                  'text-sm font-medium',
+                  'text-sm font-medium transition-colors',
                   currentStep > index + 1
                     ? 'text-green-600'
                     : currentStep === index + 1
-                    ? 'text-blue-600'
+                    ? 'text-indigo-600'
                     : 'text-gray-500'
                 ]">
                   {{ step.title }}
@@ -76,7 +100,7 @@
               <div
                 v-if="index < steps.length - 1"
                 :class="[
-                  'hidden sm:block flex-auto h-0.5 ml-4',
+                  'hidden sm:block flex-auto h-0.5 ml-4 transition-colors duration-200',
                   currentStep > index + 1 ? 'bg-green-600' : 'bg-gray-200'
                 ]"
               ></div>
@@ -86,16 +110,19 @@
       </div>
 
       <!-- Form Container -->
-      <Card class="p-6">
-        <form @submit.prevent="handleSubmit">
-          <!-- Step 1: Kişisel Bilgiler -->
-          <div v-if="currentStep === 1" class="space-y-6">
-            <div class="text-center pb-6 border-b border-gray-200">
-              <h2 class="text-lg font-semibold text-gray-900">Kişisel Bilgiler</h2>
-              <p class="text-sm text-gray-600 mt-1">Çalışanın temel kişisel bilgilerini girin</p>
+      <form @submit.prevent="handleSubmit" class="space-y-6">
+        <!-- Step 1: Kişisel Bilgiler -->
+        <Card v-if="currentStep === 1">
+          <div class="p-6">
+            <div class="flex items-center space-x-2 pb-6 border-b border-gray-200">
+              <UserIcon class="w-6 h-6 text-indigo-600" />
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">Kişisel Bilgiler</h2>
+                <p class="text-sm text-gray-600">Çalışanın temel kişisel bilgilerini girin</p>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <!-- Ad -->
               <Input
                 v-model="form.first_name"
@@ -122,7 +149,6 @@
                 label="TC Kimlik Numarası"
                 placeholder="12345678901"
                 type="text"
-                pattern="[0-9]{11}"
                 maxlength="11"
                 required
                 :error="errors.tc_number"
@@ -168,30 +194,35 @@
                 :error="errors.email"
                 :left-icon="AtSymbolIcon"
               />
-            </div>
 
-            <!-- Adres -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Adres</label>
-              <textarea
-                v-model="form.address"
-                rows="3"
-                class="block w-full rounded-md border-0 py-2 px-3 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 text-gray-900 text-sm"
-                placeholder="Tam adres bilgisi"
-                :class="errors.address ? 'ring-red-300 focus:ring-red-500' : ''"
-              ></textarea>
-              <p v-if="errors.address" class="text-xs text-red-600 mt-1">{{ errors.address }}</p>
+              <!-- Adres -->
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Adres</label>
+                <textarea
+                  v-model="form.address"
+                  rows="3"
+                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  placeholder="Tam adres bilgisi"
+                  :class="errors.address ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''"
+                ></textarea>
+                <p v-if="errors.address" class="text-xs text-red-600 mt-1">{{ errors.address }}</p>
+              </div>
             </div>
           </div>
+        </Card>
 
-          <!-- Step 2: İş Bilgileri -->
-          <div v-if="currentStep === 2" class="space-y-6">
-            <div class="text-center pb-6 border-b border-gray-200">
-              <h2 class="text-lg font-semibold text-gray-900">İş Bilgileri</h2>
-              <p class="text-sm text-gray-600 mt-1">Pozisyon, kategori ve çalışma detayları</p>
+        <!-- Step 2: İş Bilgileri -->
+        <Card v-if="currentStep === 2">
+          <div class="p-6">
+            <div class="flex items-center space-x-2 pb-6 border-b border-gray-200">
+              <BriefcaseIcon class="w-6 h-6 text-indigo-600" />
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">İş Bilgileri</h2>
+                <p class="text-sm text-gray-600">Pozisyon, kategori ve çalışma detayları</p>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <!-- Pozisyon -->
               <Input
                 v-model="form.position"
@@ -241,43 +272,59 @@
                 :error="errors.current_project_id"
                 searchable
               />
+            </div>
 
-              <!-- Yıllık İzin Günü -->
-              <Input
-                v-model="form.annual_leave_days"
-                label="Yıllık İzin Günü"
-                type="number"
-                min="14"
-                max="30"
-                required
-                :error="errors.annual_leave_days"
-                help-text="14-30 gün arası"
-              />
+            <!-- Bilgi Notu -->
+            <div class="mt-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-4">
+              <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-indigo-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-medium text-indigo-900">Yıllık İzin Bilgisi</h3>
+                  <p class="mt-2 text-sm text-indigo-800">
+                    Yıllık izin günü sayısı, işe başlama tarihine göre otomatik olarak hesaplanacaktır. İşçi Kanunu'na göre:
+                  </p>
+                  <ul class="mt-2 text-sm text-indigo-700 list-disc list-inside space-y-1">
+                    <li>1-5 yıl arası: 14 gün</li>
+                    <li>5-15 yıl arası: 20 gün</li>
+                    <li>15 yıl ve üzeri: 26 gün</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
+        </Card>
 
-          <!-- Step 3: Maaş Bilgileri -->
-          <div v-if="currentStep === 3" class="space-y-6">
-            <div class="text-center pb-6 border-b border-gray-200">
-              <h2 class="text-lg font-semibold text-gray-900">Maaş Bilgileri</h2>
-              <p class="text-sm text-gray-600 mt-1">Ücret türü ve maaş detayları</p>
+        <!-- Step 3: Maaş Bilgileri -->
+        <Card v-if="currentStep === 3">
+          <div class="p-6">
+            <div class="flex items-center space-x-2 pb-6 border-b border-gray-200">
+              <CurrencyDollarIcon class="w-6 h-6 text-indigo-600" />
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">Maaş Bilgileri</h2>
+                <p class="text-sm text-gray-600">Ücret türü ve maaş detayları</p>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <!-- Ücret Türü -->
-              <Select
-                v-model="form.wage_type"
-                label="Ücret Türü"
-                placeholder="Ücret türü seçin"
-                :options="wageTypeOptions"
-                required
-                :error="errors.wage_type"
-                @update:model-value="resetWageFields"
-              />
+              <div class="md:col-span-2">
+                <Select
+                  v-model="form.wage_type"
+                  label="Ücret Türü"
+                  placeholder="Ücret türü seçin"
+                  :options="wageTypeOptions"
+                  required
+                  :error="errors.wage_type"
+                  @update:model-value="resetWageFields"
+                />
+              </div>
 
               <!-- Günlük Ücret -->
               <Input
-                v-if="form.wage_type === 'daily'"
                 v-model="form.daily_wage"
                 label="Günlük Ücret (₺)"
                 type="number"
@@ -285,12 +332,12 @@
                 min="0"
                 placeholder="500.00"
                 :error="errors.daily_wage"
-                :left-icon="CurrencyLiraIcon"
+                :left-icon="CurrencyDollarIcon"
+                :disabled="form.wage_type !== 'daily'"
               />
 
               <!-- Saatlik Ücret -->
               <Input
-                v-if="form.wage_type === 'hourly'"
                 v-model="form.hourly_wage"
                 label="Saatlik Ücret (₺)"
                 type="number"
@@ -298,12 +345,12 @@
                 min="0"
                 placeholder="50.00"
                 :error="errors.hourly_wage"
-                :left-icon="CurrencyLiraIcon"
+                :left-icon="CurrencyDollarIcon"
+                :disabled="form.wage_type !== 'hourly'"
               />
 
               <!-- Aylık Maaş -->
               <Input
-                v-if="form.wage_type === 'monthly'"
                 v-model="form.monthly_salary"
                 label="Aylık Maaş (₺)"
                 type="number"
@@ -311,21 +358,22 @@
                 min="0"
                 placeholder="15000.00"
                 :error="errors.monthly_salary"
-                :left-icon="CurrencyLiraIcon"
+                :left-icon="CurrencyDollarIcon"
+                :disabled="form.wage_type !== 'monthly'"
               />
             </div>
 
             <!-- Maaş Bilgi Kartı -->
-            <Card v-if="form.wage_type" class="bg-blue-50 border-blue-200">
+            <div v-if="form.wage_type" class="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
               <div class="flex items-start space-x-3">
                 <div class="flex-shrink-0">
-                  <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <svg class="h-5 w-5 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                   </svg>
                 </div>
                 <div>
                   <h3 class="text-sm font-medium text-blue-900">Ücret Türü Bilgisi</h3>
-                  <div class="mt-2 text-sm text-blue-700">
+                  <div class="mt-2 text-sm text-blue-800">
                     <p v-if="form.wage_type === 'daily'">
                       Günlük ücret: Çalışanın her çalıştığı gün için sabit ücret alacağı sistem.
                     </p>
@@ -338,41 +386,49 @@
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
+        </Card>
 
-          <!-- Step 4: Fotoğraf ve QR Kod -->
-          <div v-if="currentStep === 4" class="space-y-6">
-            <div class="text-center pb-6 border-b border-gray-200">
-              <h2 class="text-lg font-semibold text-gray-900">Fotoğraf ve QR Kod</h2>
-              <p class="text-sm text-gray-600 mt-1">Profil fotoğrafı ekleyin ve QR kod oluşturun</p>
+        <!-- Step 4: Fotoğraf ve QR Kod -->
+        <Card v-if="currentStep === 4">
+          <div class="p-6">
+            <div class="flex items-center space-x-2 pb-6 border-b border-gray-200">
+              <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+              </svg>
+              <div>
+                <h2 class="text-lg font-semibold text-gray-900">Fotoğraf ve QR Kod</h2>
+                <p class="text-sm text-gray-600">Profil fotoğrafı ekleyin ve QR kod oluşturun</p>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
               <!-- Fotoğraf Yükleme -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-4">Profil Fotoğrafı</label>
-                
-                <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+
+                <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-400 transition-colors">
                   <div class="space-y-1 text-center">
                     <!-- Preview Image -->
                     <div v-if="photoPreview" class="mb-4">
                       <img
                         :src="photoPreview"
                         alt="Fotoğraf önizleme"
-                        class="mx-auto h-32 w-32 rounded-full object-cover"
+                        class="mx-auto h-32 w-32 rounded-full object-cover ring-4 ring-indigo-100"
                       />
                     </div>
-                    
+
                     <!-- Upload Icon -->
                     <div v-else class="mx-auto h-12 w-12 text-gray-400">
                       <svg class="h-full w-full" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
                     </div>
-                    
+
                     <div class="flex text-sm text-gray-600">
-                      <label for="photo-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                      <label for="photo-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
                         <span>{{ photoPreview ? 'Fotoğrafı değiştir' : 'Fotoğraf yükle' }}</span>
                         <input
                           id="photo-upload"
@@ -389,89 +445,88 @@
                     <p class="text-xs text-gray-500">PNG, JPG, JPEG dosyaları (max 2MB)</p>
                   </div>
                 </div>
-                
+
                 <p v-if="errors.photo" class="text-xs text-red-600 mt-1">{{ errors.photo }}</p>
               </div>
 
               <!-- QR Kod Preview -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-4">QR Kod Önizleme</label>
-                
-                <Card class="text-center p-6">
+
+                <div class="bg-gradient-to-br from-gray-50 to-indigo-50 rounded-lg p-6 border border-gray-200">
                   <div v-if="generatedQrCode" class="space-y-4">
                     <div class="flex justify-center">
-                      <div class="bg-white p-4 rounded-lg shadow-sm border">
+                      <div class="bg-white p-4 rounded-lg shadow-sm border border-indigo-200">
                         <div v-html="generatedQrCode" class="qr-code"></div>
                       </div>
                     </div>
-                    <div class="text-sm text-gray-600">
-                      <p class="font-medium">{{ form.first_name }} {{ form.last_name }}</p>
-                      <p class="text-xs">Çalışan Kodu: {{ employeeCode }}</p>
+                    <div class="text-center text-sm text-gray-600">
+                      <p class="font-medium text-gray-900">{{ form.first_name }} {{ form.last_name }}</p>
+                      <p class="text-xs text-indigo-600 mt-1">Çalışan Kodu: {{ employeeCode }}</p>
                     </div>
                   </div>
-                  
-                  <div v-else class="text-gray-500">
+
+                  <div v-else class="text-center text-gray-500">
                     <svg class="mx-auto h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
                       <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h4.5v4.5h-4.5v-4.5z" />
                     </svg>
                     <p class="text-sm">QR kod otomatik oluşturulacak</p>
                   </div>
-                </Card>
+                </div>
               </div>
             </div>
           </div>
+        </Card>
 
-          <!-- Navigation Buttons -->
-          <div class="flex items-center justify-between pt-6 border-t border-gray-200 mt-8">
+        <!-- Navigation Buttons -->
+        <div class="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4">
+          <Button
+            v-if="currentStep > 1"
+            variant="outline"
+            @click="previousStep"
+            :left-icon="ArrowLeftIcon"
+          >
+            Önceki
+          </Button>
+          <div v-else></div>
+
+          <div class="flex items-center space-x-3">
             <Button
-              v-if="currentStep > 1"
-              variant="outline"
-              @click="previousStep"
-              :left-icon="ArrowLeftIcon"
+              variant="ghost"
+              :href="route('employees.index')"
             >
-              Önceki
+              İptal
             </Button>
-            <div v-else></div>
 
-            <div class="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                :href="route('employees.index')"
-              >
-                İptal
-              </Button>
+            <Button
+              v-if="currentStep < totalSteps"
+              variant="primary"
+              @click="nextStep"
+              :right-icon="ArrowRightIcon"
+            >
+              Sonraki
+            </Button>
 
-              <Button
-                v-if="currentStep < totalSteps"
-                variant="primary"
-                @click="nextStep"
-                :right-icon="ArrowRightIcon"
-                :disabled="!canProceedToNextStep"
-              >
-                Sonraki
-              </Button>
-
-              <Button
-                v-else
-                type="submit"
-                variant="primary"
-                :loading="processing"
-                :left-icon="CheckIcon"
-              >
-                Çalışanı Oluştur
-              </Button>
-            </div>
+            <Button
+              v-else
+              type="submit"
+              variant="success"
+              :loading="processing"
+              :left-icon="CheckIcon"
+            >
+              Çalışanı Oluştur
+            </Button>
           </div>
-        </form>
-      </Card>
+        </div>
+      </form>
     </div>
   </AppLayout>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { ref, computed, watch } from 'vue'
+import { useForm, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Button from '@/Components/UI/Button.vue'
 import Input from '@/Components/UI/Input.vue'
@@ -481,12 +536,13 @@ import Card from '@/Components/UI/Card.vue'
 // Heroicons
 import {
   UserIcon,
+  UserPlusIcon,
   IdentificationIcon,
   CalendarIcon,
   PhoneIcon,
   AtSymbolIcon,
   BriefcaseIcon,
-  CurrencyDollarIcon as CurrencyLiraIcon,
+  CurrencyDollarIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckIcon
@@ -498,14 +554,8 @@ const props = defineProps({
   managers: Array
 })
 
-// Breadcrumbs
-const breadcrumbs = [
-  { label: 'Çalışanlar', href: route('employees.index') },
-  { label: 'Yeni Çalışan Ekle' }
-]
-
 // Form state
-const { data: form, setData, post, processing, errors, reset } = useForm({
+const { data: form, setData, post, processing, errors } = useForm({
   first_name: '',
   last_name: '',
   tc_number: '',
@@ -519,7 +569,7 @@ const { data: form, setData, post, processing, errors, reset } = useForm({
   start_date: new Date().toISOString().split('T')[0],
   manager_id: '',
   current_project_id: '',
-  annual_leave_days: 14,
+  // annual_leave_days will be calculated automatically in backend
   wage_type: '',
   daily_wage: '',
   hourly_wage: '',
@@ -538,7 +588,7 @@ const generatedQrCode = ref('')
 const steps = [
   { title: 'Kişisel Bilgiler', icon: UserIcon },
   { title: 'İş Bilgileri', icon: BriefcaseIcon },
-  { title: 'Maaş Bilgileri', icon: CurrencyLiraIcon },
+  { title: 'Maaş Bilgileri', icon: CurrencyDollarIcon },
   { title: 'Fotoğraf & QR Kod', icon: CheckIcon }
 ]
 
@@ -564,19 +614,25 @@ const wageTypeOptions = [
 ]
 
 // Computed options
-const managerOptions = computed(() => 
-  props.managers.map(manager => ({
-    label: `${manager.first_name} ${manager.last_name}`,
+const managerOptions = computed(() => {
+  if (!props.managers || !Array.isArray(props.managers)) {
+    return []
+  }
+  return props.managers.map(manager => ({
+    label: manager.name || `${manager.first_name || ''} ${manager.last_name || ''}`.trim(),
     value: manager.id
   }))
-)
+})
 
-const projectOptions = computed(() => 
-  props.projects.map(project => ({
+const projectOptions = computed(() => {
+  if (!props.projects || !Array.isArray(props.projects)) {
+    return []
+  }
+  return props.projects.map(project => ({
     label: project.name,
     value: project.id
   }))
-)
+})
 
 const employeeCode = computed(() => {
   if (form.first_name && form.last_name) {
@@ -592,29 +648,38 @@ const employeeCode = computed(() => {
 
 // Step validation
 const canProceedToNextStep = computed(() => {
-  switch (currentStep.value) {
+  const step = currentStep.value
+  let canProceed = false
+
+  switch (step) {
     case 1:
-      return form.first_name && form.last_name && form.tc_number && form.birth_date
+      canProceed = !!(form.first_name && form.last_name && form.tc_number && form.birth_date)
+      break
     case 2:
-      return form.position && form.category && form.start_date && form.annual_leave_days
+      canProceed = !!(form.position && form.category && form.start_date)
+      break
     case 3:
-      return form.wage_type && (
+      canProceed = !!(form.wage_type && (
         (form.wage_type === 'daily' && form.daily_wage) ||
         (form.wage_type === 'hourly' && form.hourly_wage) ||
         (form.wage_type === 'monthly' && form.monthly_salary)
-      )
+      ))
+      break
     case 4:
-      return true
+      canProceed = true
+      break
     default:
-      return false
+      canProceed = false
   }
+
+  return canProceed
 })
 
 // Methods
 const nextStep = () => {
   if (canProceedToNextStep.value && currentStep.value < totalSteps) {
     currentStep.value++
-    
+
     // Generate QR code when reaching last step
     if (currentStep.value === 4) {
       generateQrCode()
@@ -629,12 +694,9 @@ const previousStep = () => {
 }
 
 const resetWageFields = () => {
-  setData({
-    ...form,
-    daily_wage: '',
-    hourly_wage: '',
-    monthly_salary: ''
-  })
+  form.daily_wage = ''
+  form.hourly_wage = ''
+  form.monthly_salary = ''
 }
 
 const handlePhotoUpload = (event) => {
@@ -645,15 +707,15 @@ const handlePhotoUpload = (event) => {
       alert('Sadece JPG, JPEG ve PNG formatları desteklenmektedir.')
       return
     }
-    
+
     if (file.size > 2 * 1024 * 1024) { // 2MB
       alert('Dosya boyutu 2MB\'dan küçük olmalıdır.')
       return
     }
-    
+
     // Set form data
     setData('photo', file)
-    
+
     // Create preview
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -666,13 +728,7 @@ const handlePhotoUpload = (event) => {
 const generateQrCode = () => {
   // In a real app, you'd use a QR code library like qrcode
   // For demo, using a placeholder
-  const qrData = JSON.stringify({
-    employee_code: employeeCode.value,
-    name: `${form.first_name} ${form.last_name}`,
-    tc_number: form.tc_number,
-    position: form.position
-  })
-  
+
   // Mock QR code generation
   generatedQrCode.value = `
     <div style="width: 128px; height: 128px; background: #000; position: relative;">
@@ -684,11 +740,9 @@ const generateQrCode = () => {
 }
 
 const handleSubmit = () => {
-  const submitData = { ...form }
-  
-  // Set employee code
-  submitData.employee_code = employeeCode.value
-  
+  // Set employee code before submitting
+  form.employee_code = employeeCode.value
+
   post(route('employees.store'), {
     preserveScroll: true,
     onSuccess: () => {
@@ -698,7 +752,7 @@ const handleSubmit = () => {
       // Find first step with errors and go there
       if (errors.first_name || errors.last_name || errors.tc_number || errors.birth_date || errors.gender || errors.phone || errors.email || errors.address) {
         currentStep.value = 1
-      } else if (errors.position || errors.category || errors.start_date || errors.manager_id || errors.current_project_id || errors.annual_leave_days) {
+      } else if (errors.position || errors.category || errors.start_date || errors.manager_id || errors.current_project_id) {
         currentStep.value = 2
       } else if (errors.wage_type || errors.daily_wage || errors.hourly_wage || errors.monthly_salary) {
         currentStep.value = 3
@@ -715,16 +769,6 @@ watch([() => form.first_name, () => form.last_name], () => {
     generateQrCode()
   }
 })
-
-// Auto-generate employee code when name changes
-watch([() => form.first_name, () => form.last_name], () => {
-  if (form.first_name && form.last_name) {
-    // Update QR code if on last step
-    if (currentStep.value === 4) {
-      generateQrCode()
-    }
-  }
-})
 </script>
 
 <style scoped>
@@ -732,115 +776,5 @@ watch([() => form.first_name, () => form.last_name], () => {
 .qr-code {
   display: inline-block;
   font-family: monospace;
-}
-
-/* File upload drag and drop styling */
-.border-dashed {
-  border-style: dashed;
-}
-
-/* Step progress styling */
-.step-connector {
-  background: linear-gradient(to right, transparent 50%, #e5e7eb 50%);
-}
-
-/* Form section spacing */
-.form-section {
-  scroll-margin-top: 2rem;
-}
-
-/* Custom scrollbar for long forms */
-.form-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.form-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.form-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.form-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .step-title {
-    display: none;
-  }
-  
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Animation for step transitions */
-.step-transition-enter-active,
-.step-transition-leave-active {
-  transition: all 0.3s ease-in-out;
-}
-
-.step-transition-enter-from {
-  opacity: 0;
-  transform: translateX(20px);
-}
-
-.step-transition-leave-to {
-  opacity: 0;
-  transform: translateX(-20px);
-}
-
-/* Photo preview styling */
-.photo-preview {
-  position: relative;
-  display: inline-block;
-}
-
-.photo-preview::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border: 2px solid #3b82f6;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.photo-preview:hover::after {
-  opacity: 1;
-}
-
-/* Success state for completed steps */
-.step-completed {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.25);
-}
-
-/* Loading state for form submission */
-.form-loading {
-  pointer-events: none;
-  opacity: 0.7;
-}
-
-/* Validation error styling */
-.field-error {
-  animation: shake 0.5s ease-in-out;
-}
-
-@keyframes shake {
-  0%, 20%, 40%, 60%, 80%, 100% {
-    transform: translateX(0);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-2px);
-  }
 }
 </style>

@@ -24,7 +24,7 @@
     />
 
     <!-- Content -->
-    <span v-if="$slots.default || label" :class="contentClasses">
+    <span v-if="slots.default || label" :class="contentClasses">
       <slot>{{ label }}</slot>
     </span>
 
@@ -32,7 +32,7 @@
     <component
       v-if="rightIcon && !loading"
       :is="rightIcon"
-      :class="[iconClasses, leftIcon || $slots.default || label ? 'ml-2' : '']"
+      :class="[iconClasses, leftIcon || slots.default || label ? 'ml-2' : '']"
     />
 
     <!-- Badge -->
@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import Spinner from './Spinner.vue'
 
@@ -144,6 +144,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['click'])
+
+// Slots
+const slots = useSlots()
 
 // Computed properties
 const tag = computed(() => {
@@ -257,13 +260,13 @@ const iconClasses = computed(() => {
     lg: 'w-5 h-5',
     xl: 'w-5 h-5'
   }
-  
+
   const classes = [sizeClasses[props.size]]
-  
-  if (props.leftIcon && (props.label || props.$slots.default)) {
+
+  if (props.leftIcon && (props.label || slots.default)) {
     classes.push('mr-2')
   }
-  
+
   return classes.join(' ')
 })
 

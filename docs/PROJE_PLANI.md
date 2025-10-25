@@ -242,6 +242,89 @@ Proje B (Sadece Pazar tatil):
 - [ ] Hakediş hesaplama
 - [ ] İş programı
 
+#### 11. **Hakediş Takip Sistemi** (100%) ✨
+- [x] ProgressPayment model ve CRUD
+- [x] Dashboard (istatistikler, grafikler)
+- [x] Proje ve Taşeron entegrasyonu
+- [x] Onay ve ödeme workflow
+- [x] Otomatik cascade güncelleme
+
+#### 12. **Çalışan Yönetimi - Create/Edit Sayfaları** (100%) ✅
+- [x] Employee CreateSimple.vue (tek sayfa form)
+- [x] Searchable select düzeltmeleri (Manager, Project)
+- [x] Z-index ve overflow sorunları çözüldü
+- [x] Ücret tipi alanları düzeltildi
+- [x] Form validasyonu ve submission
+
+#### 13. **Rol & Yetki Yönetim Sistemi** (0%) 🎯 PLANLANAN
+- [ ] Gelişmiş rol tanımlama sistemi
+- [ ] Proje bazlı yetkilendirme
+- [ ] Çoklu proje yöneticisi/şantiye şefi desteği
+- [ ] Modül bazlı yetki matrisi
+- [ ] Rol hiyerarşisi ve devralma
+- [ ] Kullanıcı-Rol-Proje atama arayüzü
+- [ ] Kapsamlı activity log sistemi
+- [ ] Log görüntüleme ve filtreleme arayüzü
+
+#### 14. **İnşaat Ruhsat ve İzin Yönetimi** (0%) 🏗️ YENİ PLANLANAN
+- [ ] Yapı ruhsatı takip sistemi
+- [ ] İmar durumu kayıtları
+- [ ] Ruhsat başvuru süreci takibi
+- [ ] Ruhsat belgeleri dosya yönetimi
+- [ ] Ruhsat geçerlilik tarih uyarıları
+- [ ] İskan izni takibi
+- [ ] Yapı kullanma izni süreçleri
+- [ ] Proje bazlı ruhsat durumu raporları
+
+#### 15. **Yapı Denetim Sistemi** (0%) 🔍 YENİ PLANLANAN
+- [ ] Yapı denetim kuruluşu bilgileri
+- [ ] Denetim raporları ve kayıtları
+- [ ] Periyodik denetim planlaması
+- [ ] Denetim bulguları ve uygunsuzluklar
+- [ ] Düzeltici faaliyet takibi
+- [ ] Denetim belgesi yönetimi
+- [ ] Denetmen bilgileri ve görevlendirme
+- [ ] Denetim tutanakları arşivleme
+
+#### 16. **Satış ve Tapu Yönetimi** (0%) 🏘️ YENİ PLANLANAN
+- [ ] Müşteri bilgileri (CRM entegrasyonu)
+- [ ] Satış sözleşmeleri
+- [ ] Tapu bilgileri ve devir işlemleri
+- [ ] Ödeme planları ve taksitler
+- [ ] Blok/Kat/Daire satış durumu
+- [ ] Rezervasyon sistemi
+- [ ] Satış performans raporları
+- [ ] Bağımsız bölüm listesi
+- [ ] Kat irtifakı/Kat mülkiyeti kayıtları
+
+#### 17. **Finansal Yönetim ve Kar/Zarar Sistemi** (0%) 💰 YENİ PLANLANAN
+- [ ] Gelir kaynakları modülü
+  - [ ] Satış gelirleri (daireler, işyerleri)
+  - [ ] Hakediş tahsilatları
+  - [ ] Fatura kesimi ve takibi
+  - [ ] Gelir kategorilendirme
+- [ ] Gider yönetimi modülü
+  - [ ] Personel giderleri (maaş, prim)
+  - [ ] Malzeme giderleri
+  - [ ] Taşeron ödemeleri
+  - [ ] Genel giderler (elektrik, su, vs.)
+  - [ ] Gider kategorilendirme
+- [ ] Proje bazlı maliyet merkezi
+  - [ ] Proje özel gider/gelir takibi
+  - [ ] Bütçe vs gerçekleşen karşılaştırma
+- [ ] Finansal raporlama
+  - [ ] Proje bazlı kar/zarar raporu
+  - [ ] Aylık/Yıllık gelir-gider tabloları
+  - [ ] Nakit akış raporu
+  - [ ] Karlılık analizi
+  - [ ] Dashboard widget'ları (gelir, gider, kar trendi)
+- [ ] Entegrasyon altyapısı
+  - [ ] Puantaj sisteminden personel giderleri
+  - [ ] Satınalma sisteminden malzeme giderleri
+  - [ ] Hakediş sisteminden taşeron ödemeleri
+  - [ ] Satış sisteminden gelir kayıtları
+  - [ ] Otomatik finansal kayıt oluşturma
+
 ---
 
 ## 🗄️ VERİTABANI YAPISI
@@ -437,7 +520,10 @@ Proje B (Sadece Pazar tatil):
 4. **İzin Hesaplama:** Tatil ve proje kuralları tam entegre (24 Ekim)
 
 ### Bilinen Sorunlar
-- [ ] Employee Create page hatası: Button.vue "Cannot read properties of undefined (reading 'default')" `/employees/create`
+- [x] ~~Employee Create page hatası: Button.vue "Cannot read properties of undefined (reading 'default')" `/employees/create`~~ (25 Ekim 2025)
+- [x] ~~Employee Create: setData is not a function error~~ (25 Ekim 2025)
+- [x] ~~Employee Create: leave-parameters.index route missing~~ (25 Ekim 2025)
+- [x] ~~Manager and Project searchable select issues~~ (25 Ekim 2025)
 - [ ] TimesheetV3Controller hala mevcut (kaldırılacak)
 - [ ] Bazı route'lar eski controller'ı kullanıyor
 - [ ] Test coverage yok
@@ -477,7 +563,349 @@ Bu dokümandan yeni sohbet başlatırken özet geçebilirsiniz. Tüm tamamlanan 
 
 ---
 
-**Son Güncelleme:** 25 Ekim 2025, 22:30
+---
+
+## 🔐 ROL & YETKİ YÖNETİM SİSTEMİ - DETAYLI PLAN
+
+### 📋 Sistem Mimarisi
+
+#### 1. Rol Hiyerarşisi
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Super Admin (God Mode)                                   │
+│    └─ Tüm sistem ayarlarına erişim                         │
+│    └─ Rol tanımlama ve yetki atama                         │
+│    └─ Kullanıcı yönetimi (CRUD)                            │
+│    └─ Tüm projelere erişim                                 │
+│    └─ Sistem loglarını görüntüleme                         │
+│    └─ Parametrik ayarlar                                    │
+├─────────────────────────────────────────────────────────────┤
+│ 2. Genel Yönetici (Company Admin)                          │
+│    └─ Tüm projeleri görüntüleyebilir                       │
+│    └─ Onay yetkisi (Puantaj, Satınalma, Hakediş)          │
+│    └─ Tüm raporlara erişim                                 │
+│    └─ Kullanıcı ekleme (sınırlı - kendi bölümü)           │
+│    └─ Dashboard: Tüm projeler                              │
+├─────────────────────────────────────────────────────────────┤
+│ 3. Proje Yöneticisi (Project Manager) ⭐ ÇOK SEÇİLEBİLİR  │
+│    └─ Atandığı projelere TAM erişim                        │
+│    └─ Puantaj yönetimi (kendi projeleri)                   │
+│    └─ Hakediş yönetimi (kendi projeleri)                   │
+│    └─ Satınalma yönetimi (kendi projeleri)                 │
+│    └─ Onay yetkisi (1. kademe - kendi projeleri)          │
+│    └─ Rapor görüntüleme (kendi projeleri)                  │
+│    └─ Dashboard: Sadece atandığı projeler                   │
+├─────────────────────────────────────────────────────────────┤
+│ 4. Şantiye Şefi (Site Manager) ⭐ ÇOK SEÇİLEBİLİR         │
+│    └─ Atandığı projelere erişim                            │
+│    └─ Puantaj girişi (kendi projeleri)                     │
+│    └─ Malzeme talep (kendi projeleri)                      │
+│    └─ Günlük rapor girişi                                  │
+│    └─ Sadece görüntüleme (hakediş, bütçe)                  │
+│    └─ Dashboard: Sadece atandığı projeler                   │
+├─────────────────────────────────────────────────────────────┤
+│ 5. Muhasebe/Finans Kullanıcısı                             │
+│    └─ Tüm projelerin finansal verileri                     │
+│    └─ Hakediş onaylama (final)                             │
+│    └─ Ödeme işlemleri                                       │
+│    └─ Maliyet raporları                                     │
+│    └─ Bütçe analizi                                         │
+├─────────────────────────────────────────────────────────────┤
+│ 6. İnsan Kaynakları                                         │
+│    └─ Çalışan yönetimi (CRUD)                              │
+│    └─ İzin onaylama                                         │
+│    └─ Puantaj onaylama                                      │
+│    └─ Bordro hazırlama                                      │
+│    └─ Sicil kartları                                        │
+├─────────────────────────────────────────────────────────────┤
+│ 7. Satınalma Uzmanı                                         │
+│    └─ Satınalma talepleri yönetimi                         │
+│    └─ Tedarikçi yönetimi                                    │
+│    └─ Fiyat karşılaştırma                                   │
+│    └─ Sipariş takibi                                        │
+│    └─ Stok yönetimi                                         │
+├─────────────────────────────────────────────────────────────┤
+│ 8. Çalışan (Employee)                                       │
+│    └─ Kendi bilgilerini görüntüleme                        │
+│    └─ İzin talebi oluşturma                                │
+│    └─ Puantaj görüntüleme (sadece kendisi)                 │
+│    └─ Sicil kartı görüntüleme                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 2. Modül Bazlı Yetki Matrisi
+
+Her modül için standart yetkiler:
+- `view` - Görüntüleme
+- `create` - Oluşturma
+- `edit` - Düzenleme
+- `delete` - Silme
+- `approve` - Onaylama
+- `export` - Dışa Aktarma
+
+**Örnek Yetki Kodları:**
+```
+projects.view
+projects.create
+projects.edit
+projects.delete
+projects.export
+
+employees.view
+employees.create
+employees.edit
+employees.delete
+employees.approve
+employees.export
+
+timesheets.view
+timesheets.create
+timesheets.edit
+timesheets.delete
+timesheets.approve
+timesheets.export
+
+... (tüm modüller için)
+```
+
+#### 3. Proje Bazlı Yetkilendirme
+
+**Yeni Tablo: `user_project_roles`**
+```sql
+CREATE TABLE user_project_roles (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    project_id BIGINT UNSIGNED NOT NULL,
+    role_id BIGINT UNSIGNED NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    assigned_by BIGINT UNSIGNED,
+    expires_at TIMESTAMP NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_user_project_role (user_id, project_id, role_id)
+);
+```
+
+**Özellikler:**
+- Bir kullanıcı birden fazla projeye atanabilir
+- Bir projede birden fazla proje yöneticisi olabilir
+- Bir projede birden fazla şantiye şefi olabilir
+- Yetki sona erme tarihi (opsiyonel)
+- Atayan kişi tracking
+
+#### 4. Activity Log Sistemi
+
+**Yeni Tablo: `activity_logs`**
+```sql
+CREATE TABLE activity_logs (
+    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED,
+    module VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    record_type VARCHAR(100),
+    record_id BIGINT UNSIGNED,
+    project_id BIGINT UNSIGNED NULL,
+    description TEXT,
+    old_values JSON,
+    new_values JSON,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user (user_id),
+    INDEX idx_module (module),
+    INDEX idx_action (action),
+    INDEX idx_project (project_id),
+    INDEX idx_created (created_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL
+);
+```
+
+**Loglanacak İşlemler:**
+- `view` - Görüntüleme
+- `create` - Oluşturma
+- `update` - Güncelleme
+- `delete` - Silme
+- `approve` - Onaylama
+- `reject` - Reddetme
+- `export` - Dışa Aktarma
+- `import` - İçe Aktarma
+- `login` - Giriş
+- `logout` - Çıkış
+
+**Modüller:**
+- `projects` - Projeler
+- `employees` - Çalışanlar
+- `timesheets` - Puantaj
+- `leave_requests` - İzinler
+- `progress_payments` - Hakediş
+- `purchasing` - Satınalma
+- `materials` - Malzemeler
+- `users` - Kullanıcılar
+- `roles` - Roller
+- `system` - Sistem
+
+### 📝 Geliştirme Görevleri
+
+#### Faz 1: Database & Models (1 Hafta)
+- [ ] `user_project_roles` migration oluştur
+- [ ] `activity_logs` migration oluştur
+- [ ] UserProjectRole model oluştur
+- [ ] ActivityLog model oluştur
+- [ ] Role model'e helper metodlar ekle
+- [ ] User model'e proje ilişkileri ekle
+- [ ] Seeder'lar oluştur (test verileri)
+
+#### Faz 2: Permission System (1 Hafta)
+- [ ] Modül bazlı yetki tanımları oluştur
+- [ ] PermissionSeeder (tüm modüller için CRUD yetkiler)
+- [ ] RolePermissionSeeder (rol-yetki eşleştirmeleri)
+- [ ] Middleware: CheckProjectAccess
+- [ ] Middleware: CheckModulePermission
+- [ ] Policy'ler güncelle (proje bazlı kontroller)
+
+#### Faz 3: Admin Panel (2 Hafta)
+- [ ] Rol Yönetimi sayfası
+  - [ ] Rol listesi
+  - [ ] Rol oluştur/düzenle
+  - [ ] Yetki ataması (checkbox matrisi)
+  - [ ] Rol önizleme
+- [ ] Kullanıcı Yönetimi sayfası
+  - [ ] Kullanıcı listesi
+  - [ ] Kullanıcı oluştur/düzenle
+  - [ ] Rol ataması
+  - [ ] Proje-Rol ataması (multi-select)
+  - [ ] Kullanıcı aktivite geçmişi
+- [ ] Proje-Kullanıcı Atama sayfası
+  - [ ] Proje seç
+  - [ ] Kullanıcı-Rol matrisi
+  - [ ] Toplu atama özelliği
+  - [ ] Sona erme tarihi belirleme
+
+#### Faz 4: Activity Log System (1 Hafta)
+- [ ] ActivityLogService oluştur
+- [ ] Trait: LogsActivity (tüm model'lere eklenecek)
+- [ ] Observer'lar (otomatik loglama)
+- [ ] Activity Log sayfası
+  - [ ] Filtreleme (tarih, modül, aksiyon, kullanıcı, proje)
+  - [ ] Arama
+  - [ ] Export (Excel, CSV)
+  - [ ] Detay modal (eski/yeni değerler karşılaştırma)
+  - [ ] Grafikler (zaman bazlı aktivite)
+
+#### Faz 5: Frontend Integration (1 Hafta)
+- [ ] Tüm Controller'lara proje bazlı filtre ekle
+- [ ] Dashboard'ları güncelle (rol bazlı)
+- [ ] Menü sistemini güncelle (yetki bazlı)
+- [ ] Buton/aksiyon gizleme (yetki bazlı)
+- [ ] Composable: usePermissions
+- [ ] Composable: useProjectAccess
+
+#### Faz 6: Testing & Documentation (1 Hafta)
+- [ ] Unit testler (Permission, Role, User)
+- [ ] Feature testler (Middleware, Policy)
+- [ ] Integration testler (End-to-end yetki kontrolleri)
+- [ ] Dokümantasyon (rol tanımları, yetki matrisi)
+
+### 🎯 Örnek Kullanım Senaryoları
+
+#### Senaryo 1: Çoklu Proje Yöneticisi
+```
+Kullanıcı: Ahmet Yılmaz
+Rol: Proje Yöneticisi
+
+Atamalar:
+- Proje A (Konut İnşaatı) → Proje Yöneticisi
+- Proje B (Villa Projesi) → Proje Yöneticisi
+- Proje C (AVM İnşaatı) → Şantiye Şefi
+
+Dashboard'da:
+- Proje A ve B için tam yetki (puantaj, hakediş, satınalma, onay)
+- Proje C için sınırlı yetki (sadece puantaj girişi, görüntüleme)
+- Diğer projeler görünmez
+```
+
+#### Senaryo 2: Onay Workflow
+```
+İşlem: Hakediş Onaylama
+
+1. Şantiye Şefi (Mehmet) → Hakediş oluşturur
+2. Proje Yöneticisi (Ahmet) → 1. kademe onaylar
+3. Genel Yönetici (Ali) → 2. kademe onaylar
+4. Muhasebe (Ayşe) → Final onay + Ödeme
+
+Activity Log:
+- 10:00 - Mehmet - Hakediş oluşturuldu (ID: 123)
+- 11:00 - Ahmet - Hakediş onaylandı (1. kademe)
+- 14:00 - Ali - Hakediş onaylandı (2. kademe)
+- 15:30 - Ayşe - Hakediş onaylandı (Final) + Ödeme yapıldı
+```
+
+#### Senaryo 3: Proje Bazlı Dashboard
+```
+Super Admin Dashboard:
+- Tüm projeler (10 proje)
+- Tüm istatistikler
+- Sistem geneli metrikler
+
+Proje Yöneticisi Dashboard (Ahmet):
+- Sadece Proje A ve B
+- Bu projelere ait istatistikler
+- Onay bekleyen işler (sadece bu projeler)
+
+Şantiye Şefi Dashboard (Mehmet):
+- Sadece Proje C
+- Puantaj özeti
+- Malzeme talepleri
+- Hakediş görüntüleme (sadece okuma)
+```
+
+### 💡 Ek Öneriler
+
+#### 1. İki Aşamalı Onay Sistemi
+```
+Kritik İşlemler (Hakediş, Satınalma > 50.000 TL):
+1. Proje Yöneticisi onayı
+2. Genel Yönetici / Muhasebe onayı
+
+Normal İşlemler (Puantaj, Malzeme Talebi):
+1. Proje Yöneticisi / Şantiye Şefi onayı
+```
+
+#### 2. Vekalet Sistemi (Delegation)
+```
+Kullanıcı izinde iken yetkilerini başkasına devredebilir:
+- Başlangıç/Bitiş tarihi
+- Hangi yetkilerin devredileceği (seçmeli)
+- Activity log'da izlenebilir
+```
+
+#### 3. IP Kısıtlama
+```
+Belirli roller için IP whitelist:
+- Super Admin → Sadece ofis IP'si
+- Muhasebe → Sadece ofis IP'si
+- Diğer roller → Kısıtlama yok
+```
+
+#### 4. Zaman Bazlı Yetkiler
+```
+Vardiya bazlı yetkilendirme:
+- Gece vardiyası sadece puantaj girişi
+- Gündüz vardiyası tüm yetkiler
+```
+
+---
+
+**Son Güncelleme:** 25 Ekim 2025, 23:00
 **Güncelleyen:** Development Team
-**Versiyon:** 3.2.0
-**Önemli Değişiklik:** Hakediş sistemi Proje ve Taşeron Show sayfalarına entegre edildi. NaN hataları ve card görünüm sorunları çözüldü.
+**Versiyon:** 3.3.0
+**Önemli Değişiklik:**
+- Employee Create page hataları düzeltildi
+- Kapsamlı Rol & Yetki Yönetim Sistemi planlandı
+- Activity Log sistemi tasarımı tamamlandı
+- Çoklu proje yöneticisi/şantiye şefi desteği planlandı

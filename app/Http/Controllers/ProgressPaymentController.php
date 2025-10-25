@@ -19,17 +19,29 @@ class ProgressPaymentController extends Controller
      */
     public function dashboard(): Response
     {
+        // Calculate totals manually to avoid computed column issues
+        $allPayments = ProgressPayment::all();
+        $totalAmount = $allPayments->sum(function($payment) {
+            return ($payment->completed_quantity ?? 0) * ($payment->unit_price ?? 0);
+        });
+
+        $paidPayments = ProgressPayment::where('status', 'paid')->get();
+        $paidAmount = $paidPayments->sum(function($payment) {
+            return ($payment->completed_quantity ?? 0) * ($payment->unit_price ?? 0);
+        });
+
+        $pendingPayments = ProgressPayment::whereIn('status', ['planned', 'in_progress', 'completed', 'approved'])->get();
+        $pendingAmount = $pendingPayments->sum(function($payment) {
+            return ($payment->completed_quantity ?? 0) * ($payment->unit_price ?? 0);
+        });
+
         // Summary statistics
         $summary = [
             'total_payments' => ProgressPayment::count(),
             'completed_payments' => ProgressPayment::whereIn('status', ['completed', 'approved', 'paid'])->count(),
-            'total_amount' => ProgressPayment::selectRaw('SUM(completed_quantity * unit_price) as total')->value('total') ?? 0,
-            'paid_amount' => ProgressPayment::where('status', 'paid')
-                ->selectRaw('SUM(completed_quantity * unit_price) as total')
-                ->value('total') ?? 0,
-            'pending_amount' => ProgressPayment::whereIn('status', ['planned', 'in_progress', 'completed', 'approved'])
-                ->selectRaw('SUM(completed_quantity * unit_price) as total')
-                ->value('total') ?? 0,
+            'total_amount' => round($totalAmount, 2),
+            'paid_amount' => round($paidAmount, 2),
+            'pending_amount' => round($pendingAmount, 2),
 
             // By status
             'by_status' => ProgressPayment::selectRaw('status, COUNT(*) as count')

@@ -1,7 +1,7 @@
 <template>
   <div
     :class="[
-      'bg-white overflow-hidden transition-all duration-200',
+      'relative bg-white transition-all duration-200',
       shadowClasses[shadow],
       roundedClasses[rounded],
       borderClasses,
@@ -276,8 +276,5 @@ const badgeClasses = {
   background: #a8a8a8;
 }
 
-/* Loading overlay positioning */
-.relative {
-  position: relative;
-}
+/* Loading overlay positioning - now handled by relative class in template */
 </style>

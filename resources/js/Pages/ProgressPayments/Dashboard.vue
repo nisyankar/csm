@@ -296,6 +296,11 @@ const props = defineProps({
   }
 })
 
+// Debug: Log summary data
+console.log('Progress Payments Dashboard - Summary:', props.summary)
+console.log('Total Amount:', props.summary.total_amount, 'Type:', typeof props.summary.total_amount)
+console.log('Paid Amount:', props.summary.paid_amount, 'Type:', typeof props.summary.paid_amount)
+
 const completionRate = computed(() => {
   if (props.summary.total_payments === 0) return 0
   return Math.round((props.summary.completed_payments / props.summary.total_payments) * 100)
@@ -336,12 +341,26 @@ const quickActions = computed(() => {
 })
 
 const formatCurrency = (amount) => {
+  console.log('formatCurrency called with:', amount, 'Type:', typeof amount)
+
+  // Handle null, undefined, NaN
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    console.warn('Invalid amount for currency formatting:', amount)
+    return '₺0'
+  }
+
+  const numAmount = Number(amount)
+  if (isNaN(numAmount)) {
+    console.warn('Could not convert to number:', amount)
+    return '₺0'
+  }
+
   return new Intl.NumberFormat('tr-TR', {
     style: 'currency',
     currency: 'TRY',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
-  }).format(amount)
+  }).format(numAmount)
 }
 
 const getStatusLabel = (status) => {

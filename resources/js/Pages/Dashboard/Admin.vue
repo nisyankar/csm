@@ -182,14 +182,15 @@ const quickActions = computed(() => {
         href: route('timesheets.bulk-entry'),
         icon: 'clock',
         color: 'bg-purple-50 text-purple-700'
-      },
-      {
-        label: 'İzin Parametreleri',
-        description: 'İzin ayarlarını yönetin',
-        href: route('leave-parameters.index'),
-        icon: 'cog',
-        color: 'bg-yellow-50 text-yellow-700'
       }
+      // İzin Parametreleri modülü henüz eklenmedi
+      // {
+      //   label: 'İzin Parametreleri',
+      //   description: 'İzin ayarlarını yönetin',
+      //   href: route('leave-parameters.index'),
+      //   icon: 'cog',
+      //   color: 'bg-yellow-50 text-yellow-700'
+      // }
     ]
   } catch (error) {
     console.error('Error building quick actions:', error)

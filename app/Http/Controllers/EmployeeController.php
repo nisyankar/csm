@@ -81,7 +81,7 @@ class EmployeeController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Employees/Create', [
+        return Inertia::render('Employees/CreateSimple', [
             'departments' => $this->getDepartmentsRaw(),
             'projects' => $this->getProjectsRaw(),
             'managers' => $this->getManagersRaw(),
@@ -124,18 +124,18 @@ class EmployeeController extends Controller
                 'address' => 'nullable|string',
                 'position' => 'required|string|max:100',
                 'category' => 'required|in:worker,foreman,technician,engineer,manager',
-                'status' => 'required|in:active,inactive,suspended',
+                'status' => 'nullable|in:active,inactive,suspended',
                 'start_date' => 'required|date',
                 'end_date' => 'nullable|date|after:start_date',
                 'department_id' => 'nullable|exists:departments,id',
                 'current_project_id' => 'nullable|exists:projects,id',
                 'manager_id' => 'nullable|exists:employees,id',
-                'annual_leave_days' => 'required|integer|min:14|max:30',
+                // annual_leave_days will be calculated automatically
                 'used_leave_days' => 'nullable|integer|min:0',
                 'wage_type' => 'required|in:daily,hourly,monthly',
-                'daily_wage' => 'nullable|numeric|min:0',
-                'hourly_wage' => 'nullable|numeric|min:0',
-                'monthly_salary' => 'nullable|numeric|min:0',
+                'daily_wage' => 'required_if:wage_type,daily|nullable|numeric|min:0.01',
+                'hourly_wage' => 'required_if:wage_type,hourly|nullable|numeric|min:0.01',
+                'monthly_salary' => 'required_if:wage_type,monthly|nullable|numeric|min:0.01',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
             ]);
 
@@ -150,6 +150,15 @@ class EmployeeController extends Controller
             if ($request->hasFile('photo')) {
                 $photoPath = $request->file('photo')->store('employee_photos', 'public');
                 $validated['photo_path'] = $photoPath;
+            }
+
+            // Calculate annual leave days based on start date
+            // Turkish Labor Law: 1-5 years: 14 days, 5-15 years: 20 days, 15+ years: 26 days
+            $validated['annual_leave_days'] = $this->calculateAnnualLeaveDays($validated['start_date']);
+
+            // Set default status if not provided
+            if (!isset($validated['status'])) {
+                $validated['status'] = 'active';
             }
 
             $employee = Employee::create($validated);
@@ -601,6 +610,8 @@ class EmployeeController extends Controller
             return array_map(function ($manager) {
                 return [
                     'id' => (int) $manager->id,
+                    'first_name' => $this->cleanString($manager->first_name),
+                    'last_name' => $this->cleanString($manager->last_name),
                     'name' => $this->cleanString(trim($manager->first_name . ' ' . $manager->last_name))
                 ];
             }, $managers);
@@ -1214,5 +1225,47 @@ class EmployeeController extends Controller
             ->toArray();
 
         return $projectStats;
+    }
+
+    /**
+     * Calculate annual leave days based on Turkish Labor Law
+     *
+     * Turkish Labor Law (İş Kanunu 53. Madde):
+     * - 1-5 years of service (1 yıldan az 5 yıla kadar): 14 days
+     * - 5-15 years of service (5 yıldan az on beş yıla kadar): 20 days
+     * - 15+ years of service (on beş yıl ve daha fazla): 26 days
+     *
+     * @param string $startDate Employee's start date
+     * @return int Annual leave days
+     */
+    private function calculateAnnualLeaveDays(string $startDate): int
+    {
+        try {
+            $startDate = \Carbon\Carbon::parse($startDate);
+            $now = \Carbon\Carbon::now();
+
+            // Calculate years of service
+            $yearsOfService = $startDate->diffInYears($now);
+
+            // Apply Turkish Labor Law rules
+            if ($yearsOfService < 1) {
+                // For new employees (less than 1 year), they still get 14 days
+                // but they may need to be prorated based on company policy
+                return 14;
+            } elseif ($yearsOfService >= 1 && $yearsOfService < 5) {
+                // 1-5 years: 14 days
+                return 14;
+            } elseif ($yearsOfService >= 5 && $yearsOfService < 15) {
+                // 5-15 years: 20 days
+                return 20;
+            } else {
+                // 15+ years: 26 days
+                return 26;
+            }
+        } catch (\Exception $e) {
+            \Log::error('Annual leave calculation error: ' . $e->getMessage());
+            // Default to minimum leave days on error
+            return 14;
+        }
     }
 }

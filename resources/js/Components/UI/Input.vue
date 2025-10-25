@@ -48,6 +48,7 @@
         :step="step"
         :pattern="pattern"
         :autocomplete="autocomplete"
+        :maxlength="maxlength"
         :class="[
           'block w-full rounded-md border-0 py-2 shadow-sm ring-1 ring-inset transition-colors',
           'placeholder:text-gray-400',
@@ -212,6 +213,10 @@ const props = defineProps({
   },
   autocomplete: {
     type: String,
+    default: undefined
+  },
+  maxlength: {
+    type: [String, Number],
     default: undefined
   }
 })

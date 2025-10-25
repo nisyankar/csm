@@ -23,11 +23,12 @@
       >
         <input
           ref="searchInputRef"
-          v-model="searchQuery"
+          :value="isOpen ? searchQuery : displayValue"
+          @input="handleSearchInput"
           @focus="openDropdown"
           @blur="handleBlur"
           @keydown="handleKeydown"
-          :placeholder="searchPlaceholder"
+          :placeholder="displayValue || searchPlaceholder"
           :disabled="disabled"
           :class="[
             'block w-full rounded-md border-0 py-2 pl-3 pr-10 shadow-sm ring-1 ring-inset transition-colors',
@@ -101,7 +102,7 @@
         <div
           v-if="searchable && isOpen"
           ref="dropdownRef"
-          class="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none max-h-60 overflow-auto"
+          class="absolute z-50 mt-1 w-full bg-white shadow-lg rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none max-h-60 overflow-auto"
         >
           <!-- No results -->
           <div
@@ -115,7 +116,7 @@
           <div
             v-for="(option, index) in filteredOptions"
             :key="getOptionValue(option)"
-            @click="selectOption(option)"
+            @mousedown.prevent="selectOption(option)"
             @mouseenter="highlightedIndex = index"
             :class="[
               'cursor-pointer select-none relative px-3 py-2 text-sm',
@@ -323,9 +324,18 @@ const filteredOptions = computed(() => {
 
 const selectedOptions = computed(() => {
   if (!props.multiple) return []
-  
+
   const values = Array.isArray(props.modelValue) ? props.modelValue : []
   return props.options.filter(option => values.includes(getOptionValue(option)))
+})
+
+// For single select, show selected label in search input
+const displayValue = computed(() => {
+  if (props.multiple) return ''
+  if (!props.modelValue) return ''
+
+  const selectedOption = props.options.find(option => getOptionValue(option) === props.modelValue)
+  return selectedOption ? getOptionLabel(selectedOption) : ''
 })
 
 // Helper Methods
@@ -375,18 +385,21 @@ const handleFocus = (event) => {
 }
 
 const handleBlur = (event) => {
-  // Delay to allow click events on dropdown
-  setTimeout(() => {
-    if (props.searchable && isOpen.value) {
-      closeDropdown()
-    }
-    emit('blur', event)
-  }, 200)
+  // Don't close immediately - let handleClickOutside handle it
+  // This allows dropdown clicks to register before closing
+  emit('blur', event)
+}
+
+const handleSearchInput = (event) => {
+  searchQuery.value = event.target.value
+  if (!isOpen.value) {
+    openDropdown()
+  }
 }
 
 const handleKeydown = (event) => {
   if (!props.searchable) return
-  
+
   switch (event.key) {
     case 'ArrowDown':
       event.preventDefault()
@@ -396,12 +409,12 @@ const handleKeydown = (event) => {
         highlightedIndex.value = Math.min(highlightedIndex.value + 1, filteredOptions.value.length - 1)
       }
       break
-      
+
     case 'ArrowUp':
       event.preventDefault()
       highlightedIndex.value = Math.max(highlightedIndex.value - 1, -1)
       break
-      
+
     case 'Enter':
       event.preventDefault()
       if (isOpen.value && highlightedIndex.value >= 0) {
@@ -410,11 +423,11 @@ const handleKeydown = (event) => {
         openDropdown()
       }
       break
-      
+
     case 'Escape':
       closeDropdown()
       break
-      
+
     case 'Tab':
       closeDropdown()
       break
@@ -469,7 +482,16 @@ watch(searchQuery, (newQuery) => {
 
 // Click outside handler
 const handleClickOutside = (event) => {
-  if (isOpen.value && dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+  if (!isOpen.value) return
+
+  const searchInput = searchInputRef.value
+  const dropdown = dropdownRef.value
+
+  // Check if click is outside both search input and dropdown
+  const isClickInsideSearchInput = searchInput && searchInput.contains(event.target)
+  const isClickInsideDropdown = dropdown && dropdown.contains(event.target)
+
+  if (!isClickInsideSearchInput && !isClickInsideDropdown) {
     closeDropdown()
   }
 }
