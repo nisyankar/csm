@@ -28,6 +28,7 @@ use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\SubcontractorController;
 use App\Http\Controllers\ProjectStructureController;
 use App\Http\Controllers\ProjectFloorController;
+use App\Http\Controllers\ProgressPaymentController;
 use App\Http\Controllers\ProjectUnitController;
 use App\Http\Controllers\WorkItemAssignmentController;
 use App\Http\Controllers\DailyReportController;
@@ -900,4 +901,41 @@ Route::middleware(['auth'])->prefix('api/holidays')->name('api.holidays.')->grou
     Route::delete('/{holiday}', [App\Http\Controllers\HolidayController::class, 'destroy'])->name('destroy');
     Route::get('/range', [App\Http\Controllers\HolidayController::class, 'getHolidaysInRange'])->name('range');
     Route::post('/seed-2025', [App\Http\Controllers\HolidayController::class, 'seed2025Holidays'])->name('seed-2025');
+});
+
+// PROGRESS PAYMENT ROUTES (Hakediş Takibi)
+Route::middleware(['auth', 'verified'])->prefix('progress-payments')->name('progress-payments.')->group(function () {
+    Route::get('/dashboard', [ProgressPaymentController::class, 'dashboard'])->name('dashboard');
+    Route::get('/', [ProgressPaymentController::class, 'index'])->name('index');
+    Route::get('/create', [ProgressPaymentController::class, 'create'])
+        ->middleware('role:admin|project_manager')
+        ->name('create');
+    Route::post('/', [ProgressPaymentController::class, 'store'])
+        ->middleware('role:admin|project_manager')
+        ->name('store');
+    Route::get('/{progressPayment}', [ProgressPaymentController::class, 'show'])->name('show');
+    Route::get('/{progressPayment}/edit', [ProgressPaymentController::class, 'edit'])
+        ->middleware('role:admin|project_manager')
+        ->name('edit');
+    Route::put('/{progressPayment}', [ProgressPaymentController::class, 'update'])
+        ->middleware('role:admin|project_manager')
+        ->name('update');
+    Route::delete('/{progressPayment}', [ProgressPaymentController::class, 'destroy'])
+        ->middleware('role:admin|project_manager')
+        ->name('destroy');
+
+    // Approval actions
+    Route::post('/{progressPayment}/approve', [ProgressPaymentController::class, 'approve'])
+        ->middleware('role:admin|project_manager')
+        ->name('approve');
+    Route::post('/{progressPayment}/mark-as-paid', [ProgressPaymentController::class, 'markAsPaid'])
+        ->middleware('role:admin|accountant')
+        ->name('mark-as-paid');
+});
+
+// PROGRESS TRACKING API ROUTES
+Route::middleware(['auth'])->prefix('api/progress')->name('api.progress.')->group(function () {
+    Route::get('/project/{project}', [ProgressPaymentController::class, 'projectProgress'])->name('project');
+    Route::get('/structure/{structure}', [ProgressPaymentController::class, 'structureProgress'])->name('structure');
+    Route::get('/floor/{floor}', [ProgressPaymentController::class, 'floorProgress'])->name('floor');
 });

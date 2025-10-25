@@ -243,6 +243,11 @@ class ProjectController extends Controller
                     ->orderBy('project_subcontractor.status')
                     ->orderBy('project_subcontractor.assigned_date', 'desc');
             },
+            'progressPayments' => function ($query) {
+                $query->with(['subcontractor', 'workItem'])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(50);
+            },
             'structures.floors.units'
         ]);
 

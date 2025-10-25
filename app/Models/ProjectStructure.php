@@ -340,4 +340,68 @@ class ProjectStructure extends Model
             'metadata' => $metadata,
         ]);
     }
+
+    /**
+     * İlerleme takip metodları (ProgressPayment bazlı)
+     */
+
+    /**
+     * ProgressPayment ilişkisi
+     */
+    public function progressPayments(): HasMany
+    {
+        return $this->hasMany(ProgressPayment::class, 'project_structure_id');
+    }
+
+    /**
+     * Blok ilerleme yüzdesi (ProgressPayment bazlı)
+     * Katlardaki tüm işlerin ortalama ilerlemesi
+     */
+    public function getProgressPercentageAttribute(): float
+    {
+        $floors = $this->floors()->get();
+
+        if ($floors->isEmpty()) {
+            // Eğer kat yoksa, doğrudan bu bloğa bağlı progressPayments'a bak
+            $payments = $this->progressPayments()->get();
+
+            if ($payments->isEmpty()) {
+                return 0;
+            }
+
+            $totalProgress = $payments->sum('completion_percentage');
+            return round($totalProgress / $payments->count(), 2);
+        }
+
+        // Katlar varsa, katların ortalama ilerlemesi
+        $totalProgress = $floors->sum(fn($floor) => $floor->progress_percentage ?? 0);
+        return round($totalProgress / $floors->count(), 2);
+    }
+
+    /**
+     * Blok ilerleme özeti
+     */
+    public function getProgressSummary(): array
+    {
+        $totalPayments = ProgressPayment::where('project_structure_id', $this->id)->count();
+        $completedPayments = ProgressPayment::where('project_structure_id', $this->id)
+            ->where('status', 'completed')
+            ->count();
+
+        $totalAmount = ProgressPayment::where('project_structure_id', $this->id)->sum('total_amount');
+        $paidAmount = ProgressPayment::where('project_structure_id', $this->id)
+            ->where('status', 'paid')
+            ->sum('total_amount');
+
+        return [
+            'progress_percentage' => $this->progress_percentage,
+            'total_floors' => $this->floors()->count(),
+            'completed_floors' => $this->floors()->where('status', 'completed')->count(),
+            'total_payments' => $totalPayments,
+            'completed_payments' => $completedPayments,
+            'total_amount' => $totalAmount,
+            'paid_amount' => $paidAmount,
+            'pending_amount' => $totalAmount - $paidAmount,
+        ];
+    }
 }

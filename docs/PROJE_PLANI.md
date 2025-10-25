@@ -1,17 +1,62 @@
 # SPT - Şantiye Proje Takip Sistemi
 ## 📋 Proje Planı ve Durum Takibi
 
-**Son Güncelleme:** 24 Ekim 2025
-**Versiyon:** 3.0.0
+**Son Güncelleme:** 25 Ekim 2025
+**Versiyon:** 3.2.0
 **Durum:** Aktif Geliştirme
 
 ---
 
 ## 📊 GÜNCEL DURUM ÖZETİ
 
-### ✅ Son Tamamlanan Geliştirmeler (24 Ekim 2025)
+### ✅ Son Tamamlanan Geliştirmeler (25 Ekim 2025)
 
-#### 1. **Resmi Tatil Yönetim Sistemi** ✨ YENİ
+#### 1. **Hakediş (Progress Payment) Takip Sistemi** ✨ YENİ ⭐
+- [x] ProgressPayment model ve migration oluşturuldu
+- [x] Hakediş CRUD Controller (ProgressPaymentController)
+- [x] Dashboard sayfası (istatistikler, grafikler, son hakediş kayıtları)
+  - Durum dağılımı, proje bazlı ilerleme
+  - Taşeron performans tablosu
+  - Onay bekleyenler listesi
+  - **NaN hataları düzeltildi (computed column sum() sorunu)**
+- [x] Index sayfası (liste görünümü + filtreler)
+  - Proje, Taşeron, Durum, Yıl, Ay filtreleri
+  - Arama özelliği
+  - İlerleme çubukları
+  - **Görüntüle ve Düzenle butonları eklendi**
+- [x] Create/Edit sayfaları (modern full-width tasarım)
+  - Proje bazlı taşeron filtreleme
+  - Blok → Kat → Birim cascading dropdowns
+  - İlerleme ve tutar otomatik hesaplama
+  - Unit/Daire listing düzeltildi
+- [x] Show sayfası (detay görünümü)
+  - 3-column responsive layout
+  - Timeline ve quick stats
+  - Onay ve ödeme işlemleri
+- [x] **Proje Show sayfasına Hakediş Kayıtları tab'ı eklendi**
+  - Tab sistemi ile hakediş listesi
+  - İstatistik kartları (toplam, tamamlanan, tutar, ilerleme)
+  - NaN hataları parseFloat() ile düzeltildi
+- [x] **Taşeron Show sayfasına Hakediş Kayıtları tab'ı eklendi**
+  - Tab sistemi ile hakediş listesi
+  - İstatistik kartları eklendi
+  - **Card görünüm sorunları kalıcı çözüldü** (white/10 backdrop-blur pattern)
+- [x] Onay ve ödeme workflow (planned → in_progress → completed → approved → paid)
+- [x] Otomatik cascade güncelleme (Payment → Floor → Structure → Project)
+- [x] Backend ilişkiler: projects, subcontractors, work_items, structures, floors, units
+- [x] 108 test verisi (ProgressPaymentSeeder)
+- [x] 25 iş kalemi (WorkItemSeeder)
+- [x] Tüm sayfalar modern full-width tasarımda
+
+**Özellikler:**
+- Metraj ve hakediş tutarı takibi
+- İlerleme yüzdesi hesaplama
+- Proje yapısı entegrasyonu (Blok/Kat/Birim - opsiyonel)
+- Taşeron bazlı performans raporlama
+- Dönem (yıl/ay) filtreleme
+- Durum bazlı raporlama
+
+#### 2. **Resmi Tatil Yönetim Sistemi** ✨ YENİ
 - [x] Holiday model ve migration oluşturuldu
 - [x] Arefe (yarım gün tatil) desteği eklendi
   - `is_half_day`, `half_day_start` kolonları
@@ -392,16 +437,47 @@ Proje B (Sadece Pazar tatil):
 4. **İzin Hesaplama:** Tatil ve proje kuralları tam entegre (24 Ekim)
 
 ### Bilinen Sorunlar
-- TimesheetV3Controller hala mevcut (kaldırılacak)
-- Bazı route'lar eski controller'ı kullanıyor
-- Test coverage yok
+- [ ] Employee Create page hatası: Button.vue "Cannot read properties of undefined (reading 'default')" `/employees/create`
+- [ ] TimesheetV3Controller hala mevcut (kaldırılacak)
+- [ ] Bazı route'lar eski controller'ı kullanıyor
+- [ ] Test coverage yok
+
+### Teknik Düzeltmeler (25 Ekim 2025)
+#### NaN Hatası Çözümü - Computed Columns
+**Problem:** Laravel migration'da `total_amount` computed column olarak tanımlanmış (`->storedAs('completed_quantity * unit_price')`). Eloquent'te `sum('total_amount')` kullanıldığında NaN hatası veriyordu.
+
+**Çözüm:** Computed column'lar üzerinde doğrudan aggregate fonksiyonlar çalışmadığı için raw SQL kullanıldı:
+```php
+// ❌ Hatalı
+$total = ProgressPayment::sum('total_amount');
+
+// ✅ Doğru
+$total = ProgressPayment::selectRaw('SUM(completed_quantity * unit_price) as total')->value('total') ?? 0;
+```
+
+**Etkilenen Dosyalar:**
+- `app/Http/Controllers/ProgressPaymentController.php` (dashboard method)
+- `resources/js/Pages/Projects/Show.vue` (progressPaymentStats computed)
+- `resources/js/Pages/Subcontractors/Show.vue` (progressPaymentStats computed)
+
+#### Card Görünüm Düzeltmesi
+**Problem:** Subcontractor Show sayfasında header stats kartları mor/beyaz yarı saydam arka plan kullanıyordu ve mor gradient üzerinde metin okunmuyordu.
+
+**Çözüm:** Project Show sayfasındaki glass-morphism pattern kopyalandı:
+```css
+/* ❌ Eski - okunmuyor */
+bg-purple-800 bg-opacity-40 border-purple-400 border-opacity-30
+
+/* ✅ Yeni - net okunuyor */
+bg-white/10 backdrop-blur-sm border-white/30
+```
 
 ### Sonraki Sohbet İçin
 Bu dokümandan yeni sohbet başlatırken özet geçebilirsiniz. Tüm tamamlanan görevler [x] ile işaretli, yapılacaklar [ ] ile işaretli.
 
 ---
 
-**Son Güncelleme:** 24 Ekim 2025, 18:00
+**Son Güncelleme:** 25 Ekim 2025, 22:30
 **Güncelleyen:** Development Team
-**Versiyon:** 3.1.0
-**Önemli Değişiklik:** Dashboard widget sistemi tamamlandı! Resmi tatil ve proje bazlı hafta tatili sistemleri eklendi.
+**Versiyon:** 3.2.0
+**Önemli Değişiklik:** Hakediş sistemi Proje ve Taşeron Show sayfalarına entegre edildi. NaN hataları ve card görünüm sorunları çözüldü.

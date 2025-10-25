@@ -98,6 +98,18 @@
             ]"
           />
 
+          <!-- Progress Payment Management -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'site_manager'])"
+            label="Hakediş Takibi"
+            icon="chart-bar"
+            :items="[
+              { href: route('progress-payments.dashboard'), label: 'Dashboard', active: route().current('progress-payments.dashboard') },
+              { href: route('progress-payments.index'), label: 'Hakediş Listesi', active: route().current('progress-payments.index') || route().current('progress-payments.show') },
+              { href: route('progress-payments.create'), label: 'Yeni Hakediş', active: route().current('progress-payments.create') }
+            ]"
+          />
+
           <!-- Leave Management -->
           <SidebarGroup
             label="İzin Yönetimi"

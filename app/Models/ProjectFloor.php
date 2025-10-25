@@ -144,4 +144,51 @@ class ProjectFloor extends Model
             'total_area' => $this->calculateTotalArea(),
         ]);
     }
+
+    /**
+     * İlerleme takip metodları (ProgressPayment bazlı)
+     */
+
+    /**
+     * ProgressPayment ilişkisi
+     */
+    public function progressPayments(): HasMany
+    {
+        return $this->hasMany(ProgressPayment::class, 'project_floor_id');
+    }
+
+    /**
+     * Kat ilerleme yüzdesi (ProgressPayment bazlı)
+     */
+    public function getProgressPercentageAttribute(): float
+    {
+        $payments = $this->progressPayments()->get();
+
+        if ($payments->isEmpty()) {
+            return 0;
+        }
+
+        $totalProgress = $payments->sum('completion_percentage');
+        return round($totalProgress / $payments->count(), 2);
+    }
+
+    /**
+     * Kat ilerleme özeti
+     */
+    public function getProgressSummary(): array
+    {
+        $totalPayments = $this->progressPayments()->count();
+        $completedPayments = $this->progressPayments()->where('status', 'completed')->count();
+        $totalAmount = $this->progressPayments()->sum('total_amount');
+        $paidAmount = $this->progressPayments()->where('status', 'paid')->sum('total_amount');
+
+        return [
+            'progress_percentage' => $this->progress_percentage,
+            'total_payments' => $totalPayments,
+            'completed_payments' => $completedPayments,
+            'total_amount' => $totalAmount,
+            'paid_amount' => $paidAmount,
+            'pending_amount' => $totalAmount - $paidAmount,
+        ];
+    }
 }

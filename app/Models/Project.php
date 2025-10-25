@@ -428,4 +428,77 @@ class Project extends Model
 
         return implode(', ', $turkishDays);
     }
+
+    /**
+     * İlerleme takip metodları
+     */
+
+    /**
+     * Proje ilerleme hesaplaması
+     * Tüm blokların ortalama ilerlemesini döndürür
+     */
+    public function getProgressPercentageAttribute(): float
+    {
+        $structures = $this->structures()->get();
+
+        if ($structures->isEmpty()) {
+            return 0;
+        }
+
+        $totalProgress = $structures->sum(function ($structure) {
+            return $structure->progress_percentage ?? 0;
+        });
+
+        return round($totalProgress / $structures->count(), 2);
+    }
+
+    /**
+     * İlerleme özeti (dashboard için)
+     */
+    public function getProgressSummary(): array
+    {
+        $totalPayments = ProgressPayment::forProject($this->id)->count();
+        $completedPayments = ProgressPayment::forProject($this->id)->byStatus('completed')->count();
+        $paidPayments = ProgressPayment::forProject($this->id)->byStatus('paid')->count();
+
+        $totalAmount = ProgressPayment::forProject($this->id)->sum('total_amount');
+        $paidAmount = ProgressPayment::forProject($this->id)->byStatus('paid')->sum('total_amount');
+
+        return [
+            'progress_percentage' => $this->progress_percentage,
+            'total_structures' => $this->structures()->count(),
+            'completed_structures' => $this->structures()->where('status', 'completed')->count(),
+            'total_payments' => $totalPayments,
+            'completed_payments' => $completedPayments,
+            'paid_payments' => $paidPayments,
+            'total_amount' => $totalAmount,
+            'paid_amount' => $paidAmount,
+            'pending_amount' => $totalAmount - $paidAmount,
+        ];
+    }
+
+    /**
+     * Proje ilerleme detayları (Blok bazında)
+     */
+    public function getDetailedProgress(): array
+    {
+        return $this->structures()->get()->map(function ($structure) {
+            return [
+                'structure_id' => $structure->id,
+                'structure_name' => $structure->name,
+                'progress_percentage' => $structure->progress_percentage,
+                'status' => $structure->status,
+                'floors_count' => $structure->floors()->count(),
+                'completed_floors' => $structure->floors()->where('status', 'completed')->count(),
+            ];
+        })->toArray();
+    }
+
+    /**
+     * ProgressPayment ilişkisi
+     */
+    public function progressPayments(): HasMany
+    {
+        return $this->hasMany(ProgressPayment::class);
+    }
 }

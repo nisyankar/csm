@@ -163,6 +163,11 @@ class SubcontractorController extends Controller
                 $query->with(['project', 'rater'])
                     ->orderBy('rated_at', 'desc');
             },
+            'progressPayments' => function ($query) {
+                $query->with(['project', 'workItem'])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(50);
+            },
             'approver',
         ]);
 

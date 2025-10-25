@@ -166,6 +166,14 @@ class Subcontractor extends Model
     // }
 
     /**
+     * Taşeronun hakediş kayıtları
+     */
+    public function progressPayments()
+    {
+        return $this->hasMany(ProgressPayment::class);
+    }
+
+    /**
      * Aktif taşeronlar
      */
     public function scopeActive($query)
