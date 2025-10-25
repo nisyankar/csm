@@ -81,7 +81,6 @@ class TimesheetDemoSeeder extends Seeder
                     $timesheet = Timesheet::create([
                         'employee_id' => $employee->id,
                         'project_id' => $employee->current_project_id,
-                        'department_id' => $employee->department_id,
                         'work_date' => $current->format('Y-m-d'),
                         'start_time' => $startTime,
                         'end_time' => $endTime,
@@ -133,7 +132,6 @@ class TimesheetDemoSeeder extends Seeder
             $timesheet = Timesheet::create([
                 'employee_id' => $employee->id,
                 'project_id' => $employee->current_project_id,
-                'department_id' => $employee->department_id,
                 'work_date' => Carbon::today()->format('Y-m-d'),
                 'start_time' => '08:00:00',
                 'end_time' => '17:00:00',
@@ -191,7 +189,6 @@ class TimesheetDemoSeeder extends Seeder
             $rejected = Timesheet::create([
                 'employee_id' => $employee->id,
                 'project_id' => $employee->current_project_id,
-                'department_id' => $employee->department_id,
                 'work_date' => $workDate,
                 'start_time' => '09:30:00', // Geç gelmiş
                 'end_time' => '16:00:00', // Erken çıkmış
@@ -243,7 +240,6 @@ class TimesheetDemoSeeder extends Seeder
             $timesheet = Timesheet::create([
                 'employee_id' => $employee->id,
                 'project_id' => $employee->current_project_id,
-                'department_id' => $employee->department_id,
                 'work_date' => $workDate,
                 'start_time' => '08:00:00',
                 'end_time' => '20:00:00', // 12 saat
@@ -289,7 +285,6 @@ class TimesheetDemoSeeder extends Seeder
                 Timesheet::create([
                     'employee_id' => $employee->id,
                     'project_id' => $employee->current_project_id,
-                    'department_id' => $employee->department_id,
                     'work_date' => $annualLeaveDate,
                 'attendance_type' => 'annual_leave',
                 'entry_method' => 'system',
@@ -309,7 +304,6 @@ class TimesheetDemoSeeder extends Seeder
                 Timesheet::create([
                     'employee_id' => $employee->id,
                     'project_id' => $employee->current_project_id,
-                    'department_id' => $employee->department_id,
                     'work_date' => $sickLeaveDate,
                     'attendance_type' => 'sick_leave',
                     'entry_method' => 'manual',

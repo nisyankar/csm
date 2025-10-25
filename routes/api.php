@@ -785,4 +785,50 @@ Route::middleware(['auth:sanctum'])->prefix('v1/project-management')->name('api.
             ->middleware('role:admin|project_manager|site_manager')
             ->name('reject');
     });
+
+    // Financial Management (Finansal Yönetim)
+    Route::prefix('financial')->name('financial.')->group(function () {
+
+        // Income Categories (Gelir Kategorileri)
+        Route::prefix('income-categories')->name('income-categories.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\IncomeCategoryController::class, 'index'])->name('index');
+            Route::get('/tree', [\App\Http\Controllers\Api\IncomeCategoryController::class, 'tree'])->name('tree');
+            Route::get('/{incomeCategory}', [\App\Http\Controllers\Api\IncomeCategoryController::class, 'show'])->name('show');
+        });
+
+        // Expense Categories (Gider Kategorileri)
+        Route::prefix('expense-categories')->name('expense-categories.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\ExpenseCategoryController::class, 'index'])->name('index');
+            Route::get('/tree', [\App\Http\Controllers\Api\ExpenseCategoryController::class, 'tree'])->name('tree');
+            Route::get('/{expenseCategory}', [\App\Http\Controllers\Api\ExpenseCategoryController::class, 'show'])->name('show');
+        });
+
+        // Financial Transactions (Finansal İşlemler)
+        Route::prefix('transactions')->name('transactions.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'store'])
+                ->middleware('role:admin|project_manager|hr')
+                ->name('store');
+            Route::get('/{financialTransaction}', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'show'])->name('show');
+            Route::put('/{financialTransaction}', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'update'])
+                ->middleware('role:admin|project_manager|hr')
+                ->name('update');
+            Route::delete('/{financialTransaction}', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'destroy'])
+                ->middleware('role:admin|project_manager')
+                ->name('destroy');
+
+            // Transaction Actions
+            Route::post('/{financialTransaction}/payment', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'makePayment'])
+                ->middleware('role:admin|project_manager|hr')
+                ->name('payment');
+            Route::post('/{financialTransaction}/approve', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'approve'])
+                ->middleware('role:admin|project_manager')
+                ->name('approve');
+
+            // Reports
+            Route::get('/profit-loss', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'profitLoss'])->name('profit-loss');
+            Route::get('/category-breakdown', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'categoryBreakdown'])->name('category-breakdown');
+            Route::get('/dashboard-summary', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'dashboardSummary'])->name('dashboard-summary');
+        });
+    });
 });

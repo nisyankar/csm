@@ -341,26 +341,22 @@ class ConstructionSeeder extends Seeder
                         continue; // %85 devam oranı
                     }
 
+                    // Basit timesheet - yeni model yapısına uygun
                     Timesheet::create([
                         'employee_id' => $employee->id,
                         'project_id' => $employee->current_project_id,
-                        'department_id' => $departments[array_rand($departments)]->id ?? null,
+                        'shift_id' => 1, // Gündüz vardiyası (ShiftSeeder'dan)
                         'work_date' => $date->format('Y-m-d'),
-                        'start_time' => '08:00:00',
-                        'end_time' => '17:00:00',
-                        'total_minutes' => 480, // 8 saat
-                        'regular_minutes' => 480,
-                        'overtime_minutes' => 0,
-                        'break_minutes' => 60,
-                        'shift_type' => 'day',
-                        'attendance_type' => 'present',
+                        'start_time' => $date->copy()->setTime(8, 0),
+                        'end_time' => $date->copy()->setTime(17, 0),
+                        'hours_worked' => 8.0,
+                        'overtime_hours' => 0,
+                        'break_duration' => 1.0,
                         'entry_method' => 'manual',
                         'entered_by' => $employee->user_id,
-                        'entered_at' => $date,
                         'approval_status' => 'approved',
-                        'daily_rate' => $employee->daily_wage,
-                        'hourly_rate' => $employee->hourly_wage ?? 50,
-                        'calculated_wage' => $employee->daily_wage ?? 400,
+                        'year' => $date->year,
+                        'week_number' => $date->weekOfYear,
                     ]);
                 }
             }

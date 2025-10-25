@@ -32,6 +32,7 @@ use App\Http\Controllers\ProgressPaymentController;
 use App\Http\Controllers\ProjectUnitController;
 use App\Http\Controllers\WorkItemAssignmentController;
 use App\Http\Controllers\DailyReportController;
+use App\Http\Controllers\FinancialController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -938,4 +939,31 @@ Route::middleware(['auth'])->prefix('api/progress')->name('api.progress.')->grou
     Route::get('/project/{project}', [ProgressPaymentController::class, 'projectProgress'])->name('project');
     Route::get('/structure/{structure}', [ProgressPaymentController::class, 'structureProgress'])->name('structure');
     Route::get('/floor/{floor}', [ProgressPaymentController::class, 'floorProgress'])->name('floor');
+});
+
+// FINANCIAL MANAGEMENT ROUTES (Finansal Yönetim - Faz 2)
+Route::middleware(['auth', 'verified'])->prefix('financial')->name('financial.')->group(function () {
+    // Financial Dashboard
+    Route::get('/dashboard', [FinancialController::class, 'dashboard'])
+        ->middleware('role:admin|project_manager|accountant')
+        ->name('dashboard');
+
+    // Transactions
+    Route::get('/', [FinancialController::class, 'index'])
+        ->middleware('role:admin|project_manager|accountant|hr')
+        ->name('index');
+    Route::get('/create', [FinancialController::class, 'create'])
+        ->middleware('role:admin|project_manager|accountant')
+        ->name('create');
+    Route::get('/{transaction}', [FinancialController::class, 'show'])
+        ->middleware('role:admin|project_manager|accountant|hr')
+        ->name('show');
+    Route::get('/{transaction}/edit', [FinancialController::class, 'edit'])
+        ->middleware('role:admin|project_manager|accountant')
+        ->name('edit');
+
+    // Reports
+    Route::get('/reports/profit-loss', [FinancialController::class, 'profitLoss'])
+        ->middleware('role:admin|project_manager|accountant')
+        ->name('reports.profit-loss');
 });

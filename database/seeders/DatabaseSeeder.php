@@ -23,8 +23,11 @@ class DatabaseSeeder extends Seeder
             // Proje atamaları
             EmployeeProjectAssignmentSeeder::class, // Çalışan-proje atamaları
 
-            // Puantaj ve raporlar
-            TimesheetDemoSeeder::class, // Demo puantaj verileri
+            // Resmi Tatiller
+            HolidaysSeeder::class, // 2025 Resmi Tatil günleri
+
+            // Puantaj ve raporlar - GEÇİCİ DEVRE DIŞI (timesheet model güncellenmeli)
+            // TimesheetDemoSeeder::class, // Demo puantaj verileri
             DailyReportSeeder::class, // Günlük rapor verileri
 
             // Malzeme ve stok
@@ -45,6 +48,12 @@ class DatabaseSeeder extends Seeder
             // Proje yapısı ve taşeron atamaları
             ProjectStructureSeeder::class, // Blok, kat, daire yapıları
             ProjectSubcontractorSeeder::class, // Proje-taşeron atamaları
+
+            // Hakediş kayıtları
+            ProgressPaymentSeeder::class, // Taşeron hakediş verileri
+
+            // Finansal Yönetim
+            FinancialCategoriesSeeder::class, // Gelir/Gider kategorileri
         ]);
     }
 }
