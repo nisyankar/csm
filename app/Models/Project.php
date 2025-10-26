@@ -501,4 +501,12 @@ class Project extends Model
     {
         return $this->hasMany(ProgressPayment::class);
     }
+
+    /**
+     * Quantity ilişkisi (Keşif & Metraj)
+     */
+    public function quantities(): HasMany
+    {
+        return $this->hasMany(Quantity::class);
+    }
 }

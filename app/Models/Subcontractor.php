@@ -247,7 +247,7 @@ class Subcontractor extends Model
             $this->email,
         ]);
 
-        return implode(' | ', $parts);
+        return implode(' | ', $parts) ?: 'İletişim bilgisi yok';
     }
 
     /**
@@ -255,8 +255,9 @@ class Subcontractor extends Model
      */
     public function getRatingStarsAttribute(): string
     {
-        $fullStars = floor($this->rating);
-        $halfStar = ($this->rating - $fullStars) >= 0.5 ? 1 : 0;
+        $rating = (float) ($this->rating ?? 0);
+        $fullStars = floor($rating);
+        $halfStar = ($rating - $fullStars) >= 0.5 ? 1 : 0;
         $emptyStars = 5 - $fullStars - $halfStar;
 
         return str_repeat('★', (int) $fullStars) .

@@ -941,6 +941,40 @@ Route::middleware(['auth'])->prefix('api/progress')->name('api.progress.')->grou
     Route::get('/floor/{floor}', [ProgressPaymentController::class, 'floorProgress'])->name('floor');
 });
 
+// QUANTITY ROUTES (Keşif & Metraj Yönetimi - Faz 2)
+Route::middleware(['auth', 'verified'])->prefix('quantities')->name('quantities.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\QuantityController::class, 'dashboard'])->name('dashboard');
+    Route::get('/', [App\Http\Controllers\QuantityController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\QuantityController::class, 'create'])
+        ->middleware('role:admin|project_manager')
+        ->name('create');
+    Route::post('/', [App\Http\Controllers\QuantityController::class, 'store'])
+        ->middleware('role:admin|project_manager')
+        ->name('store');
+    Route::get('/{quantity}', [App\Http\Controllers\QuantityController::class, 'show'])->name('show');
+    Route::get('/{quantity}/edit', [App\Http\Controllers\QuantityController::class, 'edit'])
+        ->middleware('role:admin|project_manager')
+        ->name('edit');
+    Route::put('/{quantity}', [App\Http\Controllers\QuantityController::class, 'update'])
+        ->middleware('role:admin|project_manager')
+        ->name('update');
+    Route::delete('/{quantity}', [App\Http\Controllers\QuantityController::class, 'destroy'])
+        ->middleware('role:admin|project_manager')
+        ->name('destroy');
+
+    // Search for hakediş integration
+    Route::get('/search', [App\Http\Controllers\QuantityController::class, 'search'])
+        ->name('search');
+
+    // Verification and approval actions
+    Route::post('/{quantity}/verify', [App\Http\Controllers\QuantityController::class, 'verify'])
+        ->middleware('role:admin|project_manager')
+        ->name('verify');
+    Route::post('/{quantity}/approve', [App\Http\Controllers\QuantityController::class, 'approve'])
+        ->middleware('role:admin|project_manager')
+        ->name('approve');
+});
+
 // FINANCIAL MANAGEMENT ROUTES (Finansal Yönetim - Faz 2)
 Route::middleware(['auth', 'verified'])->prefix('financial')->name('financial.')->group(function () {
     // Financial Dashboard

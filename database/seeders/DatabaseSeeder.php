@@ -54,6 +54,9 @@ class DatabaseSeeder extends Seeder
 
             // Finansal Yönetim
             FinancialCategoriesSeeder::class, // Gelir/Gider kategorileri
+
+            // Keşif & Metraj Yönetimi
+            QuantitySeeder::class, // Metraj kayıtları
         ]);
     }
 }

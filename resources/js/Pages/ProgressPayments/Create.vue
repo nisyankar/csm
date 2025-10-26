@@ -152,6 +152,7 @@
                   v-model="form.project_unit_id"
                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   :disabled="!form.project_floor_id"
+                  @change="onUnitChange"
                 >
                   <option :value="null">Seçiniz...</option>
                   <option v-for="unit in unitOptions" :key="unit.value" :value="unit.value">
@@ -191,6 +192,79 @@
                 </p>
               </div>
 
+              <!-- Metraj Bilgisi Widget -->
+              <div v-if="form.work_item_id" class="lg:col-span-2">
+                <!-- Loading -->
+                <div v-if="quantityLoading" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 text-blue-600 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-blue-700 font-medium">Metraj kaydı aranıyor...</span>
+                  </div>
+                </div>
+
+                <!-- Metraj Bulundu -->
+                <div v-else-if="relatedQuantity && !quantityError" class="bg-emerald-50 border-2 border-emerald-200 rounded-lg p-6">
+                  <div class="flex items-start">
+                    <svg class="h-6 w-6 text-emerald-600 mr-3 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="flex-1">
+                      <h4 class="text-sm font-bold text-emerald-900 mb-3">Metraj Kaydı Bulundu</h4>
+                      <div class="grid grid-cols-2 gap-4">
+                        <div>
+                          <dt class="text-xs text-emerald-700">Planlanan</dt>
+                          <dd class="text-lg font-bold text-emerald-900">
+                            {{ relatedQuantity.planned_quantity }} {{ relatedQuantity.unit }}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt class="text-xs text-emerald-700">Tamamlanan</dt>
+                          <dd class="text-lg font-bold text-emerald-900">
+                            {{ relatedQuantity.completed_quantity }} {{ relatedQuantity.unit }}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt class="text-xs text-emerald-700">Daha Önce Hakediş Yapılan</dt>
+                          <dd class="text-lg font-bold text-orange-600">
+                            {{ relatedQuantity.total_invoiced }} {{ relatedQuantity.unit }}
+                          </dd>
+                        </div>
+                        <div class="bg-white rounded-lg p-2">
+                          <dt class="text-xs text-emerald-700 font-semibold">Hakediş Yapılabilir Kalan</dt>
+                          <dd class="text-xl font-bold text-blue-600">
+                            {{ relatedQuantity.available_to_invoice }} {{ relatedQuantity.unit }}
+                          </dd>
+                        </div>
+                      </div>
+                      <p class="text-xs text-emerald-700 mt-3">
+                        ✓ Metraj ID: #{{ relatedQuantity.id }} |
+                        {{ relatedQuantity.is_verified ? '✓ Doğrulanmış' : '⚠ Doğrulanmamış' }} |
+                        {{ relatedQuantity.is_approved ? '✓ Onaylı' : '⚠ Onaysız' }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Metraj Bulunamadı veya Hata -->
+                <div v-else-if="quantityError" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div class="flex items-start">
+                    <svg class="h-6 w-6 text-yellow-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <h4 class="text-sm font-bold text-yellow-900 mb-1">Metraj Kaydı Bulunamadı</h4>
+                      <p class="text-sm text-yellow-700">{{ quantityError }}</p>
+                      <p class="text-xs text-yellow-600 mt-2">
+                        Manuel olarak metraj bilgilerini girebilirsiniz, ancak keşif kaydı ile ilişkilendirilmeyecektir.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Planlanan Metraj -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -203,27 +277,36 @@
                   min="0"
                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   :class="{'border-red-300 focus:ring-red-500': form.errors.planned_quantity}"
+                  :readonly="relatedQuantity != null"
                 />
                 <p v-if="form.errors.planned_quantity" class="text-red-600 text-sm mt-2">
                   {{ form.errors.planned_quantity }}
                 </p>
+                <p v-if="relatedQuantity" class="text-xs text-gray-500 mt-1">
+                  Metraj kaydından otomatik dolduruldu
+                </p>
               </div>
 
-              <!-- Tamamlanan Metraj -->
+              <!-- Bu Dönem Tamamlanan Metraj -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Tamamlanan Metraj <span class="text-red-500">*</span>
+                  Bu Dönem Tamamlanan Metraj <span class="text-red-500">*</span>
                 </label>
                 <input
                   v-model="form.completed_quantity"
                   type="number"
                   step="0.01"
                   min="0"
+                  :max="relatedQuantity ? relatedQuantity.available_to_invoice : null"
                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   :class="{'border-red-300 focus:ring-red-500': form.errors.completed_quantity}"
+                  placeholder="Bu hakediş döneminde tamamlanan"
                 />
                 <p v-if="form.errors.completed_quantity" class="text-red-600 text-sm mt-2">
                   {{ form.errors.completed_quantity }}
+                </p>
+                <p v-if="relatedQuantity" class="text-xs text-gray-500 mt-1">
+                  Maksimum: {{ relatedQuantity.available_to_invoice }} {{ relatedQuantity.unit }}
                 </p>
               </div>
 
@@ -407,6 +490,7 @@
 import { ref, computed } from 'vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import axios from 'axios'
 
 const props = defineProps({
   projects: {
@@ -430,6 +514,7 @@ const form = useForm({
   project_structure_id: null,
   project_floor_id: null,
   project_unit_id: null,
+  quantity_id: null,
   planned_quantity: 0,
   completed_quantity: 0,
   unit: 'm²',
@@ -444,6 +529,9 @@ const form = useForm({
 const structureOptions = ref([])
 const floorOptions = ref([])
 const unitOptions = ref([])
+const relatedQuantity = ref(null)
+const quantityLoading = ref(false)
+const quantityError = ref(null)
 
 // Filtrelenmiş taşeronlar - sadece seçili projeye atanan taşeronlar
 const filteredSubcontractors = computed(() => {
@@ -502,6 +590,11 @@ const onStructureChange = () => {
   form.project_floor_id = null
   form.project_unit_id = null
   unitOptions.value = []
+
+  // Metraj ara (varsa)
+  if (form.work_item_id) {
+    fetchQuantity()
+  }
 }
 
 const onFloorChange = () => {
@@ -521,6 +614,67 @@ const onFloorChange = () => {
     }
   }
   form.project_unit_id = null
+
+  // Metraj ara (varsa)
+  if (form.work_item_id) {
+    fetchQuantity()
+  }
+}
+
+const onUnitChange = () => {
+  // Metraj ara (varsa)
+  if (form.work_item_id) {
+    fetchQuantity()
+  }
+}
+
+// Metraj arama - konum veya iş kalemi değiştiğinde çağrılır
+const fetchQuantity = async () => {
+  if (!form.project_id || !form.work_item_id) {
+    relatedQuantity.value = null
+    return
+  }
+
+  quantityLoading.value = true
+  quantityError.value = null
+
+  try {
+    const response = await axios.get('/quantities/search', {
+      params: {
+        project_id: form.project_id,
+        structure_id: form.project_structure_id,
+        floor_id: form.project_floor_id,
+        unit_id: form.project_unit_id,
+        work_item_id: form.work_item_id
+      }
+    })
+
+    if (response.data.found) {
+      relatedQuantity.value = response.data.quantity
+
+      // Form alanlarını otomatik doldur
+      form.quantity_id = response.data.quantity.id
+      form.planned_quantity = response.data.quantity.planned_quantity
+      form.unit = response.data.quantity.unit
+
+      // Tamamlanan metrajı sıfırla - kullanıcı girecek
+      form.completed_quantity = 0
+    } else {
+      relatedQuantity.value = null
+      form.quantity_id = null
+    }
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      quantityError.value = 'Bu lokasyon ve iş kalemi için metraj kaydı bulunamadı.'
+      relatedQuantity.value = null
+      form.quantity_id = null
+    } else {
+      quantityError.value = 'Metraj bilgisi alınırken bir hata oluştu.'
+      console.error('Metraj fetch error:', error)
+    }
+  } finally {
+    quantityLoading.value = false
+  }
 }
 
 const onWorkItemChange = () => {
@@ -528,6 +682,9 @@ const onWorkItemChange = () => {
   if (workItem && workItem.unit) {
     form.unit = workItem.unit
   }
+
+  // Metraj ara
+  fetchQuantity()
 }
 
 const formatCurrency = (amount) => {

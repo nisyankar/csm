@@ -32,6 +32,7 @@ class ProjectUnit extends Model
     ];
 
     protected $appends = [
+        'name',
         'unit_display',
         'full_code',
     ];
@@ -62,13 +63,20 @@ class ProjectUnit extends Model
     /**
      * Accessors
      */
+    public function getNameAttribute(): string
+    {
+        return $this->unit_code ?? '';
+    }
+
     public function getUnitDisplayAttribute(): string
     {
+        $unitCode = $this->unit_code ?? '';
+
         if ($this->room_configuration) {
-            return $this->unit_code . ' (' . $this->room_configuration . ')';
+            return $unitCode . ' (' . $this->room_configuration . ')';
         }
 
-        return $this->unit_code;
+        return $unitCode;
     }
 
     public function getFullCodeAttribute(): string
@@ -83,9 +91,11 @@ class ProjectUnit extends Model
             $parts[] = $this->floor->floor_display;
         }
 
-        $parts[] = $this->unit_code;
+        if ($this->unit_code) {
+            $parts[] = $this->unit_code;
+        }
 
-        return implode(' - ', $parts);
+        return implode(' - ', $parts) ?: '';
     }
 
     public function getUnitTypeDisplayAttribute(): string

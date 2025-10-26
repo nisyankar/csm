@@ -110,6 +110,18 @@
             ]"
           />
 
+          <!-- Quantity Management (Keşif & Metraj) -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'site_manager'])"
+            label="Keşif & Metraj"
+            icon="chart-pie"
+            :items="[
+              { href: route('quantities.dashboard'), label: 'Dashboard', active: route().current('quantities.dashboard') },
+              { href: route('quantities.index'), label: 'Metraj Listesi', active: route().current('quantities.index') || route().current('quantities.show') },
+              { href: route('quantities.create'), label: 'Yeni Metraj', active: route().current('quantities.create') }
+            ]"
+          />
+
           <!-- Financial Management -->
           <SidebarGroup
             v-if="canAccess(['admin', 'project_manager', 'hr'])"

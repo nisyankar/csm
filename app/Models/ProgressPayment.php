@@ -14,6 +14,7 @@ class ProgressPayment extends Model
         'project_id',
         'subcontractor_id',
         'work_item_id',
+        'quantity_id',
         'project_structure_id',
         'project_floor_id',
         'project_unit_id',
@@ -89,6 +90,11 @@ class ProgressPayment extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function quantity(): BelongsTo
+    {
+        return $this->belongsTo(Quantity::class);
     }
 
     /**
