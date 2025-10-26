@@ -911,6 +911,12 @@ Route::middleware(['auth', 'verified'])->prefix('progress-payments')->name('prog
     Route::get('/create', [ProgressPaymentController::class, 'create'])
         ->middleware('role:admin|project_manager')
         ->name('create');
+
+    // Metraj Aşımı Raporu (MUST be before /{progressPayment})
+    Route::get('/quantity-overrun-report', [ProgressPaymentController::class, 'quantityOverrunReport'])
+        ->middleware('role:admin|project_manager')
+        ->name('quantity-overrun-report');
+
     Route::post('/', [ProgressPaymentController::class, 'store'])
         ->middleware('role:admin|project_manager')
         ->name('store');
@@ -948,6 +954,11 @@ Route::middleware(['auth', 'verified'])->prefix('quantities')->name('quantities.
     Route::get('/create', [App\Http\Controllers\QuantityController::class, 'create'])
         ->middleware('role:admin|project_manager')
         ->name('create');
+
+    // Search for hakediş integration (MOVED BEFORE /{quantity})
+    Route::get('/search', [App\Http\Controllers\QuantityController::class, 'search'])
+        ->name('search');
+
     Route::post('/', [App\Http\Controllers\QuantityController::class, 'store'])
         ->middleware('role:admin|project_manager')
         ->name('store');
@@ -961,10 +972,6 @@ Route::middleware(['auth', 'verified'])->prefix('quantities')->name('quantities.
     Route::delete('/{quantity}', [App\Http\Controllers\QuantityController::class, 'destroy'])
         ->middleware('role:admin|project_manager')
         ->name('destroy');
-
-    // Search for hakediş integration
-    Route::get('/search', [App\Http\Controllers\QuantityController::class, 'search'])
-        ->name('search');
 
     // Verification and approval actions
     Route::post('/{quantity}/verify', [App\Http\Controllers\QuantityController::class, 'verify'])

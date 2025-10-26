@@ -213,6 +213,64 @@
             </div>
           </div>
 
+          <!-- İlişkili Metraj Kaydı -->
+          <div v-if="progressPayment.quantity" class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-green-50 flex items-center justify-between">
+              <h3 class="text-lg font-medium text-gray-900">İlişkili Metraj Kaydı</h3>
+              <Link
+                :href="`/quantities/${progressPayment.quantity.id}`"
+                class="inline-flex items-center text-sm text-emerald-600 hover:text-emerald-800 font-medium"
+              >
+                <span>Metraj Detayı</span>
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+            <div class="p-6 space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <dt class="text-xs font-medium text-gray-500 mb-1">Planlanan Toplam</dt>
+                  <dd class="text-lg font-bold text-gray-900">
+                    {{ progressPayment.quantity.planned_quantity }} {{ progressPayment.unit }}
+                  </dd>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+                  <dt class="text-xs font-medium text-emerald-600 mb-1">Tamamlanan Toplam</dt>
+                  <dd class="text-lg font-bold text-emerald-700">
+                    {{ progressPayment.quantity.completed_quantity }} {{ progressPayment.unit }}
+                  </dd>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <dt class="text-xs font-medium text-orange-600 mb-1">Kalan</dt>
+                  <dd class="text-lg font-bold text-orange-700">
+                    {{ progressPayment.quantity.remaining_quantity }} {{ progressPayment.unit }}
+                  </dd>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <dt class="text-xs font-medium text-blue-600 mb-1">Metraj İlerlemesi</dt>
+                  <dd class="text-lg font-bold text-blue-700">
+                    {{ progressPayment.quantity.completion_percentage }}%
+                  </dd>
+                </div>
+              </div>
+              <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm text-amber-800">
+                      Bu hakediş <strong>Metraj #{{ progressPayment.quantity.id }}</strong> kaydına bağlıdır. Tüm hakediş kayıtlarını görmek için metraj detay sayfasını ziyaret edebilirsiniz.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Notlar -->
           <div v-if="progressPayment.notes" class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">

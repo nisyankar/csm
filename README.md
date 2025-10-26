@@ -45,12 +45,28 @@
 - Sipariş takibi
 - Teslimat yönetimi
 
+### Keşif & Metraj Modülü 🆕
+- **Proje Yapısı Entegrasyonu**: Yapı/Kat/Birim bazlı metraj kayıtları
+- **İş Kalemi Takibi**: İş kalemleri ile ilişkilendirilmiş metraj hesaplama
+- **Planlanan ve Tamamlanan**: Metraj planlama ve gerçekleşme takibi
+- **Hakediş Entegrasyonu**: Metraj kayıtlarından hakediş oluşturma
+- **İlerleme İzleme**: Tamamlanma yüzdesi ve kalan miktar hesaplama
+- **Ölçüm Yöntemleri**: Farklı ölçüm yöntemleri desteği
+- **Onay Süreci**: Doğrulama ve onaylama akışı
+- **Proje Show Sayfası**: Metraj kayıtları tab görünümü
+
 ### Hakediş Modülü
-- Taşeron hakediş kayıtları
+- **Metraj Bazlı Hakediş**: Keşif/Metraj kayıtlarından otomatik veri çekme
+- **Akıllı Form**: Proje/yapı/kat/birim seçimine göre ilgili metraj bulma
+- **Otomatik Limit Kontrolü**: Kalan hakediş yapılabilir miktar hesaplama
+- **Metraj Aşımı Takibi**: Planlanan metrajı aşan hakediş kayıtlarının otomatik tespiti
+- **Aşım Raporu**: Metraj aşımı kayıtlarının filtrelenebilir raporu
+- **Aşım Uyarıları**: Kullanıcıya aşım durumunda görsel uyarı
 - İş kalemi bazlı metraj takibi
 - Onay süreci (completed → approved → paid)
 - Ödeme durumu takibi
 - Proje yapı/kat/birim detaylı kayıt
+- **Metraj İlişkisi**: Her hakediş metraj kaydına bağlı
 
 ### Finansal Yönetim Modülü 🆕
 - **Event-Driven Otomatik Kayıt**: Puantaj, Hakediş, Satınalma modüllerinden
@@ -123,6 +139,22 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 26 Ekim 2025 - Keşif/Metraj ve Hakediş Entegrasyonu 🎯
+- **Metraj-Hakediş İlişkisi**: İş akışı düzeltildi (Metraj → Hakediş)
+- **Akıllı Hakediş Formu**: Proje/yapı/kat/birim seçince otomatik metraj bulma
+- **Otomatik Limit Kontrolü**: Daha önce hakediş yapılan miktarı çıkarıp kullanılabilir kalan gösterir
+- **İlişkili Kayıt Görünümü**:
+  - Proje Show'da Keşif/Metraj tabı eklendi
+  - Metraj Show'da İlişkili Hakediş widget'ı eklendi
+- **Backend İyileştirmeler**:
+  - QuantityController'a search() API endpoint eklendi
+  - Project-Quantity relationship eklendi
+  - Null-safe accessor metodları güncellendi
+- **Frontend İyileştirmeler**:
+  - Hakediş form'unda metraj bilgi widget'ı (yeşil: bulundu, sarı: bulunamadı)
+  - Quantity Stats computed properties
+  - Payment status labels ve variant helpers
 
 #### 26 Ekim 2025 - Finansal Yönetim Modülü Tamamlandı 🎉
 - **Event-Driven Finansal Sistem**: Puantaj, Hakediş, Satınalma onaylarından otomatik finansal kayıt

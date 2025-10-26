@@ -280,6 +280,40 @@ class ProgressPaymentController extends Controller
             $validated['period_month'] = now()->month;
         }
 
+        // Metraj aşımı kontrolü (eğer quantity_id varsa)
+        if (!empty($validated['quantity_id'])) {
+            $quantity = \App\Models\Quantity::find($validated['quantity_id']);
+
+            if ($quantity) {
+                // Daha önce hakediş yapılmış toplam miktarı hesapla
+                $totalInvoiced = ProgressPayment::where('quantity_id', $quantity->id)
+                    ->whereIn('status', ['completed', 'approved', 'paid'])
+                    ->sum('completed_quantity');
+
+                // Kalan hakediş yapılabilir miktar
+                $availableToInvoice = $quantity->completed_quantity - $totalInvoiced;
+
+                // Metraj aşımı var mı?
+                if ($validated['completed_quantity'] > $availableToInvoice) {
+                    $validated['is_quantity_overrun'] = true;
+                    $validated['overrun_amount'] = $validated['completed_quantity'] - $availableToInvoice;
+
+                    // Otomatik not ekle
+                    $overrunNote = sprintf(
+                        'METRAJ AŞIMI: Metrajda kalan %s %s, hakediş %s %s (Aşım: %s %s)',
+                        number_format($availableToInvoice, 2),
+                        $validated['unit'],
+                        number_format($validated['completed_quantity'], 2),
+                        $validated['unit'],
+                        number_format($validated['overrun_amount'], 2),
+                        $validated['unit']
+                    );
+
+                    $validated['overrun_notes'] = $overrunNote;
+                }
+            }
+        }
+
         $progressPayment = ProgressPayment::create($validated);
 
         return redirect()->route('progress-payments.show', $progressPayment)
@@ -298,7 +332,8 @@ class ProgressPaymentController extends Controller
             'projectStructure',
             'projectFloor',
             'projectUnit',
-            'approvedBy'
+            'approvedBy',
+            'quantity'
         ]);
 
         return Inertia::render('ProgressPayments/Show', [
@@ -327,6 +362,13 @@ class ProgressPaymentController extends Controller
                 'project_unit' => $progressPayment->projectUnit ? [
                     'id' => $progressPayment->projectUnit->id,
                     'name' => $progressPayment->projectUnit->name,
+                ] : null,
+                'quantity' => $progressPayment->quantity ? [
+                    'id' => $progressPayment->quantity->id,
+                    'planned_quantity' => $progressPayment->quantity->planned_quantity,
+                    'completed_quantity' => $progressPayment->quantity->completed_quantity,
+                    'remaining_quantity' => $progressPayment->quantity->remaining_quantity,
+                    'completion_percentage' => $progressPayment->quantity->completion_percentage,
                 ] : null,
                 'planned_quantity' => $progressPayment->planned_quantity,
                 'completed_quantity' => $progressPayment->completed_quantity,
@@ -481,6 +523,86 @@ class ProgressPaymentController extends Controller
     public function floorProgress(ProjectFloor $floor)
     {
         return response()->json($floor->getProgressSummary());
+    }
+
+    /**
+     * Display quantity overrun report
+     */
+    public function quantityOverrunReport(Request $request): Response
+    {
+        $query = ProgressPayment::where('is_quantity_overrun', true)
+            ->with([
+                'project',
+                'subcontractor',
+                'workItem',
+                'projectStructure',
+                'projectFloor',
+                'projectUnit',
+                'quantity'
+            ]);
+
+        // Filters
+        if ($request->filled('project_id')) {
+            $query->where('project_id', $request->project_id);
+        }
+
+        if ($request->filled('subcontractor_id')) {
+            $query->where('subcontractor_id', $request->subcontractor_id);
+        }
+
+        if ($request->filled('work_item_id')) {
+            $query->where('work_item_id', $request->work_item_id);
+        }
+
+        // Date range filter
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        $overruns = $query->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn ($payment) => [
+                'id' => $payment->id,
+                'project_name' => $payment->project->name,
+                'subcontractor_name' => $payment->subcontractor->company_name,
+                'work_item_name' => $payment->workItem->name,
+                'location' => implode(' / ', array_filter([
+                    $payment->projectStructure?->name,
+                    $payment->projectFloor?->floor_display,
+                    $payment->projectUnit?->name
+                ])) ?: '-',
+                'completed_quantity' => $payment->completed_quantity,
+                'overrun_amount' => $payment->overrun_amount,
+                'unit' => $payment->unit,
+                'total_amount' => $payment->total_amount,
+                'status' => $payment->status,
+                'status_label' => $this->getStatusLabel($payment->status),
+                'overrun_notes' => $payment->overrun_notes,
+                'created_at' => $payment->created_at->format('d.m.Y'),
+            ]);
+
+        // Summary statistics
+        $totalOverrunAmount = ProgressPayment::where('is_quantity_overrun', true)->sum('overrun_amount');
+        $totalOverrunValue = ProgressPayment::where('is_quantity_overrun', true)->sum('total_amount');
+        $overrunCount = ProgressPayment::where('is_quantity_overrun', true)->count();
+
+        return Inertia::render('ProgressPayments/QuantityOverrunReport', [
+            'overruns' => $overruns,
+            'summary' => [
+                'total_overrun_amount' => $totalOverrunAmount,
+                'total_overrun_value' => $totalOverrunValue,
+                'overrun_count' => $overrunCount,
+            ],
+            'projects' => \App\Models\Project::select('id', 'name')->orderBy('name')->get(),
+            'subcontractors' => \App\Models\Subcontractor::select('id', 'company_name')->orderBy('company_name')->get(),
+            'workItems' => \App\Models\WorkItem::select('id', 'name')->orderBy('name')->get(),
+            'filters' => $request->only(['project_id', 'subcontractor_id', 'work_item_id', 'start_date', 'end_date']),
+        ]);
     }
 
     /**

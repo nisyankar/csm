@@ -89,6 +89,20 @@
                   {{ project.progress_payments.length }}
                 </span>
               </button>
+              <button
+                @click="activeTab = 'quantities'"
+                :class="[
+                  'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                  activeTab === 'quantities'
+                    ? 'border-white text-white'
+                    : 'border-transparent text-cyan-100 hover:text-white hover:border-cyan-200'
+                ]"
+              >
+                Keşif / Metraj
+                <span v-if="quantities?.length" class="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                  {{ quantities.length }}
+                </span>
+              </button>
             </nav>
           </div>
         </div>
@@ -778,6 +792,131 @@
           </div>
         </Card>
       </div>
+
+      <!-- Quantities (Keşif/Metraj) Tab -->
+      <div v-show="activeTab === 'quantities'" class="space-y-6">
+        <!-- Header with Add Button -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">Keşif / Metraj Kayıtları</h2>
+            <p class="mt-1 text-sm text-gray-500">Bu projeye ait keşif ve metraj kayıtlarını görüntüleyin</p>
+          </div>
+          <Link
+            :href="route('quantities.create')"
+            class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Yeni Metraj
+          </Link>
+        </div>
+
+        <!-- Quantities List -->
+        <Card v-if="quantities && quantities.length > 0">
+          <!-- Stats Summary -->
+          <div class="bg-gradient-to-r from-emerald-50 to-green-50 p-6 border-b border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <p class="text-sm font-medium text-gray-600">Toplam Kayıt</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ quantityStats.total }}</p>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-600">Aktif</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ quantityStats.active }}</p>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-600">Tamamlanan</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ quantityStats.completed }}</p>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-600">Ortalama İlerleme</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ quantityStats.avgProgress }}%</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasyon</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İş Kalemi</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İlerleme</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hakediş Durumu</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="quantity in quantities" :key="quantity.id" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 text-sm">
+                    <div class="font-medium text-gray-900">{{ quantity.location }}</div>
+                    <div class="text-xs text-gray-500">{{ quantity.created_at }}</div>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-900">{{ quantity.work_item }}</td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center">
+                      <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                        <div
+                          class="h-2 rounded-full"
+                          :class="quantity.progress_percentage >= 100 ? 'bg-green-600' : 'bg-emerald-600'"
+                          :style="{ width: `${Math.min(quantity.progress_percentage || 0, 100)}%` }"
+                        ></div>
+                      </div>
+                      <span class="text-xs font-medium text-gray-700">{{ quantity.progress_percentage }}%</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                      {{ quantity.completed_quantity }} / {{ quantity.planned_quantity }} {{ quantity.unit }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm">
+                      <div class="font-medium text-gray-900">{{ quantity.total_invoiced }} {{ quantity.unit }}</div>
+                      <div class="text-xs" :class="quantity.available_to_invoice > 0 ? 'text-orange-600' : 'text-gray-500'">
+                        Kalan: {{ quantity.available_to_invoice }} {{ quantity.unit }}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <Badge :variant="getQuantityStatusVariant(quantity.status)">
+                      {{ getQuantityStatusLabel(quantity.status) }}
+                    </Badge>
+                  </td>
+                  <td class="px-6 py-4 text-sm font-medium">
+                    <Link
+                      :href="route('quantities.show', quantity.id)"
+                      class="text-emerald-600 hover:text-emerald-900"
+                    >
+                      Görüntüle
+                    </Link>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <!-- Empty State -->
+        <Card v-else>
+          <div class="p-12 text-center">
+            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p class="text-gray-500 mb-4">Henüz keşif/metraj kaydı yok</p>
+            <Link
+              :href="route('quantities.create')"
+              class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              İlk Keşif/Metraj Kaydını Oluştur
+            </Link>
+          </div>
+        </Card>
+      </div>
     </div>
 
     <!-- Assign/Edit Subcontractor Modal -->
@@ -976,7 +1115,8 @@ const props = defineProps({
   stats: Object,
   recent_activities: Array,
   can_edit: Boolean,
-  available_subcontractors: Array
+  available_subcontractors: Array,
+  quantities: Array
 })
 
 const activeTab = ref('details')
@@ -1237,6 +1377,52 @@ const getPaymentStatusLabel = (status) => {
     completed: 'Tamamlandı',
     approved: 'Onaylandı',
     paid: 'Ödendi'
+  }
+  return labels[status] || status
+}
+
+// Quantity Stats
+const quantityStats = computed(() => {
+  if (!props.quantities || props.quantities.length === 0) return {
+    total: 0,
+    active: 0,
+    completed: 0,
+    avgProgress: 0
+  }
+
+  const quantities = props.quantities
+
+  return {
+    total: quantities.length,
+    active: quantities.filter(q => q.status === 'active' || q.status === 'in_progress').length,
+    completed: quantities.filter(q => q.status === 'completed').length,
+    avgProgress: quantities.length > 0
+      ? Math.round(quantities.reduce((sum, q) => sum + (parseFloat(q.progress_percentage) || 0), 0) / quantities.length)
+      : 0
+  }
+})
+
+// Quantity Status Helpers
+const getQuantityStatusVariant = (status) => {
+  const variants = {
+    planned: 'secondary',
+    in_progress: 'info',
+    active: 'info',
+    completed: 'success',
+    approved: 'success',
+    cancelled: 'danger'
+  }
+  return variants[status] || 'secondary'
+}
+
+const getQuantityStatusLabel = (status) => {
+  const labels = {
+    planned: 'Planlandı',
+    in_progress: 'Devam Ediyor',
+    active: 'Aktif',
+    completed: 'Tamamlandı',
+    approved: 'Onaylandı',
+    cancelled: 'İptal Edildi'
   }
   return labels[status] || status
 }

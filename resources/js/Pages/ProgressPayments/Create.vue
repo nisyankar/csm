@@ -297,16 +297,33 @@
                   type="number"
                   step="0.01"
                   min="0"
-                  :max="relatedQuantity ? relatedQuantity.available_to_invoice : null"
                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  :class="{'border-red-300 focus:ring-red-500': form.errors.completed_quantity}"
+                  :class="{'border-red-300 focus:ring-red-500': form.errors.completed_quantity || isQuantityOverrun}"
                   placeholder="Bu hakediş döneminde tamamlanan"
                 />
                 <p v-if="form.errors.completed_quantity" class="text-red-600 text-sm mt-2">
                   {{ form.errors.completed_quantity }}
                 </p>
-                <p v-if="relatedQuantity" class="text-xs text-gray-500 mt-1">
-                  Maksimum: {{ relatedQuantity.available_to_invoice }} {{ relatedQuantity.unit }}
+
+                <!-- Uyarı: Kalan metrajdan fazla -->
+                <div v-if="isQuantityOverrun" class="mt-2 p-3 bg-amber-50 border border-amber-300 rounded-lg">
+                  <div class="flex items-start">
+                    <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium text-amber-800">Metraj Aşımı Uyarısı</p>
+                      <p class="text-xs text-amber-700 mt-1">
+                        Girilen miktar ({{ form.completed_quantity }} {{ form.unit }}) metrajda kalan miktarı
+                        ({{ relatedQuantity.available_to_invoice }} {{ relatedQuantity.unit }}) aşıyor.
+                        Bu durum <strong>Metraj Aşımı Raporu</strong>'nda görünecektir.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <p v-if="relatedQuantity && !isQuantityOverrun" class="text-xs text-gray-500 mt-1">
+                  Kalan hakediş yapılabilir miktar: {{ relatedQuantity.available_to_invoice }} {{ relatedQuantity.unit }}
                 </p>
               </div>
 
@@ -558,6 +575,14 @@ const totalAmount = computed(() => {
   return (form.completed_quantity || 0) * (form.unit_price || 0)
 })
 
+// Metraj aşımı kontrolü
+const isQuantityOverrun = computed(() => {
+  if (!relatedQuantity.value || !form.completed_quantity) {
+    return false
+  }
+  return parseFloat(form.completed_quantity) > parseFloat(relatedQuantity.value.available_to_invoice)
+})
+
 const onProjectChange = () => {
   const project = props.projects.find(p => p.id === form.project_id)
   if (project && project.structures) {
@@ -614,14 +639,13 @@ const onFloorChange = () => {
     }
   }
   form.project_unit_id = null
-
-  // Metraj ara (varsa)
-  if (form.work_item_id) {
-    fetchQuantity()
-  }
+  relatedQuantity.value = null
+  quantityError.value = null
+  // Metraj aramayı kaldırdık - unit seçildikten sonra onUnitChange() çağrılacak
 }
 
 const onUnitChange = () => {
+  console.log('onUnitChange called - unit:', form.project_unit_id, 'work_item:', form.work_item_id)
   // Metraj ara (varsa)
   if (form.work_item_id) {
     fetchQuantity()

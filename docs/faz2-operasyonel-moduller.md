@@ -1,10 +1,10 @@
 # FAZ 2: Operasyonel Çekirdek
-## 🔄 DEVAM EDİYOR (%35)
+## 🔄 DEVAM EDİYOR (%50)
 
 **Başlangıç:** 25 Ekim 2025
 **Hedef Bitiş:** Aralık 2025
-**Durum:** Aktif Sprint - Finansal Modül Tamamlandı ✅
-**Modül Sayısı:** 7 (1/7 tamamlandı)
+**Durum:** Aktif Sprint - Keşif & Metraj %95 Tamamlandı ✅
+**Modül Sayısı:** 7 (1 tamamlandı, 1 neredeyse tamamlandı)
 
 ---
 
@@ -143,39 +143,100 @@ budget_vs_actual (
 
 ---
 
-### 2. Keşif & Metraj Yönetimi (0%) 📐 **PRİORİTE 2**
+### 2. Keşif & Metraj Yönetimi (95%) 📐 **PRİORİTE 2** ✅
 
 #### Hedef
-Hakediş tutarlarını manuel değil, ölçülen metrajlardan otomatik hesaplamak.
+Hakediş tutarlarını manuel değil, ölçülen metrajlardan otomatik hesaplamak ve metraj aşımlarını takip etmek.
 
 #### Database
 ```sql
 quantities (
     id, project_id, work_item_id,
-    structure_id, floor_id, unit_id,  -- Opsiyonel lokasyon
-    planned_quantity, completed_quantity,
+    project_structure_id, project_floor_id, project_unit_id,  -- Opsiyonel lokasyon
+    planned_quantity, completed_quantity, remaining_quantity,
+    unit, status, completion_percentage,
     measurement_date, measurement_method,
-    verified_by, approved_by, notes
+    verified_by, verified_at, approved_by, approved_at,
+    notes, created_at, updated_at, deleted_at
 )
 ```
 
-#### Özellikler
-- 📐 Proje keşfi yüklenebilir (Excel/BOQ import)
-- 🔁 Gerçekleşen metraj kaydı (ölçüm bazlı)
-- 🔗 Hakediş ile otomatik ilişki
-- 📊 Keşif vs Gerçekleşen metraj raporu
+#### Özellikler Tamamlandı ✅
+- ✅ Proje yapısı entegrasyonu (Yapı/Kat/Birim)
+- ✅ İş kalemi bazlı metraj kayıtları
+- ✅ Planlanan ve tamamlanan miktar takibi
+- ✅ Hakediş ile otomatik ilişki (quantity_id foreign key)
+- ✅ **Metraj Aşımı Takip Sistemi**:
+  - ✅ Otomatik aşım tespiti (is_quantity_overrun flag)
+  - ✅ Aşım miktarı ve tutarı kaydetme
+  - ✅ Kullanıcıya görsel uyarı (sarı alert box)
+  - ✅ Filtrelenebilir Metraj Aşımı Raporu
+  - ✅ Proje/taşeron/iş kalemi bazlı raporlama
+  - ✅ Tarih aralığı filtreleme
+- ✅ İlerleme yüzdesi otomatik hesaplama
+- ✅ Ölçüm yöntemleri ve onay süreci
+- ✅ Proje Show sayfasında Keşif/Metraj tabı
+- ✅ Metraj Show sayfasında İlişkili Hakediş widget'ı
 
-#### Entegrasyon
-- **Hakediş:** `completed_quantity` metrajdan çekilir
-- **Finansal:** `realized_cost = completed_quantity * unit_price`
-- **İş Kalemleri:** `planned_quantity` tanımlanır
+#### Entegrasyon Tamamlandı ✅
+- **Hakediş:** Akıllı form ile otomatik metraj bulma ✅
+  - Proje/Yapı/Kat/Birim seçildiğinde ilgili metraj API'den çekilir
+  - `planned_quantity`, `unit`, `quantity_id` otomatik doldurulur
+  - Daha önce hakediş yapılan miktar çıkarılarak kalan gösterilir
+- **Finansal:** İlerleme ve tutar hesaplamaları entegre
+- **İş Kalemleri:** WorkItem relationship ile tam entegrasyon
+- **Proje:** Project-Quantity relationship eklendi
 
 #### Sprint Görevler
-- [ ] Migration
-- [ ] Quantity model
-- [ ] ProgressPaymentController güncellemesi (metraj entegrasyonu)
-- [ ] Frontend: Metraj giriş formu
-- [ ] Keşif import/export (Excel)
+- [x] Migration (quantities table)
+- [x] Quantity model ve ilişkiler
+- [x] QuantityService (business logic)
+- [x] QuantityController (CRUD + search API)
+- [x] ProgressPaymentController güncellemesi (metraj entegrasyonu)
+- [x] Frontend: Metraj CRUD sayfaları (Dashboard, Index, Create, Edit, Show)
+- [x] Hakediş Create sayfasına metraj auto-fill widget'ı
+- [x] Metraj Show sayfasına İlişkili Hakediş tablosu
+- [x] Project Show sayfasına Keşif/Metraj tabı
+- [x] QuantitySeeder (69 test verisi)
+- [x] Sidebar menü entegrasyonu
+- [x] **Metraj Aşımı Sistemi**:
+  - [x] Migration (is_quantity_overrun, overrun_amount, overrun_notes)
+  - [x] ProgressPayment model güncellemesi
+  - [x] Otomatik aşım tespiti (ProgressPaymentController::store)
+  - [x] Kullanıcı uyarı sistemi (Create.vue)
+  - [x] Metraj Aşımı Raporu sayfası (Vue)
+  - [x] QuantityOverrunReport controller method
+  - [x] Route kayıt (/progress-payments/quantity-overrun-report)
+  - [x] Sidebar menü entegrasyonu
+- [ ] Keşif import/export (Excel) - Sonraki sprint
+
+#### Tamamlanan Dosyalar (26 Ekim 2025)
+**Backend:**
+- ✅ `database/migrations/2025_10_26_create_quantities_table.php`
+- ✅ `database/migrations/2025_10_26_add_quantity_overrun_tracking_to_progress_payments_table.php`
+- ✅ `app/Models/Quantity.php` (ilişkiler ve accessor'lar)
+- ✅ `app/Models/ProgressPayment.php` (metraj aşımı alanları)
+- ✅ `app/Services/QuantityService.php`
+- ✅ `app/Http/Controllers/QuantityController.php` (search API dahil)
+- ✅ `app/Http/Controllers/ProgressPaymentController.php` (metraj entegrasyonu + aşım tespiti + rapor)
+- ✅ `database/seeders/QuantitySeeder.php` (69 kayıt)
+- ✅ `routes/web.php` (quantities routes + search endpoint + overrun report)
+
+**Frontend:**
+- ✅ `resources/js/Pages/Quantities/Dashboard.vue`
+- ✅ `resources/js/Pages/Quantities/Index.vue`
+- ✅ `resources/js/Pages/Quantities/Create.vue`
+- ✅ `resources/js/Pages/Quantities/Edit.vue`
+- ✅ `resources/js/Pages/Quantities/Show.vue` (İlişkili Hakediş widget'ı ile)
+- ✅ `resources/js/Pages/ProgressPayments/Create.vue` (metraj auto-fill + aşım uyarısı)
+- ✅ `resources/js/Pages/ProgressPayments/QuantityOverrunReport.vue` (aşım raporu)
+- ✅ `resources/js/Pages/Projects/Show.vue` (Keşif/Metraj tabı)
+- ✅ `resources/js/Layouts/Sidebar.vue` (Metraj Aşımı Raporu menü öğesi)
+
+**Entegrasyon:**
+- ✅ Project model'e quantities relationship
+- ✅ ProgressPayment model'e quantity_id kolonu
+- ✅ Null-safe accessor metodları (ProjectUnit, Employee, Subcontractor, Document)
 
 ---
 
@@ -465,13 +526,13 @@ stock_movements (
 | Modül | Durum | Tamamlanma | Tahmini Süre | Gerçek Süre |
 |-------|-------|------------|--------------|-------------|
 | Finansal Yönetim | ✅ | %100 | 5 gün | 2 gün |
-| Keşif & Metraj | 🔜 | %0 | 7 gün | - |
+| Keşif & Metraj | 🔄 | %95 | 7 gün | 1.5 gün |
 | Sözleşme Yönetimi | 🔜 | %0 | 5 gün | - |
 | Satış ve Tapu | 🔜 | %0 | 10 gün | - |
 | Ruhsat Yönetimi | 🔜 | %0 | 3 gün | - |
 | Yapı Denetim | 🔜 | %0 | 3 gün | - |
 | Stok Takibi | 🔜 | %0 | 3 gün | - |
-| **TOPLAM** | **🔄** | **%35** | **36 gün** | **2 gün** |
+| **TOPLAM** | **🔄** | **%50** | **36 gün** | **3.5 gün** |
 
 ---
 

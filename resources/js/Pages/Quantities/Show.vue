@@ -285,6 +285,78 @@
             </div>
           </div>
 
+          <!-- İlişkili Hakediş Kayıtları -->
+          <div v-if="relatedPayments && relatedPayments.length > 0" class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-cyan-50 to-teal-50 flex items-center justify-between">
+              <h3 class="text-lg font-medium text-gray-900">İlişkili Hakediş Kayıtları</h3>
+              <span class="px-3 py-1 bg-cyan-600 text-white text-xs font-semibold rounded-full">
+                {{ relatedPayments.length }} Kayıt
+              </span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hakediş #</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Taşeron</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dönem</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Miktar</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Birim Fiyat</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tutar</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Durum</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="payment in relatedPayments" :key="payment.id" class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900">#{{ payment.id }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ payment.subcontractor }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600">{{ payment.period }}</td>
+                    <td class="px-4 py-3 text-sm text-right font-medium text-gray-900">
+                      {{ formatQuantity(payment.completed_quantity) }} {{ quantity.unit }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right text-gray-900">
+                      {{ formatCurrency(payment.unit_price) }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right font-bold text-cyan-600">
+                      {{ formatCurrency(payment.total_amount) }}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                      <span
+                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                        :class="{
+                          'bg-yellow-100 text-yellow-800': payment.status === 'planned',
+                          'bg-blue-100 text-blue-800': payment.status === 'in_progress',
+                          'bg-purple-100 text-purple-800': payment.status === 'completed',
+                          'bg-green-100 text-green-800': payment.status === 'approved' || payment.status === 'paid'
+                        }"
+                      >
+                        {{ getPaymentStatusLabel(payment.status) }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                      <Link
+                        :href="`/progress-payments/${payment.id}`"
+                        class="text-cyan-600 hover:text-cyan-900 text-sm font-medium"
+                      >
+                        Görüntüle
+                      </Link>
+                    </td>
+                  </tr>
+                </tbody>
+                <tfoot class="bg-gray-50">
+                  <tr>
+                    <td colspan="5" class="px-4 py-3 text-right text-sm font-bold text-gray-900">Toplam:</td>
+                    <td class="px-4 py-3 text-right text-sm font-bold text-cyan-700">
+                      {{ formatCurrency(totalPaymentAmount) }}
+                    </td>
+                    <td colspan="2"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
           <!-- Kayıt Bilgileri -->
           <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -309,6 +381,7 @@
 
 <script setup>
 import { router, Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
@@ -323,6 +396,10 @@ const props = defineProps({
   canApprove: {
     type: Boolean,
     default: true
+  },
+  relatedPayments: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -377,4 +454,47 @@ const approveQuantity = () => {
     })
   }
 }
+
+// Format currency
+const formatCurrency = (amount) => {
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return '0,00 ₺'
+  }
+
+  const numAmount = Number(amount)
+  if (isNaN(numAmount)) {
+    return '0,00 ₺'
+  }
+
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(numAmount)
+}
+
+// Payment status label
+const getPaymentStatusLabel = (status) => {
+  const labels = {
+    planned: 'Planlandı',
+    in_progress: 'Devam Ediyor',
+    completed: 'Tamamlandı',
+    approved: 'Onaylandı',
+    paid: 'Ödendi'
+  }
+  return labels[status] || status
+}
+
+// Computed: Total payment amount
+const totalPaymentAmount = computed(() => {
+  if (!props.relatedPayments || props.relatedPayments.length === 0) {
+    return 0
+  }
+
+  return props.relatedPayments.reduce((sum, payment) => {
+    const amount = parseFloat(payment.total_amount) || 0
+    return sum + amount
+  }, 0)
+})
 </script>

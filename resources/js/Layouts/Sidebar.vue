@@ -106,7 +106,8 @@
             :items="[
               { href: route('progress-payments.dashboard'), label: 'Dashboard', active: route().current('progress-payments.dashboard') },
               { href: route('progress-payments.index'), label: 'Hakediş Listesi', active: route().current('progress-payments.index') || route().current('progress-payments.show') },
-              { href: route('progress-payments.create'), label: 'Yeni Hakediş', active: route().current('progress-payments.create') }
+              { href: route('progress-payments.create'), label: 'Yeni Hakediş', active: route().current('progress-payments.create') },
+              { href: route('progress-payments.quantity-overrun-report'), label: 'Metraj Aşımı Raporu', active: route().current('progress-payments.quantity-overrun-report') }
             ]"
           />
 

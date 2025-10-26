@@ -248,6 +248,11 @@ class ProjectController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->limit(50);
             },
+            'quantities' => function ($query) {
+                $query->with(['projectStructure', 'projectFloor', 'projectUnit', 'workItem', 'progressPayments'])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(50);
+            },
             'structures.floors.units'
         ]);
 
@@ -275,6 +280,31 @@ class ProjectController extends Controller
         // Get recent activities
         $recentActivities = $this->getProjectActivities($project);
 
+        // Keşif/Metraj verilerini formatla
+        $formattedQuantities = $project->quantities->map(function ($quantity) {
+            $totalInvoiced = $quantity->progressPayments()
+                ->whereIn('status', ['completed', 'approved', 'paid'])
+                ->sum('completed_quantity');
+
+            return [
+                'id' => $quantity->id,
+                'location' => ($quantity->projectStructure ? $quantity->projectStructure->name : '-') . ' / ' .
+                             ($quantity->projectFloor ? $quantity->projectFloor->name : '-') . ' / ' .
+                             ($quantity->projectUnit ? $quantity->projectUnit->name : '-'),
+                'work_item' => $quantity->workItem->name ?? '-',
+                'planned_quantity' => $quantity->planned_quantity,
+                'completed_quantity' => $quantity->completed_quantity,
+                'unit' => $quantity->unit,
+                'total_invoiced' => $totalInvoiced,
+                'available_to_invoice' => max(0, $quantity->completed_quantity - $totalInvoiced),
+                'status' => $quantity->status,
+                'created_at' => $quantity->created_at->format('d.m.Y'),
+                'progress_percentage' => $quantity->planned_quantity > 0
+                    ? round(($quantity->completed_quantity / $quantity->planned_quantity) * 100, 1)
+                    : 0,
+            ];
+        });
+
         // Taşeron atama için onaylanmış aktif taşeronlar
         $availableSubcontractors = \App\Models\Subcontractor::active()
             ->approved()
@@ -288,6 +318,7 @@ class ProjectController extends Controller
             'recent_activities' => $recentActivities,
             'can_edit' => $this->canEditProject($project),
             'available_subcontractors' => $availableSubcontractors,
+            'quantities' => $formattedQuantities,
         ]);
     }
 

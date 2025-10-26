@@ -24,6 +24,9 @@ class ProgressPayment extends Model
         'unit_price',
         'payment_date',
         'status',
+        'is_quantity_overrun',
+        'overrun_amount',
+        'overrun_notes',
         'period_year',
         'period_month',
         'notes',
@@ -36,8 +39,10 @@ class ProgressPayment extends Model
         'completed_quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'overrun_amount' => 'decimal:2',
         'payment_date' => 'date',
         'approved_at' => 'datetime',
+        'is_quantity_overrun' => 'boolean',
     ];
 
     protected $appends = ['completion_percentage'];
