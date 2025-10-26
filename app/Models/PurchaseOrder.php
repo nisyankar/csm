@@ -82,7 +82,14 @@ class PurchaseOrder extends Model
         $this->status = 'approved';
         $this->approved_by = $userId;
         $this->approved_at = now();
-        return $this->save();
+        $saved = $this->save();
+
+        if ($saved) {
+            // Fire event to create financial transaction
+            event(new \App\Events\PurchaseOrderApprovedEvent($this));
+        }
+
+        return $saved;
     }
 
     protected static function booted(): void

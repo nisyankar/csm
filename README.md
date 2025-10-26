@@ -45,6 +45,21 @@
 - Sipariş takibi
 - Teslimat yönetimi
 
+### Hakediş Modülü
+- Taşeron hakediş kayıtları
+- İş kalemi bazlı metraj takibi
+- Onay süreci (completed → approved → paid)
+- Ödeme durumu takibi
+- Proje yapı/kat/birim detaylı kayıt
+
+### Finansal Yönetim Modülü 🆕
+- **Event-Driven Otomatik Kayıt**: Puantaj, Hakediş, Satınalma modüllerinden
+- **Gelir/Gider Kategorileri**: Hiyerarşik kategori yapısı
+- **Ödeme Takibi**: Beklemede, Kısmi, Ödendi durumları
+- **Kar/Zarar Raporları**: Proje, yıl, ay bazlı analiz
+- **Dashboard**: Özet finansal widget'lar
+- **Bütçe vs Gerçekleşen**: Varyans analizi
+
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
@@ -107,13 +122,24 @@ php artisan serve
 
 ## Geliştirme Notları
 
-### Son Güncellemeler (24 Ekim 2025)
+### Son Güncellemeler
+
+#### 26 Ekim 2025 - Finansal Yönetim Modülü Tamamlandı 🎉
+- **Event-Driven Finansal Sistem**: Puantaj, Hakediş, Satınalma onaylarından otomatik finansal kayıt
+- **Gelir/Gider Kategori Yönetimi**: Hiyerarşik yapı ile esnek kategorizasyon
+- **Kar/Zarar Raporları**: Proje ve kategori bazlı detaylı analiz
+- **Financial Dashboard**: Gelir, gider, kar marjı özet kartları
+- **Ödeme Durumu Takibi**: Onaylı puantajlar otomatik "ödendi" olarak işaretlenir
+- **Bütçe vs Gerçekleşen**: Otomatik varyans hesaplaması
+- 6 Vue sayfası + Full-width profesyonel tasarım
+
+#### 24 Ekim 2025 - İzin ve Tatil Sistemi
 - **Resmi Tatil Sistemi**: Arefe (yarım gün) desteği ile eklendi
 - **Proje Bazlı Hafta Tatili**: Her proje için özelleştirilebilir hafta sonu günleri
 - **Akıllı İzin Hesaplama**: Proje kuralları + resmi tatiller entegre edildi
 - Tüm puantaj versiyonları (`timesheets_v2`, `timesheets_v3`) tek bir `timesheets` tablosunda birleştirildi
 - Model isimleri standartlaştırıldı (`TimesheetV2` → `Timesheet`)
-- Gelişmiş onay sistemi ve haftalık hesaplama özellikleri eklendi
+- Gelişmiş onay sistemi ve haftalık hesaplama özenlikleri eklendi
 - İzin-puantaj entegrasyonu tamamlandı
 
 ## Dokümantasyon

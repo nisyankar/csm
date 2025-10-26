@@ -331,6 +331,8 @@
                   <option value="planned">Planlandı</option>
                   <option value="in_progress">Devam Ediyor</option>
                   <option value="completed">Tamamlandı</option>
+                  <option value="approved">Onaylandı</option>
+                  <option value="paid">Ödendi</option>
                 </select>
               </div>
 

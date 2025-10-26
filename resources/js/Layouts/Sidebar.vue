@@ -110,6 +110,19 @@
             ]"
           />
 
+          <!-- Financial Management -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'hr'])"
+            label="Finansal Yönetim"
+            icon="currency-dollar"
+            :items="[
+              { href: route('financial.dashboard'), label: 'Dashboard', active: route().current('financial.dashboard') },
+              { href: route('financial.index'), label: 'Finansal İşlemler', active: route().current('financial.index') || route().current('financial.show') },
+              { href: route('financial.create'), label: 'Yeni İşlem', active: route().current('financial.create') },
+              { href: route('financial.reports.profit-loss'), label: 'Kar/Zarar Raporu', active: route().current('financial.reports.profit-loss') }
+            ]"
+          />
+
           <!-- Leave Management -->
           <SidebarGroup
             label="İzin Yönetimi"

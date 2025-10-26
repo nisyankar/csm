@@ -105,7 +105,8 @@ class FinancialTransactionService
             'amount' => $timesheet->calculated_wage,
             'description' => "Personel maaşı - {$timesheet->employee->full_name} - " .
                            $timesheet->work_date->format('d.m.Y'),
-            'payment_status' => 'pending',
+            'payment_status' => 'paid',  // Onaylanmış puantajlar ödenmiş kabul edilir
+            'paid_amount' => $timesheet->calculated_wage,
             'created_by' => auth()->id() ?? 1,
         ]);
     }
@@ -280,14 +281,18 @@ class FinancialTransactionService
     /**
      * Proje için kar/zarar özeti
      *
-     * @param int $projectId
+     * @param int|null $projectId
      * @param int|null $year
      * @param int|null $month
      * @return array
      */
-    public function getProfitLossSummary(int $projectId, ?int $year = null, ?int $month = null): array
+    public function getProfitLossSummary(?int $projectId = null, ?int $year = null, ?int $month = null): array
     {
-        $query = FinancialTransaction::forProject($projectId);
+        $query = FinancialTransaction::query();
+
+        if ($projectId) {
+            $query->forProject($projectId);
+        }
 
         if ($year && $month) {
             $query->forMonth($year, $month);
@@ -310,14 +315,18 @@ class FinancialTransactionService
     /**
      * Kategori bazlı kar/zarar raporu
      *
-     * @param int $projectId
+     * @param int|null $projectId
      * @param int|null $year
      * @param int|null $month
      * @return array
      */
-    public function getCategoryBreakdown(int $projectId, ?int $year = null, ?int $month = null): array
+    public function getCategoryBreakdown(?int $projectId = null, ?int $year = null, ?int $month = null): array
     {
-        $query = FinancialTransaction::forProject($projectId);
+        $query = FinancialTransaction::query();
+
+        if ($projectId) {
+            $query->forProject($projectId);
+        }
 
         if ($year && $month) {
             $query->forMonth($year, $month);
@@ -336,7 +345,7 @@ class FinancialTransactionService
                 return [
                     'category_id' => $item->category_id,
                     'category_name' => $item->incomeCategory?->name ?? 'Diğer',
-                    'amount' => (float) $item->total,
+                    'total' => (float) $item->total,
                 ];
             });
 
@@ -351,7 +360,7 @@ class FinancialTransactionService
                 return [
                     'category_id' => $item->category_id,
                     'category_name' => $item->expenseCategory?->name ?? 'Diğer',
-                    'amount' => (float) $item->total,
+                    'total' => (float) $item->total,
                 ];
             });
 

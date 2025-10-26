@@ -105,6 +105,36 @@ class FinancialController extends Controller
     }
 
     /**
+     * Store a newly created transaction
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'transaction_type' => 'required|in:income,expense',
+            'project_id' => 'required|exists:projects,id',
+            'category_id' => 'required|integer',
+            'transaction_date' => 'required|date',
+            'amount' => 'required|numeric|min:0',
+            'description' => 'required|string|max:500',
+            'invoice_number' => 'nullable|string|max:100',
+            'invoice_date' => 'nullable|date',
+            'accounting_code' => 'nullable|string|max:50',
+            'payment_method' => 'nullable|string|max:50',
+            'payment_status' => 'required|in:pending,partial,paid',
+            'paid_amount' => 'nullable|numeric|min:0',
+        ]);
+
+        // Add created_by
+        $validated['created_by'] = auth()->id();
+
+        // Create transaction
+        $transaction = $this->service->createTransaction($validated);
+
+        return redirect()->route('financial.show', $transaction)
+            ->with('success', 'Finansal işlem başarıyla oluşturuldu.');
+    }
+
+    /**
      * Display the specified transaction
      */
     public function show(FinancialTransaction $transaction): Response
@@ -143,6 +173,44 @@ class FinancialController extends Controller
             'incomeCategories' => $incomeCategories,
             'expenseCategories' => $expenseCategories,
         ]);
+    }
+
+    /**
+     * Update the specified transaction
+     */
+    public function update(Request $request, FinancialTransaction $transaction)
+    {
+        $validated = $request->validate([
+            'transaction_type' => 'required|in:income,expense',
+            'project_id' => 'required|exists:projects,id',
+            'category_id' => 'required|integer',
+            'transaction_date' => 'required|date',
+            'amount' => 'required|numeric|min:0',
+            'description' => 'required|string|max:500',
+            'invoice_number' => 'nullable|string|max:100',
+            'invoice_date' => 'nullable|date',
+            'accounting_code' => 'nullable|string|max:50',
+            'payment_method' => 'nullable|string|max:50',
+            'payment_status' => 'required|in:pending,partial,paid',
+            'paid_amount' => 'nullable|numeric|min:0',
+        ]);
+
+        // Update transaction
+        $transaction = $this->service->updateTransaction($transaction, $validated);
+
+        return redirect()->route('financial.show', $transaction)
+            ->with('success', 'Finansal işlem başarıyla güncellendi.');
+    }
+
+    /**
+     * Remove the specified transaction
+     */
+    public function destroy(FinancialTransaction $transaction)
+    {
+        $transaction->delete();
+
+        return redirect()->route('financial.index')
+            ->with('success', 'Finansal işlem başarıyla silindi.');
     }
 
     /**

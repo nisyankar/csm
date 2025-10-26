@@ -337,6 +337,9 @@ class Timesheet extends Model
             $this->only(['approval_status', 'approved_by', 'approved_at']),
             $notes
         );
+
+        // Fire event to create financial transaction
+        event(new \App\Events\TimesheetApprovedEvent($this));
     }
 
     public function reject(User $user, string $reason): void

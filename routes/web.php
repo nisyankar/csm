@@ -945,25 +945,34 @@ Route::middleware(['auth'])->prefix('api/progress')->name('api.progress.')->grou
 Route::middleware(['auth', 'verified'])->prefix('financial')->name('financial.')->group(function () {
     // Financial Dashboard
     Route::get('/dashboard', [FinancialController::class, 'dashboard'])
-        ->middleware('role:admin|project_manager|accountant')
+        ->middleware('role:admin|project_manager|hr')
         ->name('dashboard');
 
     // Transactions
     Route::get('/', [FinancialController::class, 'index'])
-        ->middleware('role:admin|project_manager|accountant|hr')
+        ->middleware('role:admin|project_manager|hr')
         ->name('index');
     Route::get('/create', [FinancialController::class, 'create'])
-        ->middleware('role:admin|project_manager|accountant')
+        ->middleware('role:admin|project_manager|hr')
         ->name('create');
+    Route::post('/', [FinancialController::class, 'store'])
+        ->middleware('role:admin|project_manager|hr')
+        ->name('store');
     Route::get('/{transaction}', [FinancialController::class, 'show'])
-        ->middleware('role:admin|project_manager|accountant|hr')
+        ->middleware('role:admin|project_manager|hr')
         ->name('show');
     Route::get('/{transaction}/edit', [FinancialController::class, 'edit'])
-        ->middleware('role:admin|project_manager|accountant')
+        ->middleware('role:admin|project_manager|hr')
         ->name('edit');
+    Route::put('/{transaction}', [FinancialController::class, 'update'])
+        ->middleware('role:admin|project_manager|hr')
+        ->name('update');
+    Route::delete('/{transaction}', [FinancialController::class, 'destroy'])
+        ->middleware('role:admin|project_manager|hr')
+        ->name('destroy');
 
     // Reports
     Route::get('/reports/profit-loss', [FinancialController::class, 'profitLoss'])
-        ->middleware('role:admin|project_manager|accountant')
+        ->middleware('role:admin|project_manager|hr')
         ->name('reports.profit-loss');
 });

@@ -451,6 +451,9 @@ class ProgressPaymentController extends Controller
             'payment_date' => $validated['payment_date'],
         ]);
 
+        // Fire event to create financial transaction
+        event(new \App\Events\ProgressPaymentPaidEvent($progressPayment));
+
         return back()->with('success', 'Hakediş kaydı ödendi olarak işaretlendi.');
     }
 
