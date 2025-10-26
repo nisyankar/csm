@@ -248,6 +248,10 @@ class ProjectController extends Controller
                     ->orderBy('created_at', 'desc')
                     ->limit(50);
             },
+            'contracts' => function ($query) {
+                $query->with(['subcontractor'])
+                    ->orderBy('created_at', 'desc');
+            },
             'quantities' => function ($query) {
                 $query->with(['projectStructure', 'projectFloor', 'projectUnit', 'workItem', 'progressPayments'])
                     ->orderBy('created_at', 'desc')

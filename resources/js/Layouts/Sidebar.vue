@@ -136,6 +136,18 @@
             ]"
           />
 
+          <!-- Contract Management -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager'])"
+            label="Sözleşme Yönetimi"
+            icon="document-text"
+            :items="[
+              { href: route('contracts.dashboard'), label: 'Dashboard', active: route().current('contracts.dashboard') },
+              { href: route('contracts.index'), label: 'Sözleşmeler', active: route().current('contracts.index') || route().current('contracts.show') || route().current('contracts.edit') },
+              { href: route('contracts.create'), label: 'Yeni Sözleşme', active: route().current('contracts.create') }
+            ]"
+          />
+
           <!-- Leave Management -->
           <SidebarGroup
             label="İzin Yönetimi"

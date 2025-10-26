@@ -33,6 +33,8 @@ use App\Http\Controllers\ProjectUnitController;
 use App\Http\Controllers\WorkItemAssignmentController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\ContractController;
+use App\Http\Controllers\QuantityController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -1016,4 +1018,46 @@ Route::middleware(['auth', 'verified'])->prefix('financial')->name('financial.')
     Route::get('/reports/profit-loss', [FinancialController::class, 'profitLoss'])
         ->middleware('role:admin|project_manager|hr')
         ->name('reports.profit-loss');
+});
+
+// CONTRACT MANAGEMENT ROUTES (Sözleşme Yönetimi - Faz 2)
+Route::middleware(['auth', 'verified'])->prefix('contracts')->name('contracts.')->group(function () {
+    // Contract Dashboard
+    Route::get('/dashboard', [ContractController::class, 'dashboard'])
+        ->middleware('role:admin|project_manager')
+        ->name('dashboard');
+
+    // Contract CRUD
+    Route::get('/', [ContractController::class, 'index'])
+        ->middleware('role:admin|project_manager')
+        ->name('index');
+    Route::get('/create', [ContractController::class, 'create'])
+        ->middleware('role:admin|project_manager')
+        ->name('create');
+    Route::post('/', [ContractController::class, 'store'])
+        ->middleware('role:admin|project_manager')
+        ->name('store');
+    Route::get('/{contract}', [ContractController::class, 'show'])
+        ->middleware('role:admin|project_manager')
+        ->name('show');
+    Route::get('/{contract}/edit', [ContractController::class, 'edit'])
+        ->middleware('role:admin|project_manager')
+        ->name('edit');
+    Route::put('/{contract}', [ContractController::class, 'update'])
+        ->middleware('role:admin|project_manager')
+        ->name('update');
+    Route::delete('/{contract}', [ContractController::class, 'destroy'])
+        ->middleware('role:admin|project_manager')
+        ->name('destroy');
+
+    // Contract Actions
+    Route::post('/{contract}/activate', [ContractController::class, 'activate'])
+        ->middleware('role:admin|project_manager')
+        ->name('activate');
+    Route::post('/{contract}/terminate', [ContractController::class, 'terminate'])
+        ->middleware('role:admin|project_manager')
+        ->name('terminate');
+    Route::post('/{contract}/complete', [ContractController::class, 'complete'])
+        ->middleware('role:admin|project_manager')
+        ->name('complete');
 });

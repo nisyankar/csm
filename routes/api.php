@@ -830,5 +830,26 @@ Route::middleware(['auth:sanctum'])->prefix('v1/project-management')->name('api.
             Route::get('/category-breakdown', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'categoryBreakdown'])->name('category-breakdown');
             Route::get('/dashboard-summary', [\App\Http\Controllers\Api\FinancialTransactionController::class, 'dashboardSummary'])->name('dashboard-summary');
         });
+
+        // Contracts (Sözleşme Yönetimi - Faz 2)
+        Route::prefix('contracts')->name('contracts.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\ContractController::class, 'search'])->name('search');
+            Route::get('/stats', [\App\Http\Controllers\Api\ContractController::class, 'stats'])->name('stats');
+            Route::get('/expiring-soon', [\App\Http\Controllers\Api\ContractController::class, 'expiringSoon'])->name('expiring-soon');
+            Route::get('/expired', [\App\Http\Controllers\Api\ContractController::class, 'expired'])->name('expired');
+            Route::get('/{contract}', [\App\Http\Controllers\Api\ContractController::class, 'show'])->name('show');
+
+            // Contract Filters
+            Route::get('/subcontractor/{subcontractorId}', [\App\Http\Controllers\Api\ContractController::class, 'bySubcontractor'])->name('by-subcontractor');
+            Route::get('/project/{projectId}', [\App\Http\Controllers\Api\ContractController::class, 'byProject'])->name('by-project');
+            Route::get('/project/{projectId}/subcontractor/{subcontractorId}/active', [\App\Http\Controllers\Api\ContractController::class, 'activeContract'])->name('active-contract');
+        });
+
+        // Quantities (Keşif/Metraj - Faz 2)
+        Route::prefix('quantities')->name('quantities.')->group(function () {
+            Route::get('/search', [\App\Http\Controllers\Api\QuantityController::class, 'search'])->name('search');
+            Route::get('/project/{projectId}', [\App\Http\Controllers\Api\QuantityController::class, 'byProject'])->name('by-project');
+            Route::get('/work-item/{workItemId}', [\App\Http\Controllers\Api\QuantityController::class, 'byWorkItem'])->name('by-work-item');
+        });
     });
 });

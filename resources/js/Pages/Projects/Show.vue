@@ -76,6 +76,20 @@
                 </span>
               </button>
               <button
+                @click="activeTab = 'contracts'"
+                :class="[
+                  'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                  activeTab === 'contracts'
+                    ? 'border-white text-white'
+                    : 'border-transparent text-cyan-100 hover:text-white hover:border-cyan-200'
+                ]"
+              >
+                Sözleşmeler
+                <span v-if="project.contracts?.length" class="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs">
+                  {{ project.contracts.length }}
+                </span>
+              </button>
+              <button
                 @click="activeTab = 'progress-payments'"
                 :class="[
                   'py-3 px-1 border-b-2 font-medium text-sm transition-colors',
@@ -545,6 +559,113 @@
             </div>
           </div>
         </Card>
+      </div>
+
+      <!-- Contracts Tab -->
+      <div v-show="activeTab === 'contracts'" class="space-y-6">
+        <!-- Header with Add Button -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">Sözleşmeler</h2>
+            <p class="text-gray-600 mt-1">Proje sözleşmelerini görüntüleyin ve yönetin</p>
+          </div>
+          <Link
+            :href="route('contracts.create', { project_id: project.id })"
+            class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Yeni Sözleşme
+          </Link>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="!project.contracts || project.contracts.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          <h3 class="mt-4 text-lg font-medium text-gray-900">Henüz sözleşme yok</h3>
+          <p class="mt-2 text-gray-500">Bu projeye ait sözleşme bulunmuyor. İlk sözleşmeyi oluşturun.</p>
+          <Link
+            :href="route('contracts.create', { project_id: project.id })"
+            class="mt-6 inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Yeni Sözleşme Oluştur
+          </Link>
+        </div>
+
+        <!-- Contracts List -->
+        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sözleşme No</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sözleşme Adı</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Taşeron</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedel</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tarih Aralığı</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="contract in project.contracts" :key="contract.id" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">{{ contract.contract_number }}</div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">{{ contract.contract_name }}</div>
+                    <div v-if="contract.work_description" class="text-sm text-gray-500 line-clamp-1">{{ contract.work_description }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ contract.subcontractor?.company_name || '-' }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ formatCurrency(contract.contract_value) }}
+                    </div>
+                    <div class="text-xs text-gray-500">{{ contract.currency }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ formatDate(contract.start_date) }}</div>
+                    <div class="text-xs text-gray-500">{{ formatDate(contract.end_date) }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span :class="[
+                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                      contract.status === 'active' ? 'bg-green-100 text-green-800' :
+                      contract.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                      contract.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                      contract.status === 'terminated' ? 'bg-red-100 text-red-800' :
+                      'bg-yellow-100 text-yellow-800'
+                    ]">
+                      {{ getContractStatusLabel(contract.status) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Link
+                      :href="route('contracts.show', contract.id)"
+                      class="text-indigo-600 hover:text-indigo-900 mr-3"
+                    >
+                      Detay
+                    </Link>
+                    <Link
+                      :href="route('contracts.edit', contract.id)"
+                      class="text-gray-600 hover:text-gray-900"
+                    >
+                      Düzenle
+                    </Link>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- Subcontractors Tab -->
@@ -1150,6 +1271,17 @@ const formatCurrency = (amount) => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(amount)
+}
+
+const getContractStatusLabel = (status) => {
+  const labels = {
+    draft: 'Taslak',
+    active: 'Aktif',
+    completed: 'Tamamlandı',
+    terminated: 'Feshedildi',
+    expired: 'Süresi Doldu',
+  }
+  return labels[status] || status
 }
 
 const getStatusLabel = (status) => {

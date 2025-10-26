@@ -1,10 +1,10 @@
 # FAZ 2: Operasyonel Çekirdek
-## 🔄 DEVAM EDİYOR (%50)
+## 🔄 DEVAM EDİYOR (%60)
 
 **Başlangıç:** 25 Ekim 2025
 **Hedef Bitiş:** Aralık 2025
-**Durum:** Aktif Sprint - Keşif & Metraj %95 Tamamlandı ✅
-**Modül Sayısı:** 7 (1 tamamlandı, 1 neredeyse tamamlandı)
+**Durum:** Aktif Sprint - Sözleşme Yönetimi Tamamlandı ✅
+**Modül Sayısı:** 7 (3 tamamlandı: Finansal, Keşif/Metraj, Sözleşme)
 
 ---
 
@@ -240,33 +240,85 @@ quantities (
 
 ---
 
-### 3. Sözleşme Yönetimi (0%) 📄 **PRİORİTE 3**
+### 3. Sözleşme Yönetimi (100%) 📄 **PRİORİTE 3** ✅
 
 #### Hedef
-Taşeron, tedarikçi, müşteri ilişkilerini merkezi sözleşme sistemi ile yönetmek.
+Taşeron, tedarikçi ilişkilerini merkezi sözleşme sistemi ile yönetmek.
 
 #### Database
 ```sql
 contracts (
-    id, contract_type,  -- subcontractor, supplier, consultant, customer
-    related_id,  -- ilgili taraf ID'si
-    contract_number, start_date, end_date,
-    value, currency, status,
-    termination_reason, notes
+    id, contract_type,  -- subcontractor, supplier
+    contract_number, contract_name,
+    project_id, subcontractor_id,
+    work_description, scope_of_work,
+    contract_value, currency,
+    payment_terms, signing_date, start_date, end_date,
+    warranty_type, warranty_amount, warranty_start_date, warranty_end_date,
+    status,  -- draft, active, completed, terminated, expired
+    termination_date, termination_reason,
+    documents, notes,
+    created_by, updated_by, approved_by, approved_at
 )
 ```
 
 #### Entegrasyon
-- **Hakediş:** `contract_id` referansı
-- **Satınalma:** `contract_id` referansı
-- **Satış:** `contract_id` referansı
+- **Hakediş:** `contract_id` referansı ✅
+- **Satınalma:** `contract_id` referansı (opsiyonel) ✅
+- **Proje:** Proje detay sayfasında Sözleşmeler tabı ✅
 
 #### Sprint Görevler
-- [ ] Migration
-- [ ] Contract model (polymorphic)
-- [ ] Mevcut tablolara `contract_id` ekleme
-- [ ] Sözleşme CRUD sayfaları
-- [ ] Sözleşme süresi ve teminat takibi
+- [x] Migrations (3 migration: contracts table, progress_payments contract_id, purchasing_requests contract_id)
+- [x] Contract model (relationships: project, subcontractor, progressPayments, purchasingRequests)
+- [x] Mevcut tablolara `contract_id` ekleme
+- [x] ContractService (business logic: create, update, activate, terminate, complete)
+- [x] ContractController (web + API endpoints)
+- [x] Sözleşme CRUD sayfaları (Dashboard, Index, Show, Create, Edit)
+- [x] Sözleşme süresi ve teminat takibi
+- [x] Otomatik sözleşme numarası oluşturma (duplicate-safe)
+- [x] Proje detay sayfasına sözleşmeler tabı ekleme
+- [x] Form validation ve hata gösterimi
+- [x] Durum yönetimi (draft → active → completed/terminated/expired)
+- [x] Dashboard istatistikleri ve süre dolacak sözleşmeler
+- [x] Seeder (15 örnek sözleşme)
+
+#### Tamamlanan Dosyalar
+**Backend:**
+- ✅ `database/migrations/2025_10_26_create_contracts_table.php`
+- ✅ `database/migrations/2025_10_26_add_contract_id_to_progress_payments_table.php`
+- ✅ `database/migrations/2025_10_26_add_contract_id_to_purchasing_requests_table.php`
+- ✅ `app/Models/Contract.php`
+- ✅ `app/Models/Subcontractor.php` (contracts relationship eklendi)
+- ✅ `app/Models/ProgressPayment.php` (contract_id eklendi)
+- ✅ `app/Models/Project.php` (contracts relationship eklendi)
+- ✅ `app/Services/Contract/ContractService.php`
+- ✅ `app/Http/Controllers/ContractController.php`
+- ✅ `app/Http/Controllers/Api/ContractController.php`
+- ✅ `routes/web.php` (contract routes)
+- ✅ `routes/api.php` (contract API routes)
+- ✅ `database/seeders/ContractSeeder.php`
+
+**Frontend:**
+- ✅ `resources/js/Pages/Contracts/Dashboard.vue`
+- ✅ `resources/js/Pages/Contracts/Index.vue`
+- ✅ `resources/js/Pages/Contracts/Show.vue`
+- ✅ `resources/js/Pages/Contracts/Create.vue`
+- ✅ `resources/js/Pages/Contracts/Edit.vue`
+- ✅ `resources/js/Pages/Projects/Show.vue` (contracts tab eklendi)
+- ✅ `resources/js/Layouts/Sidebar.vue` (menu eklendi)
+
+#### Özellikler
+- ✅ Sözleşme türü (Taşeron/Tedarikçi)
+- ✅ Otomatik sözleşme numarası (PRJ-CODE-TS-YYYY-0001)
+- ✅ Teminat yönetimi (Banka Mektubu, Nakit, Çek, Teminatsız)
+- ✅ Sözleşme durumu yönetimi ve lifecycle
+- ✅ Hakediş ile entegrasyon
+- ✅ Satınalma ile opsiyonel entegrasyon
+- ✅ Dashboard: İstatistikler, süresi dolacak sözleşmeler
+- ✅ Filtreleme (Proje, Taşeron, Durum, Tarih)
+- ✅ Full-width tasarım ve card layout
+- ✅ Pagination ve arama
+- ✅ Proje bazlı sözleşme görüntüleme
 
 ---
 
@@ -328,8 +380,7 @@ construction_permits (
 - Başvuru süreç takibi
 - Belge yönetimi (dosya upload)
 - Süre dolumu uyarıları
-- **Ruhsat revizyonları** (proje değişiklikleri) takibi
-
+ 
 #### Sprint Görevler
 - [ ] Migration
 - [ ] ConstructionPermit model

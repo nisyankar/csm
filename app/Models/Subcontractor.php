@@ -158,12 +158,20 @@ class Subcontractor extends Model
     }
 
     /**
-     * Taşeronun sözleşmeleri (ileride eklenecek)
+     * Taşeronun sözleşmeleri
      */
-    // public function contracts()
-    // {
-    //     return $this->hasMany(Contract::class);
-    // }
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    /**
+     * Aktif sözleşmeler
+     */
+    public function activeContracts()
+    {
+        return $this->hasMany(Contract::class)->where('status', 'active');
+    }
 
     /**
      * Taşeronun hakediş kayıtları

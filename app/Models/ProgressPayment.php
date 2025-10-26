@@ -13,6 +13,7 @@ class ProgressPayment extends Model
     protected $fillable = [
         'project_id',
         'subcontractor_id',
+        'contract_id',
         'work_item_id',
         'quantity_id',
         'project_structure_id',
@@ -100,6 +101,11 @@ class ProgressPayment extends Model
     public function quantity(): BelongsTo
     {
         return $this->belongsTo(Quantity::class);
+    }
+
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
     }
 
     /**

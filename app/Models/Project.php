@@ -509,4 +509,12 @@ class Project extends Model
     {
         return $this->hasMany(Quantity::class);
     }
+
+    /**
+     * Contracts ilişkisi (Sözleşmeler)
+     */
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class);
+    }
 }

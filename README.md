@@ -76,6 +76,18 @@
 - **Dashboard**: Özet finansal widget'lar
 - **Bütçe vs Gerçekleşen**: Varyans analizi
 
+### Sözleşme Yönetimi Modülü 🆕
+- **Taşeron/Tedarikçi Sözleşmeleri**: Merkezi sözleşme yönetim sistemi
+- **Otomatik Numaralandırma**: Duplicate-safe sözleşme numarası oluşturma (PRJ-CODE-TS-YYYY-0001)
+- **Teminat Yönetimi**: Banka Mektubu, Nakit, Çek, Teminatsız seçenekleri
+- **Durum Yönetimi**: Draft → Active → Completed/Terminated/Expired lifecycle
+- **Hakediş Entegrasyonu**: Sözleşmelere bağlı hakediş kayıtları
+- **Satınalma Entegrasyonu**: Opsiyonel sözleşme bağlantısı
+- **Proje Entegrasyonu**: Proje detay sayfasında sözleşmeler tabı
+- **Dashboard**: İstatistikler, süresi dolacak sözleşmeler, son sözleşmeler
+- **Filtreleme**: Proje, taşeron, durum, tarih bazlı arama
+- **Süre Takibi**: Sözleşme süresi dolacak olanlar için otomatik uyarı
+
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
@@ -139,6 +151,23 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 26 Ekim 2025 - Sözleşme Yönetimi Modülü Tamamlandı 🎉
+- **Merkezi Sözleşme Sistemi**: Taşeron ve tedarikçi sözleşmelerinin tek noktadan yönetimi
+- **3 Migration**: contracts table, progress_payments contract_id, purchasing_requests contract_id
+- **Otomatik Numaralandırma**: Duplicate-safe sözleşme numarası (PRJ-CODE-TS-YYYY-0001)
+- **Teminat Yönetimi**: Banka Mektubu, Nakit, Çek, Teminatsız seçenekleri
+- **Lifecycle Management**: Draft → Active → Completed/Terminated/Expired durum akışı
+- **Proje Entegrasyonu**:
+  - Project Show sayfasına Sözleşmeler tabı eklendi
+  - Proje seçimi ile otomatik form doldurma
+- **Hakediş Entegrasyonu**: Hakediş kayıtlarına contract_id bağlantısı
+- **Dashboard**: İstatistikler, süresi dolacak sözleşmeler (30 gün), son sözleşmeler
+- **Filtreleme Sistemi**: Proje, taşeron, durum, tarih bazlı arama
+- **ContractService**: Business logic, otomatik numaralandırma, lifecycle methods
+- **5 Vue Sayfası**: Dashboard, Index, Show, Create, Edit (full-width tasarım)
+- **Form Validation**: Comprehensive hata gösterimi (genel liste + input bazlı)
+- **15 Seeder Kayıt**: Test verisi ile sistem hazır
 
 #### 26 Ekim 2025 - Keşif/Metraj ve Hakediş Entegrasyonu 🎯
 - **Metraj-Hakediş İlişkisi**: İş akışı düzeltildi (Metraj → Hakediş)

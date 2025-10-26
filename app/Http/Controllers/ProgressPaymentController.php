@@ -580,6 +580,7 @@ class ProgressPaymentController extends Controller
                 'overrun_amount' => $payment->overrun_amount,
                 'unit' => $payment->unit,
                 'total_amount' => $payment->total_amount,
+                'overrun_value' => $payment->overrun_amount * $payment->unit_price,
                 'status' => $payment->status,
                 'status_label' => $this->getStatusLabel($payment->status),
                 'overrun_notes' => $payment->overrun_notes,
@@ -588,7 +589,9 @@ class ProgressPaymentController extends Controller
 
         // Summary statistics
         $totalOverrunAmount = ProgressPayment::where('is_quantity_overrun', true)->sum('overrun_amount');
-        $totalOverrunValue = ProgressPayment::where('is_quantity_overrun', true)->sum('total_amount');
+        $totalOverrunValue = ProgressPayment::where('is_quantity_overrun', true)
+            ->get()
+            ->sum(fn($p) => $p->overrun_amount * $p->unit_price);
         $overrunCount = ProgressPayment::where('is_quantity_overrun', true)->count();
 
         return Inertia::render('ProgressPayments/QuantityOverrunReport', [
