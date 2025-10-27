@@ -148,6 +148,18 @@
             ]"
           />
 
+          <!-- Sales & Deed Management -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'sales_manager'])"
+            label="Satış & Tapu Yönetimi"
+            icon="home"
+            :items="[
+              { href: route('sales.customers.index'), label: 'Müşteriler', active: route().current('sales.customers.*') },
+              { href: route('sales.unit-sales.index'), label: 'Satışlar', active: route().current('sales.unit-sales.*') },
+              { href: route('sales.payments.index'), label: 'Ödeme Takibi', active: route().current('sales.payments.*') }
+            ]"
+          />
+
           <!-- Leave Management -->
           <SidebarGroup
             label="İzin Yönetimi"

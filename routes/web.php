@@ -1061,3 +1061,86 @@ Route::middleware(['auth', 'verified'])->prefix('contracts')->name('contracts.')
         ->middleware('role:admin|project_manager')
         ->name('complete');
 });
+
+// SALES & DEED MANAGEMENT ROUTES (Satış ve Tapu Yönetimi - Faz 3)
+Route::middleware(['auth', 'verified'])->prefix('sales')->name('sales.')->group(function () {
+    // Customer Management
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/', [App\Http\Controllers\CustomerController::class, 'index'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\CustomerController::class, 'create'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\CustomerController::class, 'store'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('store');
+        Route::get('/{customer}', [App\Http\Controllers\CustomerController::class, 'show'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('show');
+        Route::get('/{customer}/edit', [App\Http\Controllers\CustomerController::class, 'edit'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('edit');
+        Route::put('/{customer}', [App\Http\Controllers\CustomerController::class, 'update'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('update');
+        Route::delete('/{customer}', [App\Http\Controllers\CustomerController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Unit Sales Management
+    Route::prefix('unit-sales')->name('unit-sales.')->group(function () {
+        Route::get('/', [App\Http\Controllers\UnitSaleController::class, 'index'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\UnitSaleController::class, 'create'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\UnitSaleController::class, 'store'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('store');
+        Route::get('/{unitSale}', [App\Http\Controllers\UnitSaleController::class, 'show'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('show');
+        Route::get('/{unitSale}/edit', [App\Http\Controllers\UnitSaleController::class, 'edit'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('edit');
+        Route::put('/{unitSale}', [App\Http\Controllers\UnitSaleController::class, 'update'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('update');
+        Route::delete('/{unitSale}', [App\Http\Controllers\UnitSaleController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Sale Payments Management
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/', [App\Http\Controllers\SalePaymentController::class, 'index'])
+            ->middleware('role:admin|project_manager|sales_manager|accountant')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\SalePaymentController::class, 'create'])
+            ->middleware('role:admin|project_manager|sales_manager|accountant')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\SalePaymentController::class, 'store'])
+            ->middleware('role:admin|project_manager|sales_manager|accountant')
+            ->name('store');
+        Route::get('/{payment}', [App\Http\Controllers\SalePaymentController::class, 'show'])
+            ->middleware('role:admin|project_manager|sales_manager|accountant')
+            ->name('show');
+        Route::get('/{payment}/edit', [App\Http\Controllers\SalePaymentController::class, 'edit'])
+            ->middleware('role:admin|project_manager|sales_manager|accountant')
+            ->name('edit');
+        Route::put('/{payment}', [App\Http\Controllers\SalePaymentController::class, 'update'])
+            ->middleware('role:admin|project_manager|sales_manager|accountant')
+            ->name('update');
+        Route::delete('/{payment}', [App\Http\Controllers\SalePaymentController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Payment Actions
+        Route::post('/{payment}/mark-as-paid', [App\Http\Controllers\SalePaymentController::class, 'markAsPaid'])
+            ->middleware('role:admin|project_manager|sales_manager|accountant')
+            ->name('mark-as-paid');
+    });
+});

@@ -852,4 +852,98 @@ Route::middleware(['auth:sanctum'])->prefix('v1/project-management')->name('api.
             Route::get('/work-item/{workItemId}', [\App\Http\Controllers\Api\QuantityController::class, 'byWorkItem'])->name('by-work-item');
         });
     });
+
+    // Sales & Deed Management Module (Satış ve Tapu Yönetimi)
+    Route::prefix('sales')->name('sales.')->group(function () {
+
+        // Customers (Müşteriler)
+        Route::prefix('customers')->name('customers.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\CustomerController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\CustomerController::class, 'store'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('store');
+            Route::get('/stats', [\App\Http\Controllers\Api\CustomerController::class, 'stats'])->name('stats');
+            Route::get('/{customer}', [\App\Http\Controllers\Api\CustomerController::class, 'show'])->name('show');
+            Route::put('/{customer}', [\App\Http\Controllers\Api\CustomerController::class, 'update'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('update');
+            Route::delete('/{customer}', [\App\Http\Controllers\Api\CustomerController::class, 'destroy'])
+                ->middleware('role:admin|project_manager')
+                ->name('destroy');
+
+            // Customer Actions
+            Route::post('/{customer}/activate', [\App\Http\Controllers\Api\CustomerController::class, 'activate'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('activate');
+            Route::post('/{customer}/deactivate', [\App\Http\Controllers\Api\CustomerController::class, 'deactivate'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('deactivate');
+            Route::post('/{customer}/blacklist', [\App\Http\Controllers\Api\CustomerController::class, 'blacklist'])
+                ->middleware('role:admin|project_manager')
+                ->name('blacklist');
+        });
+
+        // Unit Sales (Daire Satışları)
+        Route::prefix('unit-sales')->name('unit-sales.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\UnitSaleController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\UnitSaleController::class, 'store'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('store');
+            Route::get('/stats', [\App\Http\Controllers\Api\UnitSaleController::class, 'stats'])->name('stats');
+            Route::get('/{unitSale}', [\App\Http\Controllers\Api\UnitSaleController::class, 'show'])->name('show');
+            Route::put('/{unitSale}', [\App\Http\Controllers\Api\UnitSaleController::class, 'update'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('update');
+            Route::delete('/{unitSale}', [\App\Http\Controllers\Api\UnitSaleController::class, 'destroy'])
+                ->middleware('role:admin|project_manager')
+                ->name('destroy');
+
+            // Sale Actions
+            Route::post('/{unitSale}/cancel', [\App\Http\Controllers\Api\UnitSaleController::class, 'cancel'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('cancel');
+            Route::post('/{unitSale}/complete', [\App\Http\Controllers\Api\UnitSaleController::class, 'complete'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('complete');
+            Route::post('/{unitSale}/transfer-deed', [\App\Http\Controllers\Api\UnitSaleController::class, 'transferDeed'])
+                ->middleware('role:admin|project_manager')
+                ->name('transfer-deed');
+        });
+
+        // Sale Payments (Satış Ödemeleri)
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\SalePaymentController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\SalePaymentController::class, 'store'])
+                ->middleware('role:admin|project_manager|sales_manager|accountant')
+                ->name('store');
+            Route::get('/stats', [\App\Http\Controllers\Api\SalePaymentController::class, 'stats'])->name('stats');
+            Route::get('/upcoming', [\App\Http\Controllers\Api\SalePaymentController::class, 'upcoming'])->name('upcoming');
+            Route::get('/{payment}', [\App\Http\Controllers\Api\SalePaymentController::class, 'show'])->name('show');
+            Route::put('/{payment}', [\App\Http\Controllers\Api\SalePaymentController::class, 'update'])
+                ->middleware('role:admin|project_manager|sales_manager|accountant')
+                ->name('update');
+            Route::delete('/{payment}', [\App\Http\Controllers\Api\SalePaymentController::class, 'destroy'])
+                ->middleware('role:admin|project_manager')
+                ->name('destroy');
+
+            // Payment Actions
+            Route::post('/{payment}/mark-as-paid', [\App\Http\Controllers\Api\SalePaymentController::class, 'markAsPaid'])
+                ->middleware('role:admin|project_manager|sales_manager|accountant')
+                ->name('mark-as-paid');
+            Route::post('/{payment}/approve', [\App\Http\Controllers\Api\SalePaymentController::class, 'approve'])
+                ->middleware('role:admin|project_manager')
+                ->name('approve');
+            Route::post('/{payment}/cancel', [\App\Http\Controllers\Api\SalePaymentController::class, 'cancel'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('cancel');
+
+            // Bulk Operations
+            Route::post('/calculate-late-fees', [\App\Http\Controllers\Api\SalePaymentController::class, 'calculateLateFees'])
+                ->middleware('role:admin|project_manager|accountant')
+                ->name('calculate-late-fees');
+            Route::post('/send-reminders', [\App\Http\Controllers\Api\SalePaymentController::class, 'sendReminders'])
+                ->middleware('role:admin|project_manager|sales_manager')
+                ->name('send-reminders');
+        });
+    });
 });
