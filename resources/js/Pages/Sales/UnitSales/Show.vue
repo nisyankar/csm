@@ -266,18 +266,27 @@
             </div>
           </div>
 
-          <!-- Tapu Bilgileri -->
+          <!-- Tapu Bilgileri ve Yönetimi -->
           <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
               <h3 class="text-lg font-medium text-gray-900">Tapu Bilgileri</h3>
+              <button
+                @click="showDeedUpdateModal = true"
+                class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                </svg>
+                Güncelle
+              </button>
             </div>
             <div class="p-6">
               <dl class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <dt class="text-sm font-medium text-gray-500">Tapu Durumu</dt>
                   <dd class="mt-1">
-                    <span :class="unitSale.deed_status_badge?.class" class="px-3 py-1 text-xs font-semibold rounded-full">
-                      {{ unitSale.deed_status_badge?.text }}
+                    <span :class="getDeedStatusClass(unitSale.deed_status)" class="px-3 py-1 text-xs font-semibold rounded-full">
+                      {{ getDeedStatusLabel(unitSale.deed_status) }}
                     </span>
                   </dd>
                 </div>
@@ -285,11 +294,66 @@
                   <dt class="text-sm font-medium text-gray-500">Tapu Tipi</dt>
                   <dd class="mt-1 text-sm text-gray-900">{{ unitSale.deed_type }}</dd>
                 </div>
+                <div v-if="unitSale.title_deed_number">
+                  <dt class="text-sm font-medium text-gray-500">Tapu Numarası</dt>
+                  <dd class="mt-1 text-sm text-gray-900 font-mono">{{ unitSale.title_deed_number }}</dd>
+                </div>
                 <div v-if="unitSale.deed_transfer_date">
                   <dt class="text-sm font-medium text-gray-500">Devir Tarihi</dt>
                   <dd class="mt-1 text-sm text-gray-900">{{ formatDate(unitSale.deed_transfer_date) }}</dd>
                 </div>
+                <div v-if="unitSale.deed_notes" class="md:col-span-2">
+                  <dt class="text-sm font-medium text-gray-500">Tapu Notları</dt>
+                  <dd class="mt-1 text-sm text-gray-700 whitespace-pre-wrap">{{ unitSale.deed_notes }}</dd>
+                </div>
               </dl>
+
+              <!-- Tapu Belgeleri -->
+              <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-sm font-semibold text-gray-900">Tapu Belgeleri</h4>
+                  <button
+                    @click="showDeedDocumentModal = true"
+                    class="inline-flex items-center px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+                  >
+                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Belge Yükle
+                  </button>
+                </div>
+
+                <div v-if="unitSale.deed_documents && unitSale.deed_documents.length > 0" class="space-y-2">
+                  <div
+                    v-for="(doc, index) in unitSale.deed_documents"
+                    :key="index"
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div class="flex-shrink-0">
+                        <svg class="h-8 w-8 text-red-600" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M7 18h10v-1H7v1zM17 14H7v-1h10v1zm0-4H7V9h10v1zm2.5-5L17 2.5 14.5 5H11v4h3.5l2.5 2.5 2.5-2.5V5h-3.5l2.5-2.5z"/>
+                        </svg>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">{{ doc.file_name }}</p>
+                        <p class="text-xs text-gray-500">{{ formatDate(doc.uploaded_at) }}</p>
+                      </div>
+                    </div>
+                    <a
+                      :href="`/storage/${doc.file_path}`"
+                      target="_blank"
+                      class="flex-shrink-0 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      İndir
+                    </a>
+                  </div>
+                </div>
+
+                <div v-else class="text-center py-6 text-sm text-gray-500">
+                  Henüz yüklenen belge bulunmamaktadır.
+                </div>
+              </div>
             </div>
           </div>
 
@@ -352,19 +416,223 @@
         </div>
       </div>
     </div>
+
+    <!-- Tapu Durumu Güncelleme Modalı -->
+    <form @submit.prevent="updateDeedStatus" v-if="showDeedUpdateModal" class="fixed inset-0 z-50 overflow-y-auto">
+      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showDeedUpdateModal = false"></div>
+
+        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+          <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Tapu Durumunu Güncelle</h3>
+
+            <div class="space-y-4">
+              <!-- Tapu Durumu -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tapu Durumu *</label>
+                <select v-model="deedForm.deed_status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                  <option value="not_transferred">Devredilmedi</option>
+                  <option value="in_progress">İşlemde</option>
+                  <option value="transferred">Devredildi</option>
+                  <option value="postponed">Ertelendi</option>
+                </select>
+              </div>
+
+              <!-- Tapu Tipi -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tapu Tipi</label>
+                <input v-model="deedForm.deed_type" type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ör: Kat Mülkiyeti, Kat İrtifakı">
+              </div>
+
+              <!-- Tapu Numarası -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tapu Numarası</label>
+                <input v-model="deedForm.title_deed_number" type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Tapu sicil numarası">
+              </div>
+
+              <!-- Devir Tarihi -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Devir Tarihi</label>
+                <input v-model="deedForm.deed_transfer_date" type="date" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+              </div>
+
+              <!-- Notlar -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tapu Notları</label>
+                <textarea v-model="deedForm.deed_notes" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Tapu işlemleriyle ilgili notlar"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+            <button type="submit" :disabled="deedFormProcessing" class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:w-auto disabled:opacity-50">
+              <span v-if="!deedFormProcessing">Kaydet</span>
+              <span v-else>Kaydediliyor...</span>
+            </button>
+            <button type="button" @click="showDeedUpdateModal = false" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+              İptal
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Tapu Belgesi Yükleme Modalı -->
+    <form @submit.prevent="uploadDeedDocument" v-if="showDeedDocumentModal" class="fixed inset-0 z-50 overflow-y-auto">
+      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showDeedDocumentModal = false"></div>
+
+        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+          <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Tapu Belgesi Yükle</h3>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Belge Dosyası (PDF, JPG, PNG - Max 10MB)</label>
+                <input
+                  type="file"
+                  @change="handleFileChange"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  class="w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+                  required
+                >
+              </div>
+
+              <div v-if="selectedFile" class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <div class="flex items-center space-x-2">
+                  <svg class="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                  </svg>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-blue-900 truncate">{{ selectedFile.name }}</p>
+                    <p class="text-xs text-blue-700">{{ (selectedFile.size / 1024 / 1024).toFixed(2) }} MB</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 gap-2">
+            <button type="submit" :disabled="documentFormProcessing || !selectedFile" class="inline-flex w-full justify-center rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 sm:w-auto disabled:opacity-50">
+              <span v-if="!documentFormProcessing">Yükle</span>
+              <span v-else>Yükleniyor...</span>
+            </button>
+            <button type="button" @click="showDeedDocumentModal = false" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+              İptal
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
   </AppLayout>
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { ref } from 'vue'
+import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
-defineProps({
+const props = defineProps({
   unitSale: {
     type: Object,
     required: true
   }
 })
+
+// Tapu Modal States
+const showDeedUpdateModal = ref(false)
+const showDeedDocumentModal = ref(false)
+const deedFormProcessing = ref(false)
+const documentFormProcessing = ref(false)
+const selectedFile = ref(null)
+
+// Tapu Form Data
+const deedForm = ref({
+  deed_status: props.unitSale.deed_status || 'not_transferred',
+  deed_type: props.unitSale.deed_type || '',
+  title_deed_number: props.unitSale.title_deed_number || '',
+  deed_transfer_date: props.unitSale.deed_transfer_date || '',
+  deed_notes: props.unitSale.deed_notes || ''
+})
+
+// Update Deed Status
+const updateDeedStatus = () => {
+  deedFormProcessing.value = true
+
+  router.post(
+    route('sales.unit-sales.deed.update-status', props.unitSale.id),
+    deedForm.value,
+    {
+      onSuccess: () => {
+        showDeedUpdateModal.value = false
+      },
+      onFinish: () => {
+        deedFormProcessing.value = false
+      }
+    }
+  )
+}
+
+// Handle File Change
+const handleFileChange = (event) => {
+  selectedFile.value = event.target.files[0]
+}
+
+// Upload Deed Document
+const uploadDeedDocument = () => {
+  if (!selectedFile.value) return
+
+  documentFormProcessing.value = true
+
+  const formData = new FormData()
+  formData.append('document', selectedFile.value)
+
+  router.post(
+    route('sales.unit-sales.deed.upload-document', props.unitSale.id),
+    formData,
+    {
+      onSuccess: () => {
+        showDeedDocumentModal.value = false
+        selectedFile.value = null
+      },
+      onFinish: () => {
+        documentFormProcessing.value = false
+      }
+    }
+  )
+}
+
+// Get Deed Status Class
+const getDeedStatusClass = (status) => {
+  switch (status) {
+    case 'not_transferred':
+      return 'bg-gray-100 text-gray-800'
+    case 'in_progress':
+      return 'bg-blue-100 text-blue-800'
+    case 'transferred':
+      return 'bg-green-100 text-green-800'
+    case 'postponed':
+      return 'bg-orange-100 text-orange-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
+}
+
+// Get Deed Status Label
+const getDeedStatusLabel = (status) => {
+  switch (status) {
+    case 'not_transferred':
+      return 'Devredilmedi'
+    case 'in_progress':
+      return 'İşlemde'
+    case 'transferred':
+      return 'Devredildi'
+    case 'postponed':
+      return 'Ertelendi'
+    default:
+      return 'Bilinmiyor'
+  }
+}
 
 const formatCurrency = (amount) => {
   if (!amount) return '₺0'

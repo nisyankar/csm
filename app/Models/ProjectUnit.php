@@ -60,6 +60,18 @@ class ProjectUnit extends Model
         return $this->hasMany(Timesheet::class, 'unit_id');
     }
 
+    public function unitSales(): HasMany
+    {
+        return $this->hasMany(UnitSale::class, 'project_unit_id');
+    }
+
+    public function unitSale(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(UnitSale::class, 'project_unit_id')
+            ->whereNotIn('status', ['cancelled'])
+            ->latest();
+    }
+
     /**
      * Accessors
      */

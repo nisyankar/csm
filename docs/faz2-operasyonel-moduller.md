@@ -1,10 +1,10 @@
 # FAZ 2: Operasyonel Çekirdek
-## 🔄 DEVAM EDİYOR (%60)
+## 🔄 DEVAM EDİYOR (%70)
 
 **Başlangıç:** 25 Ekim 2025
 **Hedef Bitiş:** Aralık 2025
-**Durum:** Aktif Sprint - Sözleşme Yönetimi Tamamlandı ✅
-**Modül Sayısı:** 7 (3 tamamlandı: Finansal, Keşif/Metraj, Sözleşme)
+**Durum:** Aktif Sprint - Satış ve Tapu Yönetimi Tamamlandı ✅
+**Modül Sayısı:** 7 (4 tamamlandı: Finansal, Keşif/Metraj, Sözleşme, Satış/Tapu)
 
 ---
 
@@ -322,44 +322,132 @@ contracts (
 
 ---
 
-### 4. Satış ve Tapu Yönetimi (0%) 🏘️
+### 4. Satış ve Tapu Yönetimi (100%) 🏘️ **PRİORİTE 3** ✅
 
-#### Database
+#### Hedef
+Konut satışlarını, müşteri takibini, ödeme planlarını ve tapu devir işlemlerini merkezi sistemden yönetmek.
+
+#### Database (Zaten Mevcut)
 ```sql
 customers (
-    id, first_name, last_name, tc_number,
-    phone, email, address, occupation, marital_status
+    id, customer_type, first_name, last_name, company_name,
+    tc_number, tax_number, phone, email, address,
+    occupation, marital_status, customer_status, notes
 )
 
 unit_sales (
-    id, unit_id, customer_id,
-    sale_date, sale_price, payment_type,
-    down_payment, installment_count, installment_amount,
-    contract_number, contract_date,
-    deed_transfer_date, deed_number,
-    status  -- reserved, contracted, deed_transferred, cancelled
+    id, project_id, project_unit_id, customer_id,
+    sale_number, sale_type, list_price, discount_amount, final_price,
+    currency, down_payment, installment_count, monthly_installment,
+    payment_method, status, deed_status, deed_type,
+    title_deed_number, deed_transfer_date, deed_documents,
+    contract_documents, payment_documents, deed_notes
 )
 
 sale_payments (
-    id, unit_sale_id, payment_date, due_date, amount,
-    payment_type, payment_method, receipt_number,
-    status  -- pending, paid, overdue, cancelled
+    id, unit_sale_id, customer_id, payment_type,
+    installment_number, amount, paid_amount, remaining_amount,
+    currency, due_date, payment_date, status
 )
 ```
 
-#### Özellikler
-- Müşteri CRM
-- Rezervasyon/satış sözleşmeleri
-- Ödeme planı ve taksit takibi
-- Tapu devir işlemleri
-- Blok/Kat/Daire satış durumu görselleştirme
+#### Özellikler Tamamlandı ✅
+- ✅ Müşteri CRM (Bireysel/Kurumsal)
+- ✅ Rezervasyon/satış sözleşmeleri
+- ✅ Otomatik ödeme planı oluşturma (Peşinat + Taksitler)
+- ✅ Taksit takibi ve ödeme yönetimi
+- ✅ Otomatik gelir kaydı (Financial entegrasyon)
+- ✅ Cascade dropdown (Proje → Blok → Kat → Birim)
+- ✅ Birim satış durumu otomatik güncelleme
+- ✅ **Basit Tapu Takibi**:
+  - ✅ Tapu durumu yönetimi (Devredilmedi, İşlemde, Devredildi, Ertelendi)
+  - ✅ Tapu belgesi yükleme sistemi (PDF, JPG, PNG)
+  - ✅ Tapu bilgileri (Tip, Numara, Devir Tarihi, Notlar)
+  - ✅ UnitSale Show sayfasında interaktif tapu bölümü
+  - ✅ Modal-based güncelleme ve belge yükleme
+- ✅ **Satış Durumu Görselleştirme**:
+  - ✅ Proje bazlı satış istatistikleri
+  - ✅ Blok seçimi ve kat progress bar'ları
+  - ✅ Renk kodlu birim grid'i (Müsait, Satıldı, Rezerve, Gecikmiş)
+  - ✅ Birim detay modal'ı (Müşteri, fiyat, ödeme bilgileri)
+  - ✅ Satış oranı ve tutarları dashboard
+  - ✅ Index sayfası (Proje listesi + istatistikler)
+
+#### Entegrasyon Tamamlandı ✅
+- **Project Units**: Birim satış durumu otomatik güncelleme (is_sold, sale_date) ✅
+- **Finansal Sistem**: Satış ödeme onayı → Gelir kaydı (Event-driven ready) ✅
+- **Cascade API**: Proje → Yapı → Kat → Birim hiyerarşik dropdown ✅
+- **Routes**: Sales modülü altında organize edildi ✅
 
 #### Sprint Görevler
-- [ ] Migrations
-- [ ] Customer, UnitSale, SalePayment modelleri
-- [ ] CRUD sayfaları
-- [ ] Ödeme planı otomasyonu
-- [ ] Satış durumu dashboard widget
+- [x] Mevcut migrations kontrol (Customer, UnitSale, SalePayment zaten var)
+- [x] SalesStatusController (satış durumu görselleştirme)
+- [x] UnitSaleController tapu method'ları (updateDeedStatus, uploadDeedDocument)
+- [x] Vue Componentleri:
+  - [x] SalesStatus/Show.vue (Blok/Kat/Birim görselleştirme)
+  - [x] SalesStatus/Index.vue (Proje listesi)
+  - [x] UnitSales/Show.vue (Tapu bölümü ve modallar)
+- [x] API Endpoints:
+  - [x] GET /sales-status (Proje listesi)
+  - [x] GET /sales-status/{project} (Proje satış durumu)
+  - [x] GET /sales-status/api/structure/{structure} (Blok katları)
+  - [x] GET /sales-status/api/floor/{floor}/units (Kat birimleri)
+  - [x] POST /unit-sales/{unitSale}/deed/update-status (Tapu güncelleme)
+  - [x] POST /unit-sales/{unitSale}/deed/upload-document (Tapu belgesi yükleme)
+- [x] Routes entegrasyonu
+- [x] Dokümantasyon güncelleme
+
+#### Tamamlanan Dosyalar (27 Ekim 2025)
+**Backend:**
+- ✅ `app/Http/Controllers/SalesStatusController.php`
+- ✅ `app/Http/Controllers/UnitSaleController.php` (tapu method'ları eklendi)
+- ✅ `routes/web.php` (sales-status ve deed routes)
+
+**Frontend:**
+- ✅ `resources/js/Pages/Sales/SalesStatus/Index.vue`
+- ✅ `resources/js/Pages/Sales/SalesStatus/Show.vue`
+- ✅ `resources/js/Pages/Sales/UnitSales/Show.vue` (tapu bölümü ve modallar)
+
+#### Özellikler Detayı
+**Satış Durumu Görselleştirme:**
+- Proje istatistikleri (Toplam, Satılan, Rezerve, Müsait birim)
+- Satış oranı progress bar
+- Blok seçim sidebar (sticky)
+- Kat bazlı satış progress'i
+- Expandable kat detayları
+- Renk kodlu birim kartları:
+  - 🟢 Müsait (available)
+  - 🔴 Satıldı (sold)
+  - 🟡 Rezerve (reserved)
+  - 🟠 Gecikmiş (delayed)
+- Birim hover tooltip (Müşteri adı, durum)
+- Birim detay modal'ı (Alan, fiyat, ödeme tamamlanma)
+- Satış detayına hızlı geçiş butonu
+
+**Tapu Yönetimi:**
+- Modal-based güncelleme formu
+- Tapu durumu dropdown (4 durum)
+- Tapu tipi, numarası, devir tarihi
+- Tapu notları (textarea)
+- Belge yükleme modal'ı (drag-drop ready)
+- Belge listesi ve indirme
+- Otomatik tarih ayarlama (transferred durumunda)
+- Storage'da deed_documents klasörü
+
+#### Test Sonuçları
+- **Satış Durumu**: Proje satış istatistikleri doğru hesaplanıyor
+- **Blok/Kat Navigation**: Smooth geçişler, API çağrıları çalışıyor ✅
+- **Birim Grid**: Renk kodları ve hover tooltips aktif
+- **Tapu Güncelleme**: Form validation ve başarılı kayıt
+- **Belge Yükleme**: 10MB limit, PDF/JPG/PNG desteği
+
+#### Bug Fixes (27 Ekim 2025)
+- ✅ **Blok Seçimi Sorunu Düzeltildi**:
+  - Problem: Bloklara tıklandığında katlar görünmüyordu
+  - Sebep: `SalesStatusController::getStructureDetails()` metodunda `floor_order` kolonu kullanılıyordu ama database'de bu kolon yoktu
+  - Çözüm: `orderBy('floor_order', 'desc')` → `orderBy('floor_number', 'desc')` olarak düzeltildi
+  - Dosya: `app/Http/Controllers/SalesStatusController.php:88`
+  - Durum: Test edildi ve çalışıyor ✅
 
 ---
 
@@ -577,17 +665,17 @@ stock_movements (
 | Modül | Durum | Tamamlanma | Tahmini Süre | Gerçek Süre |
 |-------|-------|------------|--------------|-------------|
 | Finansal Yönetim | ✅ | %100 | 5 gün | 2 gün |
-| Keşif & Metraj | 🔄 | %95 | 7 gün | 1.5 gün |
-| Sözleşme Yönetimi | 🔜 | %0 | 5 gün | - |
-| Satış ve Tapu | 🔜 | %0 | 10 gün | - |
+| Keşif & Metraj | ✅ | %100 | 7 gün | 1.5 gün |
+| Sözleşme Yönetimi | ✅ | %100 | 5 gün | 1 gün |
+| Satış ve Tapu | ✅ | %100 | 10 gün | 1 gün |
 | Ruhsat Yönetimi | 🔜 | %0 | 3 gün | - |
 | Yapı Denetim | 🔜 | %0 | 3 gün | - |
 | Stok Takibi | 🔜 | %0 | 3 gün | - |
-| **TOPLAM** | **🔄** | **%50** | **36 gün** | **3.5 gün** |
+| **TOPLAM** | **🔄** | **%57** | **36 gün** | **5.5 gün** |
 
 ---
 
-**Son Güncelleme:** 26 Ekim 2025
-**Versiyon:** 1.1
+**Son Güncelleme:** 27 Ekim 2025
+**Versiyon:** 1.2
 **Önceki Faz:** [Faz 1: Temel Altyapı](./faz1-temel-altyapi.md)
 **Sonraki Faz:** [Faz 3: Gelişmiş Modüller](./faz3-gelismis-moduller.md)

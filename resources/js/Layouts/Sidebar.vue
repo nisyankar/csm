@@ -156,7 +156,8 @@
             :items="[
               { href: route('sales.customers.index'), label: 'Müşteriler', active: route().current('sales.customers.*') },
               { href: route('sales.unit-sales.index'), label: 'Satışlar', active: route().current('sales.unit-sales.*') },
-              { href: route('sales.payments.index'), label: 'Ödeme Takibi', active: route().current('sales.payments.*') }
+              { href: route('sales.payments.index'), label: 'Ödeme Takibi', active: route().current('sales.payments.*') },
+              { href: route('sales.sales-status.index'), label: 'Satış Durumu', active: route().current('sales.sales-status.*') }
             ]"
           />
 

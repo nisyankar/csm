@@ -49,7 +49,7 @@ class CustomerController extends Controller
             'company_name' => 'required_if:customer_type,corporate|nullable|string|max:255',
             'tax_office' => 'nullable|string|max:255',
             'tax_number' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
+            'email' => 'nullable|email|max:255|unique:customers,email',
             'phone' => 'nullable|string|max:20',
             'mobile_phone' => 'nullable|string|max:20',
             'work_phone' => 'nullable|string|max:20',
@@ -75,7 +75,7 @@ class CustomerController extends Controller
 
         $customer = Customer::create($validated);
 
-        return redirect()->route('customers.show', $customer)
+        return redirect()->route('sales.customers.show', $customer)
             ->with('success', 'Müşteri başarıyla oluşturuldu.');
     }
 
@@ -104,7 +104,7 @@ class CustomerController extends Controller
             'company_name' => 'required_if:customer_type,corporate|nullable|string|max:255',
             'tax_office' => 'nullable|string|max:255',
             'tax_number' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
+            'email' => 'nullable|email|max:255|unique:customers,email,' . $customer->id,
             'phone' => 'nullable|string|max:20',
             'mobile_phone' => 'nullable|string|max:20',
             'work_phone' => 'nullable|string|max:20',
@@ -129,7 +129,7 @@ class CustomerController extends Controller
 
         $customer->update($validated);
 
-        return redirect()->route('customers.show', $customer)
+        return redirect()->route('sales.customers.show', $customer)
             ->with('success', 'Müşteri başarıyla güncellendi.');
     }
 
@@ -143,7 +143,7 @@ class CustomerController extends Controller
 
         $customer->delete();
 
-        return redirect()->route('customers.index')
+        return redirect()->route('sales.customers.index')
             ->with('success', 'Müşteri başarıyla silindi.');
     }
 }

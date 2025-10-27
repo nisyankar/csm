@@ -79,7 +79,8 @@
                 >
                   <option value="">Müşteri seçiniz...</option>
                   <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                    {{ customer.full_name }}
+                    {{ customer.customer_type === 'corporate' ? customer.company_name : (customer.first_name + ' ' + customer.last_name) }}
+                    {{ customer.phone ? ' - ' + customer.phone : '' }}
                   </option>
                 </select>
                 <p v-if="form.errors.customer_id" class="text-red-600 text-sm mt-2">
@@ -109,6 +110,50 @@
                 </p>
               </div>
 
+              <!-- Blok -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Blok <span class="text-red-500">*</span>
+                </label>
+                <select
+                  v-model="selectedStructure"
+                  required
+                  :disabled="!form.project_id || loadingStructures"
+                  @change="onStructureChange"
+                  class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-100"
+                >
+                  <option value="">{{ loadingStructures ? 'Yükleniyor...' : 'Blok seçiniz...' }}</option>
+                  <option v-for="structure in structures" :key="structure.id" :value="structure.id">
+                    {{ structure.name }}
+                  </option>
+                </select>
+                <p v-if="!form.project_id" class="text-xs text-gray-500 mt-1">
+                  Önce bir proje seçiniz
+                </p>
+              </div>
+
+              <!-- Kat -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Kat <span class="text-red-500">*</span>
+                </label>
+                <select
+                  v-model="selectedFloor"
+                  required
+                  :disabled="!selectedStructure || loadingFloors"
+                  @change="onFloorChange"
+                  class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-100"
+                >
+                  <option value="">{{ loadingFloors ? 'Yükleniyor...' : 'Kat seçiniz...' }}</option>
+                  <option v-for="floor in floors" :key="floor.id" :value="floor.id">
+                    {{ floor.floor_name }}
+                  </option>
+                </select>
+                <p v-if="!selectedStructure" class="text-xs text-gray-500 mt-1">
+                  Önce bir blok seçiniz
+                </p>
+              </div>
+
               <!-- Birim -->
               <div class="lg:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -117,20 +162,23 @@
                 <select
                   v-model="form.project_unit_id"
                   required
-                  :disabled="!form.project_id"
+                  :disabled="!selectedFloor || loadingUnits"
                   class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-100"
                   :class="{'border-red-300 focus:ring-red-500': form.errors.project_unit_id}"
                 >
-                  <option value="">Birim seçiniz...</option>
+                  <option value="">{{ loadingUnits ? 'Yükleniyor...' : 'Birim seçiniz...' }}</option>
                   <option v-for="unit in availableUnits" :key="unit.id" :value="unit.id">
-                    {{ unit.name }} ({{ unit.floor?.floor_display }} - {{ unit.floor?.structure?.name }})
+                    {{ unit.unit_code }} - {{ unit.unit_type }} ({{ unit.gross_area }} m²)
                   </option>
                 </select>
                 <p v-if="form.errors.project_unit_id" class="text-red-600 text-sm mt-2">
                   {{ form.errors.project_unit_id }}
                 </p>
-                <p v-if="!form.project_id" class="text-xs text-gray-500 mt-1">
-                  Önce bir proje seçiniz
+                <p v-if="!selectedFloor" class="text-xs text-gray-500 mt-1">
+                  Önce bir kat seçiniz
+                </p>
+                <p v-if="selectedFloor && availableUnits.length === 0 && !loadingUnits" class="text-xs text-amber-600 mt-1">
+                  Bu katta müsait birim bulunmamaktadır
                 </p>
               </div>
             </div>
@@ -450,6 +498,7 @@
 import { ref, computed } from 'vue'
 import { useForm, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import axios from 'axios'
 
 const props = defineProps({
   projects: {
@@ -481,19 +530,83 @@ const form = useForm({
   deed_type: '',
   deed_transfer_date: null,
   status: 'reserved',
-  notes: ''
+  notes: '',
+  currency: 'TRY'
 })
 
+// Cascade dropdown states
+const selectedStructure = ref('')
+const selectedFloor = ref('')
+const structures = ref([])
+const floors = ref([])
 const availableUnits = ref([])
 
-const onProjectChange = () => {
-  const project = props.projects.find(p => p.id === form.project_id)
-  if (project && project.units) {
-    availableUnits.value = project.units.filter(unit => !unit.is_sold)
-  } else {
-    availableUnits.value = []
-  }
+// Loading states
+const loadingStructures = ref(false)
+const loadingFloors = ref(false)
+const loadingUnits = ref(false)
+
+const onProjectChange = async () => {
+  // Reset cascade selections
+  selectedStructure.value = ''
+  selectedFloor.value = ''
   form.project_unit_id = ''
+  structures.value = []
+  floors.value = []
+  availableUnits.value = []
+
+  if (!form.project_id) return
+
+  // Load structures for selected project
+  try {
+    loadingStructures.value = true
+    const response = await axios.get(route('sales.api.structures', form.project_id))
+    structures.value = response.data
+  } catch (error) {
+    console.error('Error loading structures:', error)
+  } finally {
+    loadingStructures.value = false
+  }
+}
+
+const onStructureChange = async () => {
+  // Reset floor and unit selections
+  selectedFloor.value = ''
+  form.project_unit_id = ''
+  floors.value = []
+  availableUnits.value = []
+
+  if (!selectedStructure.value) return
+
+  // Load floors for selected structure
+  try {
+    loadingFloors.value = true
+    const response = await axios.get(route('sales.api.floors', selectedStructure.value))
+    floors.value = response.data
+  } catch (error) {
+    console.error('Error loading floors:', error)
+  } finally {
+    loadingFloors.value = false
+  }
+}
+
+const onFloorChange = async () => {
+  // Reset unit selection
+  form.project_unit_id = ''
+  availableUnits.value = []
+
+  if (!selectedFloor.value) return
+
+  // Load available units for selected floor
+  try {
+    loadingUnits.value = true
+    const response = await axios.get(route('sales.api.available-units', selectedFloor.value))
+    availableUnits.value = response.data
+  } catch (error) {
+    console.error('Error loading units:', error)
+  } finally {
+    loadingUnits.value = false
+  }
 }
 
 const finalPrice = computed(() => {

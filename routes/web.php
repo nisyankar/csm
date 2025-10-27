@@ -1064,6 +1064,15 @@ Route::middleware(['auth', 'verified'])->prefix('contracts')->name('contracts.')
 
 // SALES & DEED MANAGEMENT ROUTES (Satış ve Tapu Yönetimi - Faz 3)
 Route::middleware(['auth', 'verified'])->prefix('sales')->name('sales.')->group(function () {
+
+    // API Routes for Cascade Dropdowns
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/projects/{project}/structures', [\App\Http\Controllers\Api\ProjectDataController::class, 'getStructures'])->name('structures');
+        Route::get('/structures/{structure}/floors', [\App\Http\Controllers\Api\ProjectDataController::class, 'getFloors'])->name('floors');
+        Route::get('/floors/{floor}/units', [\App\Http\Controllers\Api\ProjectDataController::class, 'getUnits'])->name('units');
+        Route::get('/floors/{floor}/available-units', [\App\Http\Controllers\Api\ProjectDataController::class, 'getAvailableUnits'])->name('available-units');
+    });
+
     // Customer Management
     Route::prefix('customers')->name('customers.')->group(function () {
         Route::get('/', [App\Http\Controllers\CustomerController::class, 'index'])
@@ -1142,5 +1151,33 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->name('sales.')->group(
         Route::post('/{payment}/mark-as-paid', [App\Http\Controllers\SalePaymentController::class, 'markAsPaid'])
             ->middleware('role:admin|project_manager|sales_manager|accountant')
             ->name('mark-as-paid');
+    });
+
+    // Sales Status Visualization (Satış Durumu Görselleştirme)
+    Route::prefix('sales-status')->name('sales-status.')->group(function () {
+        Route::get('/', [App\Http\Controllers\SalesStatusController::class, 'index'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('index');
+        Route::get('/{project}', [App\Http\Controllers\SalesStatusController::class, 'show'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('show');
+
+        // API Routes
+        Route::get('/api/structure/{structure}', [App\Http\Controllers\SalesStatusController::class, 'getStructureDetails'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('api.structure');
+        Route::get('/api/floor/{floor}/units', [App\Http\Controllers\SalesStatusController::class, 'getFloorUnits'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('api.floor-units');
+    });
+
+    // Deed Management (Tapu Yönetimi)
+    Route::prefix('unit-sales/{unitSale}/deed')->name('unit-sales.deed.')->group(function () {
+        Route::post('/update-status', [App\Http\Controllers\UnitSaleController::class, 'updateDeedStatus'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('update-status');
+        Route::post('/upload-document', [App\Http\Controllers\UnitSaleController::class, 'uploadDeedDocument'])
+            ->middleware('role:admin|project_manager|sales_manager')
+            ->name('upload-document');
     });
 });

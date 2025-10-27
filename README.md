@@ -88,6 +88,25 @@
 - **Filtreleme**: Proje, taşeron, durum, tarih bazlı arama
 - **Süre Takibi**: Sözleşme süresi dolacak olanlar için otomatik uyarı
 
+### Satış ve Tapu Yönetimi Modülü 🆕
+- **Müşteri CRM**: Bireysel ve kurumsal müşteri yönetimi
+- **Satış Yönetimi**: Rezervasyon, kesin satış, ön satış süreçleri
+- **Otomatik Ödeme Planı**: Peşinat + taksit planlaması
+- **Ödeme Takibi**: Detaylı taksit ve ödeme durumu izleme
+- **Cascade Dropdown**: Proje → Blok → Kat → Birim hiyerarşik seçimi
+- **Satış Durumu Görselleştirme**:
+  - Proje bazlı satış istatistikleri ve dashboard
+  - Blok seçimi ve kat bazlı progress bar'lar
+  - Renk kodlu birim grid (Müsait, Satıldı, Rezerve, Gecikmiş)
+  - İnteraktif birim kartları ve detay modal'ları
+  - Müşteri ve fiyat bilgileri ile hover tooltips
+- **Basit Tapu Takibi**:
+  - Tapu durumu yönetimi (Devredilmedi, İşlemde, Devredildi, Ertelendi)
+  - Tapu belgesi yükleme sistemi (PDF, JPG, PNG - Max 10MB)
+  - Tapu bilgileri (Tip, Numara, Devir Tarihi, Notlar)
+  - Modal-based güncelleme ve belge yönetimi
+- **Finansal Entegrasyon**: Satış ödemelerinden otomatik gelir kaydı (Event-driven ready)
+
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
@@ -151,6 +170,24 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 27 Ekim 2025 - Satış ve Tapu Yönetimi Modülü Tamamlandı 🎉
+- **Satış Durumu Görselleştirme Sistemi**: Proje bazlı interaktif satış dashboard'u
+- **Renk Kodlu Birim Grid**: Blok/Kat/Birim hiyerarşik görünümü
+- **4 Renk Durumu**: Müsait (yeşil), Satıldı (kırmızı), Rezerve (sarı), Gecikmiş (turuncu)
+- **İnteraktif Kartlar**: Hover tooltips ve detay modal'ları
+- **Satış İstatistikleri**: Toplam, satılan, rezerve, müsait birim sayıları
+- **Progress Bar'lar**: Kat bazlı satış tamamlanma oranları
+- **Basit Tapu Takibi**:
+  - Modal-based tapu durumu güncelleme formu
+  - Tapu belgesi yükleme (PDF, JPG, PNG - 10MB)
+  - Tapu bilgileri (Tip, numara, devir tarihi, notlar)
+  - UnitSale Show sayfasında interaktif tapu bölümü
+- **3 Vue Sayfası**: SalesStatus Index, Show + UnitSale Show güncelleme
+- **SalesStatusController**: 4 endpoint (index, show, structure details, floor units)
+- **Routes**: `/sales/sales-status` altında organize edildi
+- **Sidebar Entegrasyonu**: "Satış Durumu" menü öğesi eklendi
+- **Bug Fix**: Blok seçimi sorunu düzeltildi (floor_order → floor_number) ✅
 
 #### 26 Ekim 2025 - Sözleşme Yönetimi Modülü Tamamlandı 🎉
 - **Merkezi Sözleşme Sistemi**: Taşeron ve tedarikçi sözleşmelerinin tek noktadan yönetimi
