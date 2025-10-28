@@ -560,4 +560,28 @@ class ProjectController extends Controller
             ->values()
             ->toArray();
     }
+
+    /**
+     * Get project units for dropdowns
+     */
+    public function units(Project $project): JsonResponse
+    {
+        $units = $project->structures()
+            ->with(['floors.units' => function ($query) {
+                $query->select('id', 'floor_id', 'unit_code', 'unit_type', 'gross_area', 'net_area')
+                    ->orderBy('unit_code');
+            }])
+            ->get()
+            ->flatMap(function ($structure) {
+                return $structure->floors->flatMap(function ($floor) {
+                    return $floor->units;
+                });
+            })
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $units
+        ]);
+    }
 }

@@ -57,6 +57,12 @@ class DatabaseSeeder extends Seeder
 
             // Keşif & Metraj Yönetimi
             QuantitySeeder::class, // Metraj kayıtları
+
+            // Ruhsat Yönetimi
+            ConstructionPermitSeeder::class, // Yapı ruhsatı, İskan, Kullanma izni
+
+            // Yapı Denetim Sistemi
+            BuildingInspectionSeeder::class, // Denetim kuruluşları ve denetim kayıtları
         ]);
     }
 }

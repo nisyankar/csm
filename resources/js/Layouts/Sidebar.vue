@@ -161,6 +161,31 @@
             ]"
           />
 
+          <!-- Construction Permits (Ruhsat Yönetimi) -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'site_manager'])"
+            label="Ruhsat Yönetimi"
+            icon="clipboard-document-check"
+            :items="[
+              { href: route('construction-permits.dashboard'), label: 'Dashboard', active: route().current('construction-permits.dashboard') },
+              { href: route('construction-permits.index'), label: 'Ruhsatlar', active: route().current('construction-permits.index') || route().current('construction-permits.show') },
+              { href: route('construction-permits.create'), label: 'Yeni Ruhsat', active: route().current('construction-permits.create') }
+            ]"
+          />
+
+          <!-- Building Inspections (Yapı Denetim) -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'site_supervisor'])"
+            label="Yapı Denetim"
+            icon="shield-check"
+            :items="[
+              { href: route('inspections.dashboard'), label: 'Dashboard', active: route().current('inspections.dashboard') },
+              { href: route('inspections.index'), label: 'Denetimler', active: route().current('inspections.index') || route().current('inspections.show') },
+              { href: route('inspections.create'), label: 'Yeni Denetim', active: route().current('inspections.create') },
+              { href: route('inspection-companies.index'), label: 'Denetim Kuruluşları', active: route().current('inspection-companies.*') }
+            ]"
+          />
+
           <!-- Leave Management -->
           <SidebarGroup
             label="İzin Yönetimi"

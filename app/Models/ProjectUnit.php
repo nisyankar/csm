@@ -72,6 +72,11 @@ class ProjectUnit extends Model
             ->latest();
     }
 
+    public function constructionPermits(): HasMany
+    {
+        return $this->hasMany(ConstructionPermit::class, 'project_unit_id');
+    }
+
     /**
      * Accessors
      */

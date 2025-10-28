@@ -41,9 +41,11 @@ class SalesStatusController extends Controller
             $query->where('project_id', $project->id);
         })->count();
 
-        $soldUnits = ProjectUnit::whereHas('floor.structure', function ($query) use ($project) {
-            $query->where('project_id', $project->id);
-        })->where('is_sold', true)->count();
+        // Gerçek satış kayıtlarından sold units hesapla
+        $soldUnits = UnitSale::where('project_id', $project->id)
+            ->whereIn('status', ['contracted', 'in_payment', 'completed'])
+            ->distinct('project_unit_id')
+            ->count('project_unit_id');
 
         $reservedUnits = UnitSale::where('project_id', $project->id)
             ->where('status', 'reserved')
@@ -89,7 +91,15 @@ class SalesStatusController extends Controller
             ->get()
             ->map(function ($floor) {
                 $totalUnits = $floor->units->count();
-                $soldUnits = $floor->units->where('is_sold', true)->count();
+
+                // Gerçek satış kayıtlarına bakarak sat sold_units hesapla
+                $soldUnits = $floor->units->filter(function ($unit) {
+                    $sale = UnitSale::where('project_unit_id', $unit->id)
+                        ->whereNotIn('status', ['cancelled'])
+                        ->whereIn('status', ['contracted', 'in_payment', 'completed'])
+                        ->first();
+                    return $sale !== null;
+                })->count();
 
                 return [
                     'id' => $floor->id,

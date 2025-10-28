@@ -107,6 +107,24 @@
   - Modal-based güncelleme ve belge yönetimi
 - **Finansal Entegrasyon**: Satış ödemelerinden otomatik gelir kaydı (Event-driven ready)
 
+### Yapı Denetim Sistemi Modülü 🆕
+- **Denetim Kuruluşları Yönetimi**: Lisanslı yapı denetim firmalarının takibi
+- **Denetim Kayıtları**: Periyodik, özel ve final denetim kayıtları
+- **Otomatik Denetim Numaralandırma**: Duplicate-safe numara oluşturma (DEN-PRJ-YYYY-001)
+- **Uygunsuzluk Takibi**: Minor, Major, Critical seviyelerinde uygunsuzluk kayıtları
+- **Düzeltici Faaliyetler**: Uygunsuzluklara karşı aksiyonların takibi ve durumu
+- **Denetim Raporları**: PDF rapor yükleme ve ek dosya yönetimi
+- **Denetim Türleri**: Periyodik (3 aylık), Özel, Final denetimleri
+- **Durum Yönetimi**: Scheduled → Completed → Pending Action → Closed lifecycle
+- **Dashboard**: İstatistikler, yaklaşan/gecikmiş denetimler, uygunsuzluk sayıları
+- **Filtreleme**: Proje, denetim kuruluşu, tür, durum, tarih bazlı arama
+- **Ruhsat Yönetimi**:
+  - Yapı Ruhsatı (Building Permit) takibi
+  - İskan İzni (Occupancy Permit) yönetimi
+  - Yapı Kullanma İzni (Usage Permit) kayıtları
+  - Otomatik ruhsat numarası oluşturma (YR-PRJ-YYYY-001)
+  - İmar durumu ve ihraç makamı bilgileri
+
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
@@ -170,6 +188,38 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 28 Ekim 2025 - Yapı Denetim Sistemi Modülü Tamamlandı 🎉
+- **Denetim Kuruluşları Yönetimi**: Lisans numarası, iletişim bilgileri, aktif/pasif durum
+- **Denetim Kayıtları Sistemi**: Periyodik, özel ve final denetim türleri
+- **Otomatik Numaralandırma**: Duplicate-safe denetim numarası (DEN-PRJ-YYYY-001)
+- **Uygunsuzluk Yönetimi**:
+  - 3 Seviye: Minor (küçük), Major (büyük), Critical (kritik)
+  - Fotoğraf yükleme ve son tarih takibi
+  - Kritik uygunsuzluk sayacı
+- **Düzeltici Faaliyetler**:
+  - Sorumlu kişi ve son tarih ataması
+  - Durum takibi (Pending, In Progress, Completed)
+  - Tamamlanma tarihi kaydı
+- **Rapor Yönetimi**:
+  - PDF rapor yükleme (10MB limit)
+  - Sınırsız ek dosya desteği
+  - Dosya meta bilgileri (isim, tip, boyut, tarih)
+- **Dashboard**:
+  - Toplam/planlanan/bekleyen denetim sayıları
+  - Kritik uygunsuzluk sayacı
+  - Yaklaşan denetimler (7 gün içinde)
+  - Gecikmiş denetim uyarıları
+  - Denetim türü dağılımı
+- **Ruhsat Yönetimi**:
+  - Yapı Ruhsatı (Building), İskan İzni (Occupancy), Kullanma İzni (Usage)
+  - Otomatik ruhsat numaraları (YR/İİ/YKİ-PRJ-YYYY-001)
+  - İhraç makamı ve imar durumu bilgileri
+  - Başvuru, onay, geçerlilik tarihleri
+- **8 Vue Sayfası**: Full-width modern tasarım (purple gradient)
+- **Seeders**: 5 denetim kuruluşu + otomatik periyodik denetimler + ruhsat kayıtları
+- **Routes**: `/inspections/*` ve `/inspection-companies/*` altında organize edildi
+- **Sidebar Entegrasyonu**: "Yapı Denetim" menü grubu eklendi
 
 #### 27 Ekim 2025 - Satış ve Tapu Yönetimi Modülü Tamamlandı 🎉
 - **Satış Durumu Görselleştirme Sistemi**: Proje bazlı interaktif satış dashboard'u

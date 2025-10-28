@@ -1062,6 +1062,45 @@ Route::middleware(['auth', 'verified'])->prefix('contracts')->name('contracts.')
         ->name('complete');
 });
 
+// CONSTRUCTION PERMITS ROUTES (İnşaat Ruhsat ve İzin Yönetimi - Faz 2)
+Route::middleware(['auth', 'verified'])->prefix('construction-permits')->name('construction-permits.')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\ConstructionPermitController::class, 'dashboard'])
+        ->middleware('role:admin|project_manager')
+        ->name('dashboard');
+
+    // CRUD
+    Route::get('/', [\App\Http\Controllers\ConstructionPermitController::class, 'index'])
+        ->middleware('role:admin|project_manager|site_manager')
+        ->name('index');
+    Route::get('/create', [\App\Http\Controllers\ConstructionPermitController::class, 'create'])
+        ->middleware('role:admin|project_manager')
+        ->name('create');
+    Route::post('/', [\App\Http\Controllers\ConstructionPermitController::class, 'store'])
+        ->middleware('role:admin|project_manager')
+        ->name('store');
+    Route::get('/{constructionPermit}', [\App\Http\Controllers\ConstructionPermitController::class, 'show'])
+        ->middleware('role:admin|project_manager|site_manager')
+        ->name('show');
+    Route::get('/{constructionPermit}/edit', [\App\Http\Controllers\ConstructionPermitController::class, 'edit'])
+        ->middleware('role:admin|project_manager')
+        ->name('edit');
+    Route::put('/{constructionPermit}', [\App\Http\Controllers\ConstructionPermitController::class, 'update'])
+        ->middleware('role:admin|project_manager')
+        ->name('update');
+    Route::delete('/{constructionPermit}', [\App\Http\Controllers\ConstructionPermitController::class, 'destroy'])
+        ->middleware('role:admin|project_manager')
+        ->name('destroy');
+
+    // Document Management
+    Route::post('/{constructionPermit}/documents', [\App\Http\Controllers\ConstructionPermitController::class, 'uploadDocument'])
+        ->middleware('role:admin|project_manager')
+        ->name('documents.upload');
+    Route::delete('/{constructionPermit}/documents/{index}', [\App\Http\Controllers\ConstructionPermitController::class, 'deleteDocument'])
+        ->middleware('role:admin|project_manager')
+        ->name('documents.delete');
+});
+
 // SALES & DEED MANAGEMENT ROUTES (Satış ve Tapu Yönetimi - Faz 3)
 Route::middleware(['auth', 'verified'])->prefix('sales')->name('sales.')->group(function () {
 
@@ -1179,5 +1218,86 @@ Route::middleware(['auth', 'verified'])->prefix('sales')->name('sales.')->group(
         Route::post('/upload-document', [App\Http\Controllers\UnitSaleController::class, 'uploadDeedDocument'])
             ->middleware('role:admin|project_manager|sales_manager')
             ->name('upload-document');
+    });
+});
+
+// INSPECTION MANAGEMENT ROUTES (Yapı Denetim Yönetimi - Faz 2)
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    // Inspection Companies (Denetim Kuruluşları)
+    Route::prefix('inspection-companies')->name('inspection-companies.')->group(function () {
+        Route::get('/', [App\Http\Controllers\InspectionCompanyController::class, 'index'])
+            ->middleware('role:admin|project_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\InspectionCompanyController::class, 'create'])
+            ->middleware('role:admin|project_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\InspectionCompanyController::class, 'store'])
+            ->middleware('role:admin|project_manager')
+            ->name('store');
+        Route::get('/{inspectionCompany}/edit', [App\Http\Controllers\InspectionCompanyController::class, 'edit'])
+            ->middleware('role:admin|project_manager')
+            ->name('edit');
+        Route::put('/{inspectionCompany}', [App\Http\Controllers\InspectionCompanyController::class, 'update'])
+            ->middleware('role:admin|project_manager')
+            ->name('update');
+        Route::delete('/{inspectionCompany}', [App\Http\Controllers\InspectionCompanyController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Inspections (Denetimler)
+    Route::prefix('inspections')->name('inspections.')->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [App\Http\Controllers\InspectionController::class, 'dashboard'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('dashboard');
+
+        // CRUD
+        Route::get('/', [App\Http\Controllers\InspectionController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\InspectionController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\InspectionController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('store');
+        Route::get('/{inspection}', [App\Http\Controllers\InspectionController::class, 'show'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('show');
+        Route::get('/{inspection}/edit', [App\Http\Controllers\InspectionController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('edit');
+        Route::put('/{inspection}', [App\Http\Controllers\InspectionController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('update');
+        Route::delete('/{inspection}', [App\Http\Controllers\InspectionController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Report Management
+        Route::post('/{inspection}/upload-report', [App\Http\Controllers\InspectionController::class, 'uploadReport'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('upload-report');
+        Route::delete('/{inspection}/delete-report', [App\Http\Controllers\InspectionController::class, 'deleteReport'])
+            ->middleware('role:admin|project_manager')
+            ->name('delete-report');
+
+        // Attachment Management
+        Route::post('/{inspection}/upload-attachment', [App\Http\Controllers\InspectionController::class, 'uploadAttachment'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('upload-attachment');
+        Route::delete('/{inspection}/delete-attachment', [App\Http\Controllers\InspectionController::class, 'deleteAttachment'])
+            ->middleware('role:admin|project_manager')
+            ->name('delete-attachment');
+
+        // Non-Conformities & Corrective Actions (JSON API)
+        Route::post('/{inspection}/update-non-conformities', [App\Http\Controllers\InspectionController::class, 'updateNonConformities'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('update-non-conformities');
+        Route::post('/{inspection}/update-corrective-actions', [App\Http\Controllers\InspectionController::class, 'updateCorrectiveActions'])
+            ->middleware('role:admin|project_manager|site_supervisor')
+            ->name('update-corrective-actions');
     });
 });

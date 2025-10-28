@@ -517,4 +517,20 @@ class Project extends Model
     {
         return $this->hasMany(Contract::class);
     }
+
+    /**
+     * Construction Permits ilişkisi (Ruhsat ve İzinler)
+     */
+    public function constructionPermits(): HasMany
+    {
+        return $this->hasMany(ConstructionPermit::class);
+    }
+
+    /**
+     * Projeye ait denetimler
+     */
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(Inspection::class);
+    }
 }

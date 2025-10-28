@@ -188,6 +188,7 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(functi
             ->name('store');
         Route::get('/stats', [ApiProjectController::class, 'stats'])->name('stats');
         Route::get('/{project}', [ApiProjectController::class, 'show'])->name('show');
+        Route::get('/{project}/units', [ApiProjectController::class, 'units'])->name('units');
         Route::put('/{project}', [ApiProjectController::class, 'update'])
             ->middleware('role:admin|hr|project_manager|site_manager')
             ->name('update');
@@ -847,9 +848,9 @@ Route::middleware(['auth:sanctum'])->prefix('v1/project-management')->name('api.
 
         // Quantities (Keşif/Metraj - Faz 2)
         Route::prefix('quantities')->name('quantities.')->group(function () {
-            Route::get('/search', [\App\Http\Controllers\Api\QuantityController::class, 'search'])->name('search');
-            Route::get('/project/{projectId}', [\App\Http\Controllers\Api\QuantityController::class, 'byProject'])->name('by-project');
-            Route::get('/work-item/{workItemId}', [\App\Http\Controllers\Api\QuantityController::class, 'byWorkItem'])->name('by-work-item');
+            Route::get('/search', [\App\Http\Controllers\QuantityController::class, 'search'])->name('search');
+            Route::get('/project/{projectId}', [\App\Http\Controllers\QuantityController::class, 'byProject'])->name('by-project');
+            Route::get('/work-item/{workItemId}', [\App\Http\Controllers\QuantityController::class, 'byWorkItem'])->name('by-work-item');
         });
     });
 
