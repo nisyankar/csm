@@ -224,19 +224,27 @@
               (Toplam: <span class="font-medium">{{ companies.total }}</span>)
             </div>
             <div class="flex gap-2">
-              <Link
-                v-for="link in companies.links"
-                :key="link.label"
-                :href="link.url"
-                :class="[
-                  'px-3 py-2 text-sm rounded-lg border transition-all',
-                  link.active
-                    ? 'bg-purple-600 text-white border-purple-600 font-medium'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                ]"
-                :disabled="!link.url"
-                v-html="link.label"
-              />
+              <template v-for="link in companies.links" :key="link.label">
+                <Link
+                  v-if="link.url"
+                  :href="link.url"
+                  :class="[
+                    'px-3 py-2 text-sm rounded-lg border transition-all',
+                    link.active
+                      ? 'bg-purple-600 text-white border-purple-600 font-medium'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  ]"
+                  v-html="link.label"
+                />
+                <span
+                  v-else
+                  :class="[
+                    'px-3 py-2 text-sm rounded-lg border transition-all',
+                    'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                  ]"
+                  v-html="link.label"
+                />
+              </template>
             </div>
           </div>
         </div>

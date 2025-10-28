@@ -232,11 +232,11 @@ const form = useForm({
   project_id: props.inspection.project_id,
   inspection_company_id: props.inspection.inspection_company_id,
   inspector_name: props.inspection.inspector_name,
-  inspection_date: props.inspection.inspection_date,
+  inspection_date: props.inspection.inspection_date?.substring(0, 10) || '',
   inspection_type: props.inspection.inspection_type,
   status: props.inspection.status,
   findings: props.inspection.findings,
-  next_inspection_date: props.inspection.next_inspection_date,
+  next_inspection_date: props.inspection.next_inspection_date?.substring(0, 10) || '',
   notes: props.inspection.notes,
 })
 
