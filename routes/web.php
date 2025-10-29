@@ -426,6 +426,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('reject');
         Route::post('/{purchasingRequest}/cancel', [PurchasingRequestController::class, 'cancel'])
             ->name('cancel');
+        Route::post('/{purchasingRequest}/mark-as-delivered', [PurchasingRequestController::class, 'markAsDelivered'])
+            ->middleware('role:admin|hr|project_manager|site_manager')
+            ->name('mark-as-delivered');
     });
 
     // Material Management Routes
@@ -1299,5 +1302,55 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{inspection}/update-corrective-actions', [App\Http\Controllers\InspectionController::class, 'updateCorrectiveActions'])
             ->middleware('role:admin|project_manager|site_supervisor')
             ->name('update-corrective-actions');
+    });
+
+    // Warehouses (Depolar)
+    Route::prefix('warehouses')->name('warehouses.')->group(function () {
+        Route::get('/', [App\Http\Controllers\WarehouseController::class, 'index'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\WarehouseController::class, 'create'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\WarehouseController::class, 'store'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('store');
+        Route::get('/{warehouse}', [App\Http\Controllers\WarehouseController::class, 'show'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('show');
+        Route::get('/{warehouse}/edit', [App\Http\Controllers\WarehouseController::class, 'edit'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('edit');
+        Route::put('/{warehouse}', [App\Http\Controllers\WarehouseController::class, 'update'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('update');
+        Route::delete('/{warehouse}', [App\Http\Controllers\WarehouseController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Stock Movements (Stok Hareketleri)
+    Route::prefix('stock-movements')->name('stock-movements.')->group(function () {
+        Route::get('/', [App\Http\Controllers\StockMovementController::class, 'index'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\StockMovementController::class, 'create'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\StockMovementController::class, 'store'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('store');
+        Route::get('/{stockMovement}', [App\Http\Controllers\StockMovementController::class, 'show'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('show');
+        Route::get('/{stockMovement}/edit', [App\Http\Controllers\StockMovementController::class, 'edit'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('edit');
+        Route::put('/{stockMovement}', [App\Http\Controllers\StockMovementController::class, 'update'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('update');
+        Route::delete('/{stockMovement}', [App\Http\Controllers\StockMovementController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
     });
 });

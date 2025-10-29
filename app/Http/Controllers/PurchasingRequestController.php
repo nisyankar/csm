@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\PurchasingRequest;
 use App\Models\Project;
 use App\Models\Department;
+use App\Models\Warehouse;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -435,5 +438,133 @@ class PurchasingRequestController extends Controller
                 ->back()
                 ->with('error', 'Talep iptal edilemedi: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Teslimat onayı ve otomatik stok girişi
+     */
+    public function markAsDelivered(PurchasingRequest $purchasingRequest): RedirectResponse
+    {
+        if ($purchasingRequest->status !== 'ordered') {
+            return redirect()
+                ->back()
+                ->with('error', 'Sadece sipariş durumundaki talepler teslim alınabilir.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Talebi teslim edildi olarak işaretle
+            $purchasingRequest->markAsDelivered();
+
+            // Otomatik stok hareketleri oluştur
+            $this->createStockMovementsFromDelivery($purchasingRequest);
+
+            DB::commit();
+
+            return redirect()
+                ->route('purchasing-requests.show', $purchasingRequest)
+                ->with('success', 'Teslimat onaylandı ve stok kayıtları oluşturuldu.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Satınalma teslimat hatası: ' . $e->getMessage(), [
+                'purchasing_request_id' => $purchasingRequest->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Teslimat onaylanamadı: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Satınalma teslimatından otomatik stok hareketleri oluştur
+     */
+    private function createStockMovementsFromDelivery(PurchasingRequest $purchasingRequest): void
+    {
+        // Projenin deposunu bul veya oluştur
+        $warehouse = Warehouse::where('project_id', $purchasingRequest->project_id)
+            ->where('is_active', true)
+            ->first();
+
+        // Depo yoksa otomatik oluştur
+        if (!$warehouse) {
+            $warehouse = Warehouse::create([
+                'project_id' => $purchasingRequest->project_id,
+                'name' => 'Ana Depo',
+                'location' => $purchasingRequest->project->location ?? 'Proje Sahası',
+                'responsible_user_id' => $purchasingRequest->requested_by,
+                'description' => 'Otomatik oluşturulan ana depo',
+                'is_active' => true,
+            ]);
+
+            Log::info("Proje için otomatik depo oluşturuldu", [
+                'project_id' => $purchasingRequest->project_id,
+                'warehouse_id' => $warehouse->id,
+            ]);
+        }
+
+        // Her kalem için stok hareketi oluştur
+        $purchasingRequest->load('items.material');
+        $createdMovements = 0;
+
+        foreach ($purchasingRequest->items as $item) {
+            // Sadece material_id'si olan kalemler için stok hareketi oluştur
+            if (!$item->material_id) {
+                Log::info("Kalem için material_id yok, stok hareketi atlanıyor", [
+                    'item_id' => $item->id,
+                    'item_name' => $item->item_name,
+                ]);
+                continue;
+            }
+
+            try {
+                // Stok hareketi oluştur
+                $movement = StockMovement::create([
+                    'warehouse_id' => $warehouse->id,
+                    'material_id' => $item->material_id,
+                    'movement_type' => 'in',
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->actual_unit_price ?? $item->estimated_unit_price ?? 0,
+                    'reference_type' => 'purchasing_request',
+                    'reference_id' => $purchasingRequest->id,
+                    'performed_by' => Auth::id() ?? 1,
+                    'movement_date' => now(),
+                    'notes' => "Satınalma teslim alındı: {$purchasingRequest->request_code} - {$item->item_name}",
+                ]);
+
+                // Material stokunu artır
+                if ($item->material) {
+                    $item->material->increment('current_stock', $item->quantity);
+
+                    Log::info("Stok artırıldı", [
+                        'material_id' => $item->material_id,
+                        'material_name' => $item->material->name,
+                        'quantity' => $item->quantity,
+                        'new_stock' => $item->material->fresh()->current_stock,
+                    ]);
+                }
+
+                $createdMovements++;
+            } catch (\Exception $e) {
+                Log::error("Stok hareketi oluşturulamadı", [
+                    'item_id' => $item->id,
+                    'material_id' => $item->material_id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                // Hata olsa bile devam et, diğer kalemleri işle
+                continue;
+            }
+        }
+
+        Log::info("Satınalma teslimatı için stok hareketleri oluşturuldu", [
+            'purchasing_request_id' => $purchasingRequest->id,
+            'request_code' => $purchasingRequest->request_code,
+            'warehouse_id' => $warehouse->id,
+            'total_items' => $purchasingRequest->items->count(),
+            'created_movements' => $createdMovements,
+        ]);
     }
 }

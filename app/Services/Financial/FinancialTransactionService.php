@@ -172,6 +172,54 @@ class FinancialTransactionService
     }
 
     /**
+     * Stok çıkışı yapıldığında finansal kayıt oluştur
+     *
+     * @param object $stockMovement - StockMovement modeli
+     * @return FinancialTransaction|null
+     */
+    public function createFromStockMovement(object $stockMovement): ?FinancialTransaction
+    {
+        // Sadece çıkış (out) hareketleri için kayıt oluştur
+        if ($stockMovement->movement_type !== 'out') {
+            return null;
+        }
+
+        // Birim fiyat yoksa kayıt oluşturma
+        if (!$stockMovement->unit_price || $stockMovement->unit_price <= 0) {
+            return null;
+        }
+
+        // Toplam tutar
+        $totalAmount = $stockMovement->quantity * $stockMovement->unit_price;
+
+        // Stok/Malzeme gideri kategorisini bul veya oluştur
+        $expenseCategoryId = $this->getOrCreateExpenseCategory('STOK', 'Stok/Malzeme Kullanımı');
+
+        // Warehouse'dan project_id al
+        $projectId = $stockMovement->warehouse?->project_id;
+
+        if (!$projectId) {
+            Log::warning("Stock movement {$stockMovement->id} has no project_id, skipping financial transaction");
+            return null;
+        }
+
+        return $this->createFromSource('stock_movement', $stockMovement->id, [
+            'project_id' => $projectId,
+            'transaction_type' => 'expense',
+            'category_id' => $expenseCategoryId,
+            'transaction_date' => $stockMovement->movement_date ?? now(),
+            'amount' => $totalAmount,
+            'description' => "Stok kullanımı - " .
+                           ($stockMovement->material?->name ?? 'Malzeme') .
+                           " ({$stockMovement->quantity} {$stockMovement->material?->unit})" .
+                           " - " . ($stockMovement->warehouse?->name ?? 'Depo'),
+            'payment_status' => 'paid', // Stok çıkışı kullanım olarak kabul edilir
+            'paid_amount' => $totalAmount,
+            'created_by' => auth()->id() ?? 1,
+        ]);
+    }
+
+    /**
      * BudgetVsActual tablosunu güncelle
      *
      * @param FinancialTransaction $transaction

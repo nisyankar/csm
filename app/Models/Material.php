@@ -13,6 +13,8 @@ class Material extends Model
         'category',
         'unit',
         'estimated_unit_price',
+        'current_stock',
+        'min_stock_level',
         'specification',
         'material_code',
         'is_active',
@@ -20,6 +22,8 @@ class Material extends Model
 
     protected $casts = [
         'estimated_unit_price' => 'decimal:2',
+        'current_stock' => 'decimal:2',
+        'min_stock_level' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
@@ -29,6 +33,14 @@ class Material extends Model
     public function purchasingItems(): HasMany
     {
         return $this->hasMany(PurchasingItem::class);
+    }
+
+    /**
+     * Malzemenin stok hareketleri
+     */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
     }
 
     /**

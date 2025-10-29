@@ -125,6 +125,22 @@
   - Otomatik ruhsat numarası oluşturma (YR-PRJ-YYYY-001)
   - İmar durumu ve ihraç makamı bilgileri
 
+### Stok Yönetimi Modülü 🆕
+- **Depo Yönetimi**: Proje bazlı depo tanımlama ve sorumlu atama
+- **Stok Hareketleri**: Giriş, çıkış, transfer ve düzeltme kayıtları
+- **Transaction-Safe Stok**: DB transaction ile güvenli stok güncellemeleri
+- **Otomatik Stok Hesaplama**: Mevcut stok takibi (current_stock)
+- **Minimum Stok Seviyesi**: Kritik stok uyarıları için altyapı
+- **Polymorphic İlişki**: Satınalma, üretim gibi modüllerle entegrasyon hazır
+- **4 Hareket Tipi**: Giriş (in), Çıkış (out), Transfer (transfer), Düzeltme (adjustment)
+- **Yetersiz Stok Kontrolü**: Çıkış işlemlerinde otomatik kontrol
+- **Rollback Mekanizması**: Hareket silme/güncelleme için otomatik stok geri alma
+- **Filtreleme**: Depo, malzeme, hareket tipi, tarih aralığı bazlı arama
+- **Modern UI**: Cyan-emerald gradient tema, hakediş modülü tasarımıyla tutarlı
+- **Satınalma Entegrasyonu**: "Satınalma & Stok" menü grubu altında organize
+- **6 Vue Sayfası**: Warehouses (Index, Create, Edit) + StockMovements (Index, Create, Edit)
+- **Gerçekçi Seeder**: Her proje için 2-3 depo + çoklu stok hareketleri
+
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
@@ -188,6 +204,26 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 29 Ekim 2025 - Stok Yönetimi Modülü Tamamlandı 🎉
+- **Depo Yönetimi Sistemi**: Proje bazlı depo tanımlama
+- **Stok Hareketi Kayıtları**: Giriş, çıkış, transfer, düzeltme işlemleri
+- **Transaction-Safe İşlemler**: DB::transaction() ile güvenli stok güncellemeleri
+- **Otomatik Stok Takibi**:
+  - materials tablosuna current_stock ve min_stock_level kolonları
+  - Her stok hareketi ile otomatik güncelleme
+  - Yetersiz stok kontrolü (çıkış işlemlerinde)
+- **Rollback Mekanizması**:
+  - Hareket silme: Stok otomatik geri alınır
+  - Hareket güncelleme: Eski hareket iptal, yeni hareket uygulanır
+- **Polymorphic İlişki**: reference_type/reference_id ile modül entegrasyonu
+- **3 Migration**: warehouses, stock_movements, materials güncelleme
+- **2 Model**: Warehouse (SoftDeletes), StockMovement
+- **2 Controller**: WarehouseController, StockMovementController (CRUD + stok yönetimi)
+- **6 Vue Sayfası**: Modern cyan-emerald gradient tema
+- **Sidebar Entegrasyonu**: "Satınalma & Stok" menü grubu
+- **StockManagementSeeder**: Gerçekçi demo veriler (her proje 2-3 depo + stok hareketleri)
+- **Routes**: `/warehouses/*` ve `/stock-movements/*` rotaları
 
 #### 28 Ekim 2025 - Yapı Denetim Sistemi Modülü Tamamlandı 🎉
 - **Denetim Kuruluşları Yönetimi**: Lisans numarası, iletişim bilgileri, aktif/pasif durum

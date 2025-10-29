@@ -196,12 +196,14 @@
           <!-- Purchasing Management -->
           <SidebarGroup
             v-if="canAccess(['admin', 'hr', 'project_manager', 'site_manager', 'foreman'])"
-            label="Satınalma"
+            label="Satınalma & Stok"
             icon="shopping-cart"
             :items="[
               { href: route('purchasing-requests.index'), label: 'Satınalma Talepleri', active: route().current('purchasing-requests.*') },
               { href: route('purchasing-requests.create'), label: 'Yeni Talep', active: route().current('purchasing-requests.create') },
-              { href: route('materials.index'), label: 'Malzemeler', active: route().current('materials.*') }
+              { href: route('materials.index'), label: 'Malzemeler', active: route().current('materials.*') },
+              { href: route('warehouses.index'), label: 'Depolar', active: route().current('warehouses.*') },
+              { href: route('stock-movements.index'), label: 'Stok Hareketleri', active: route().current('stock-movements.*') }
             ]"
           />
 

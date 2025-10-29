@@ -63,6 +63,9 @@ class DatabaseSeeder extends Seeder
 
             // Yapı Denetim Sistemi
             BuildingInspectionSeeder::class, // Denetim kuruluşları ve denetim kayıtları
+
+            // Stok Yönetimi
+            StockManagementSeeder::class, // Depolar ve stok hareketleri
         ]);
     }
 }

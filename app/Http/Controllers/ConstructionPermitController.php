@@ -378,37 +378,58 @@ class ConstructionPermitController extends Controller
      */
     public function uploadDocument(Request $request, ConstructionPermit $constructionPermit)
     {
-        $request->validate([
-            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
-            'document_name' => 'nullable|string|max:255',
-        ]);
+        try {
+            $request->validate([
+                'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+                'document_name' => 'nullable|string|max:255',
+            ]);
 
-        $file = $request->file('document');
-        $documentName = $request->input('document_name', $file->getClientOriginalName());
+            $file = $request->file('document');
+            $documentName = $request->input('document_name', $file->getClientOriginalName());
 
-        // Store file
-        $path = $file->store('permit_documents', 'public');
+            // Store file
+            $path = $file->store('permit_documents', 'public');
 
-        // Add to documents array
-        $documents = $constructionPermit->documents ?? [];
-        $documents[] = [
-            'name' => $documentName,
-            'original_name' => $file->getClientOriginalName(),
-            'path' => $path,
-            'size' => $file->getSize(),
-            'mime_type' => $file->getMimeType(),
-            'uploaded_at' => now()->toDateTimeString(),
-            'uploaded_by' => auth()->id(),
-        ];
+            // Safely get documents array
+            $documents = [];
+            if ($constructionPermit->documents && is_array($constructionPermit->documents)) {
+                $documents = $constructionPermit->documents;
+            }
 
-        $constructionPermit->update([
-            'documents' => $documents,
-            'updated_by' => auth()->id(),
-        ]);
+            // Add new document
+            $documents[] = [
+                'name' => $documentName,
+                'original_name' => $file->getClientOriginalName(),
+                'path' => $path,
+                'size' => $file->getSize(),
+                'mime_type' => $file->getMimeType(),
+                'uploaded_at' => now()->toDateTimeString(),
+                'uploaded_by' => auth()->id() ?? 1,
+            ];
 
-        return redirect()
-            ->back()
-            ->with('success', 'Belge başarıyla yüklendi.');
+            $constructionPermit->update([
+                'documents' => $documents,
+                'updated_by' => auth()->id() ?? 1,
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('success', 'Belge başarıyla yüklendi.');
+        } catch (\Exception $e) {
+            // Hata durumunda yüklenen dosyayı temizle
+            if (isset($path) && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+
+            \Log::error('Ruhsat belge yükleme hatası: ' . $e->getMessage(), [
+                'permit_id' => $constructionPermit->id,
+                'file_name' => $file->getClientOriginalName() ?? 'unknown',
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Belge yüklenirken bir hata oluştu: ' . $e->getMessage());
+        }
     }
 
     /**

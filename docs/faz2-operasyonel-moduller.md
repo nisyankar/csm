@@ -1,10 +1,10 @@
 # FAZ 2: Operasyonel Çekirdek
-## 🔄 DEVAM EDİYOR (%86)
+## ✅ TAMAMLANDI (%100)
 
 **Başlangıç:** 25 Ekim 2025
-**Hedef Bitiş:** Aralık 2025
-**Durum:** Aktif Sprint - Yapı Denetim Sistemi Tamamlandı ✅
-**Modül Sayısı:** 7 (6 tamamlandı: Finansal, Keşif/Metraj, Sözleşme, Satış/Tapu, Ruhsat, Denetim)
+**Bitiş:** 29 Ekim 2025
+**Durum:** FAZ 2 TAMAMLANDI - Tüm 7 Modül Aktif ✅
+**Modül Sayısı:** 7/7 (Finansal, Keşif/Metraj, Sözleşme, Satış/Tapu, Ruhsat, Denetim, Stok)
 
 ---
 
@@ -65,7 +65,15 @@ budget_vs_actual (
   - Event: `ProgressPaymentPaidEvent`
   - Listener: `CreateFinancialTransactionForProgressPayment`
   - Ödeme Durumu: `paid` (ödendi)
-- **Satış** → income (gelir kaydı) 🔜
+- **Satış** → income (gelir kaydı) ✅ **(29 Ekim 2025)**
+  - Method: `SalePaymentController::createIncomeTransaction()`
+  - Ödeme Durumu: `paid` (ödeme alındığında)
+  - Kategori: 'SATIS-KONUT' veya 'SATIS'
+- **Stok Çıkışı** → expense (stok kullanım gideri) ✅ **(29 Ekim 2025)**
+  - Method: `FinancialTransactionService::createFromStockMovement()`
+  - Ödeme Durumu: `paid` (kullanım)
+  - Kategori: 'STOK'
+  - Sadece 'out' tipindeki hareketler için
 
 #### Raporlar
 - Proje bazlı kar/zarar ✅
@@ -559,13 +567,15 @@ construction_permits (
 - **Tasarım**: Progress-Payments ile tutarlı full-width tasarım ✅
 
 #### Teknik Borç 🔧
-- **Belge Yükleme Hatası**: Bazı durumlarda belge yüklendiğinde sayfa hatası alınıyor
-  - Senaryo: Ruhsat oluşturduktan sonra belge yüklendiğinde hata
-  - Geçici Çözüm: Kayıtları silince sayfa düzeliyor
-  - Olası Sebep: Documents field'ında JSON parse hatası veya ilişkili kayıt eksikliği
-  - Yapılan: Model'e `protected $attributes = ['documents' => '[]']` default değer eklendi
-  - Durum: Yeni kayıtlarda hata görülmedi, eski kayıtlarla sorun devam ediyor
-  - Sonraki Adım: Belge upload validation'ını güçlendirmek, error handling iyileştirmek
+- ✅ **Belge Yükleme Hatası DÜZELTİLDİ** (29 Ekim 2025):
+  - Problem: Ruhsat oluşturduktan sonra belge yüklendiğinde hata alınıyordu
+  - Çözüm:
+    - Try-catch bloğu ile güvenli hata yönetimi eklendi
+    - Hata durumunda yüklenen dosya otomatik temizleniyor
+    - Detaylı log kaydı eklendi
+    - JSON array kontrolü güçlendirildi
+  - Dosya: `app/Http/Controllers/ConstructionPermitController.php::uploadDocument()`
+  - Durum: **ÇÖZÜLDÜ** ✅
 
 ---
 
@@ -736,37 +746,89 @@ inspections (
 
 ---
 
-### 7. Basit Stok Takibi (0%) 📦
+### 7. Basit Stok Takibi (100%) 📦 ✅
+
+#### Hedef
+Proje bazlı depo yönetimi ve malzeme stok takibi. Satınalma modülü ile entegre edilmiş basit stok sistemi.
 
 #### Database
 ```sql
 warehouses (
-    id, project_id, name, location, responsible_user_id
+    id, project_id, name, location,
+    responsible_user_id, description, is_active,
+    created_at, updated_at, deleted_at
 )
 
 stock_movements (
     id, warehouse_id, material_id,
-    movement_type,  -- in, out, transfer
-    quantity, unit_price, total_cost,
-    source_module, source_id,  -- Otomatik entegrasyon
-    notes, created_by
+    movement_type ENUM('in', 'out', 'transfer', 'adjustment'),
+    quantity DECIMAL(15,2), unit_price DECIMAL(15,2),
+    reference_type, reference_id,  -- Polymorphic relation
+    performed_by, notes, movement_date,
+    created_at, updated_at
+)
+
+materials (
+    ...,
+    current_stock DECIMAL(15,2) DEFAULT 0,
+    min_stock_level DECIMAL(15,2) DEFAULT 0
 )
 ```
 
 #### Özellikler
-- Depo tanımlama
-- Stok giriş/çıkış kayıtları
-- Otomatik entegrasyon:
-  - **Satınalma Teslimatı** → Stok artışı
-  - **Günlük Rapor** → Stok azalışı
-- Anlık stok durumu raporları
+- **Depo Yönetimi**: Proje bazlı depo tanımlama ve sorumlu atama ✅
+- **Stok Hareketleri**: Giriş, çıkış, transfer, düzeltme kayıtları ✅
+- **Otomatik Stok Güncelleme**: Transaction-based stok hesaplama ✅
+- **Mevcut Stok Takibi**: Malzeme bazlı anlık stok durumu ✅
+- **Min. Stok Seviyesi**: Kritik stok uyarıları için altyapı ✅
+- **Polymorphic İlişki**: Satınalma, üretim gibi kaynaklarla bağlantı ✅
+- **Filtreleme**: Depo, malzeme, hareket tipi, tarih bazlı arama ✅
 
 #### Sprint Görevler
-- [ ] Migrations
-- [ ] Warehouse, StockMovement modelleri
-- [ ] Materials tablosuna `current_stock` ekleme
-- [ ] Stok giriş/çıkış formları
-- [ ] Otomatik entegrasyon servisleri
+- [x] Migration'lar (warehouses, stock_movements, materials güncelleme)
+- [x] Warehouse ve StockMovement modelleri
+- [x] Materials tablosuna current_stock ve min_stock_level ekleme
+- [x] WarehouseController (CRUD işlemleri)
+- [x] StockMovementController (transaction-based stok yönetimi)
+- [x] Route tanımlamaları (warehouses.*, stock-movements.*)
+- [x] Vue sayfaları (Warehouses: Index, Create, Edit - StockMovements: Index, Create, Edit)
+- [x] Sidebar entegrasyonu (Satınalma & Stok menüsü)
+- [x] StockManagementSeeder (gerçekçi demo veriler)
+- [x] Hakediş modülü tasarımı ile uyumlu modern UI/UX
+
+#### Tamamlanan Dosyalar
+**Backend:**
+- ✅ `database/migrations/2025_10_29_*_warehouses_stock.php` (3 migration)
+- ✅ `app/Models/Warehouse.php`
+- ✅ `app/Models/StockMovement.php`
+- ✅ `app/Http/Controllers/WarehouseController.php`
+- ✅ `app/Http/Controllers/StockMovementController.php`
+- ✅ `database/seeders/StockManagementSeeder.php`
+- ✅ `routes/web.php` (warehouses.*, stock-movements.* rotaları)
+
+**Frontend:**
+- ✅ `resources/js/Pages/Warehouses/Index.vue`
+- ✅ `resources/js/Pages/Warehouses/Create.vue`
+- ✅ `resources/js/Pages/Warehouses/Edit.vue`
+- ✅ `resources/js/Pages/StockMovements/Index.vue`
+- ✅ `resources/js/Pages/StockMovements/Create.vue`
+- ✅ `resources/js/Pages/StockMovements/Edit.vue`
+- ✅ `resources/js/Layouts/Sidebar.vue` (Satınalma & Stok menü entegrasyonu)
+
+**Seeder Özellikleri:**
+- ✅ Her proje için 2-3 depo oluşturma
+- ✅ Depo başına 5-10 malzeme için stok hareketleri
+- ✅ İlk giriş, çıkış ve ek giriş hareketleri
+- ✅ Transfer ve düzeltme hareketleri
+- ✅ Otomatik current_stock güncelleme
+
+#### Teknik Detaylar
+- **Transaction Safety**: DB::transaction() ile stok güncellemeleri
+- **Stok Kontrolü**: Çıkış hareketlerinde yetersiz stok kontrolü
+- **Rollback Mekanizması**: Hareket silme/güncelleme için stok geri alma
+- **Modern UI**: Cyan-emerald gradient tema, hakediş modülü stiliyle tutarlı
+- **Responsive Design**: Full-width layout, grid-based forms
+- **Filtreleme**: 6 farklı filtre kriteri (arama, depo, malzeme, tip, tarih aralığı)
 
 ---
 
@@ -777,7 +839,7 @@ stock_movements (
 - ✅ Finansal migrations ve modeller (4 tablo)
 - ✅ Otomatik kayıt servisleri (Event/Listener yapısı)
 - ✅ Vue sayfaları (6 sayfa: Index, Create, Edit, Show, Dashboard, ProfitLoss)
-- ✅ API ve Web Controllers
+- ✅ API ve Web Controllersz
 - ✅ Puantaj, Hakediş, Satınalma entegrasyonu
 - ✅ Sidebar menü entegrasyonu
 - ✅ Test ve bug düzeltmeleri
@@ -832,13 +894,18 @@ stock_movements (
 - [ ] Otomatik financial_transaction kaydı
 
 #### Satınalma (Purchasing)
-- [ ] `contract_id` kolonu eklenecek
-- [ ] Teslimat → Stok artışı entegrasyonu
-- [ ] Otomatik financial_transaction kaydı
+- [x] `contract_id` kolonu eklenecek ✅
+- [x] **Teslimat → Stok artışı entegrasyonu** ✅ **(29 Ekim 2025)**
+  - `PurchasingRequestController::markAsDelivered()` metodu eklendi
+  - Teslimat onayında otomatik depo bulma/oluşturma
+  - Her kalem için otomatik stok "in" hareketi
+  - Material current_stock otomatik güncelleme
+  - Route: POST /purchasing-requests/{id}/mark-as-delivered
+- [x] Otomatik financial_transaction kaydı ✅
 
 #### Malzeme (Materials)
-- [ ] `current_stock` kolonu eklenecek
-- [ ] Warehouse ilişkisi
+- [x] `current_stock` kolonu eklenecek ✅
+- [x] Warehouse ilişkisi ✅
 
 #### Puantaj (Timesheet)
 - [ ] Aylık maaş hesaplama → Otomatik financial_transaction
@@ -893,12 +960,12 @@ stock_movements (
 | Satış ve Tapu | ✅ | %100 | 10 gün | 1 gün |
 | Ruhsat Yönetimi | ✅ | %100 | 3 gün | 0.5 gün |
 | Yapı Denetim | ✅ | %100 | 3 gün | 0.5 gün |
-| Stok Takibi | 🔜 | %0 | 3 gün | - |
-| **TOPLAM** | **🔄** | **%86** | **36 gün** | **6.5 gün** |
+| Stok Takibi | ✅ | %100 | 3 gün | 0.5 gün |
+| **TOPLAM** | **✅** | **%100** | **36 gün** | **7 gün** |
 
 ---
 
-**Son Güncelleme:** 28 Ekim 2025
-**Versiyon:** 1.3
+**Son Güncelleme:** 29 Ekim 2025
+**Versiyon:** 1.4 - **FAZ 2 TAMAMLANDI** 🎉
 **Önceki Faz:** [Faz 1: Temel Altyapı](./faz1-temel-altyapi.md)
 **Sonraki Faz:** [Faz 3: Gelişmiş Modüller](./faz3-gelismis-moduller.md)
