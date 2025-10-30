@@ -221,6 +221,18 @@
             ]"
           />
 
+          <!-- Equipment Management -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'site_manager', 'procurement_officer'])"
+            label="Ekipman Yönetimi"
+            icon="truck"
+            :items="[
+              { href: route('equipments.index'), label: 'Ekipmanlar', active: route().current('equipments.*') },
+              { href: route('equipment-usages.index'), label: 'Kullanım Kayıtları', active: route().current('equipment-usages.*') },
+              { href: route('equipment-maintenance.index'), label: 'Bakım ve Onarım', active: route().current('equipment-maintenance.*') }
+            ]"
+          />
+
           <!-- Document Management -->
           <SidebarGroup
             v-if="canAccess(['admin', 'hr', 'project_manager'])"

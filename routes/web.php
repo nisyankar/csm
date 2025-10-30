@@ -40,6 +40,9 @@ use App\Http\Controllers\SafetyTrainingController;
 use App\Http\Controllers\SafetyInspectionController;
 use App\Http\Controllers\RiskAssessmentController;
 use App\Http\Controllers\PpeAssignmentController;
+use App\Http\Controllers\EquipmentController;
+use App\Http\Controllers\EquipmentUsageController;
+use App\Http\Controllers\EquipmentMaintenanceController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -1493,5 +1496,78 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{ppeAssignment}/return', [PpeAssignmentController::class, 'returnPpe'])
             ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
             ->name('return');
+    });
+
+    // ========================================
+    // EQUIPMENT MANAGEMENT - Ekipman Yönetimi
+    // ========================================
+
+    // Equipments - Ekipmanlar
+    Route::prefix('equipments')->name('equipments.')->group(function () {
+        Route::get('/', [EquipmentController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager|procurement_officer')
+            ->name('index');
+        Route::get('/create', [EquipmentController::class, 'create'])
+            ->middleware('role:admin|project_manager|procurement_officer')
+            ->name('create');
+        Route::post('/', [EquipmentController::class, 'store'])
+            ->middleware('role:admin|project_manager|procurement_officer')
+            ->name('store');
+        Route::get('/{equipment}', [EquipmentController::class, 'show'])
+            ->middleware('role:admin|project_manager|site_manager|procurement_officer')
+            ->name('show');
+        Route::get('/{equipment}/edit', [EquipmentController::class, 'edit'])
+            ->middleware('role:admin|project_manager|procurement_officer')
+            ->name('edit');
+        Route::put('/{equipment}', [EquipmentController::class, 'update'])
+            ->middleware('role:admin|project_manager|procurement_officer')
+            ->name('update');
+        Route::delete('/{equipment}', [EquipmentController::class, 'destroy'])
+            ->middleware('role:admin')
+            ->name('destroy');
+    });
+
+    // Equipment Usages - Ekipman Kullanımları
+    Route::prefix('equipment-usages')->name('equipment-usages.')->group(function () {
+        Route::get('/', [EquipmentUsageController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager|procurement_officer')
+            ->name('index');
+        Route::get('/create', [EquipmentUsageController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('create');
+        Route::post('/', [EquipmentUsageController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('store');
+        Route::get('/{equipmentUsage}/edit', [EquipmentUsageController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('edit');
+        Route::put('/{equipmentUsage}', [EquipmentUsageController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update');
+        Route::delete('/{equipmentUsage}', [EquipmentUsageController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Equipment Maintenance - Ekipman Bakımları
+    Route::prefix('equipment-maintenance')->name('equipment-maintenance.')->group(function () {
+        Route::get('/', [EquipmentMaintenanceController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager|procurement_officer')
+            ->name('index');
+        Route::get('/create', [EquipmentMaintenanceController::class, 'create'])
+            ->middleware('role:admin|project_manager|procurement_officer')
+            ->name('create');
+        Route::post('/', [EquipmentMaintenanceController::class, 'store'])
+            ->middleware('role:admin|project_manager|procurement_officer')
+            ->name('store');
+        Route::get('/{equipmentMaintenance}/edit', [EquipmentMaintenanceController::class, 'edit'])
+            ->middleware('role:admin|project_manager|procurement_officer')
+            ->name('edit');
+        Route::put('/{equipmentMaintenance}', [EquipmentMaintenanceController::class, 'update'])
+            ->middleware('role:admin|project_manager|procurement_officer')
+            ->name('update');
+        Route::delete('/{equipmentMaintenance}', [EquipmentMaintenanceController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
     });
 });

@@ -156,6 +156,28 @@
 - **Filtreleme**: Proje, tür, önem derecesi, durum bazlı arama
 - **Gerçekçi Seeder**: 2 kaza, 2 eğitim, 1 denetim, 1 risk değerlendirmesi, 2 KKD kaydı
 
+### Ekipman & Makine Yönetimi Modülü 🆕
+- **Ekipman Envanteri**: 17 farklı ekipman tipi (Ekskavatör, Buldozer, Vinç, Loader, Kompaktör, Jeneratör vb.)
+- **Sahiplik Yönetimi**: Mülkiyetli, Kiralık, Leasing olmak üzere 3 sahiplik türü
+- **Kullanım Kayıtları**: Operatör, proje, tarih, süre bazlı detaylı kullanım takibi
+- **Sayaç Yönetimi**: Saat, kilometre, çevrim cinsinden sayaç okuma ve toplam hesaplama
+- **Yakıt Takibi**: Yakıt tüketimi ve maliyet kayıtları
+- **Bakım Sistemi**: Rutin, Önleyici, Düzeltici, Arıza olmak üzere 4 bakım türü
+- **Periyodik Bakım**: Bakım hatırlatıcı ve son bakım tarihi takibi
+- **Maliyet Analizi**: İşletme, bakım, yakıt maliyetlerinin toplam hesaplaması
+- **Finansal Entegrasyon**: Kira ve bakım giderlerinin otomatik finansal kayıt oluşturması
+- **Ekipman Durumları**: Müsait, Kullanımda, Bakımda, Arızalı durum yönetimi
+- **Otomatik Kodlama**: EKP-001 (ekipman), BKM-001 (bakım) otomatik kod oluşturma
+- **Modern UI**: Yellow-amber-orange gradient tema, full-width tasarım
+- **NULL-Safe Pagination**: Template-based pagination rendering
+- **3 Database Migration**: equipments, equipment_usages, equipment_maintenance
+- **3 Model**: Equipment, EquipmentUsage, EquipmentMaintenance (relationships, scopes, accessors)
+- **3 Controller**: Full CRUD, filtering, statistics, financial integration
+- **9 Vue Sayfası**: Equipments (Index, Create, Edit, Show), EquipmentUsages (Index, Create, Edit), EquipmentMaintenance (Index, Create, Edit)
+- **Sidebar Entegrasyonu**: "Ekipman Yönetimi" menü grubu (truck ikonu)
+- **EquipmentManagementSeeder**: 5 ekipman, 4 kullanım, 5 bakım kaydı
+- **Routes**: `/equipments/*`, `/equipment-usages/*`, `/equipment-maintenance/*`
+
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
@@ -219,6 +241,41 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 30 Ekim 2025 - Ekipman & Makine Yönetimi Modülü Tamamlandı 🎉
+- **Ekipman Envanteri Sistemi**: 17 farklı ekipman tipi ile kapsamlı envanter yönetimi
+- **3 Sahiplik Türü**: Mülkiyetli, Kiralık, Leasing seçenekleri
+- **Kullanım Kayıtları**:
+  - Operatör, proje, tarih, süre bazlı detaylı kayıt
+  - Sayaç okuma takibi (saat, km, çevrim)
+  - Yakıt tüketimi ve maliyet hesaplaması
+  - Durum bazlı ekipman kullanılabilirlik kontrolü
+- **Bakım ve Onarım Sistemi**:
+  - 4 Bakım Türü: Rutin, Önleyici, Düzeltici, Arıza
+  - Maliyet ayrımı (işçilik, parça, dış servis)
+  - Periyodik bakım hatırlatıcı (next_maintenance_date)
+  - Bakım geçmişi ve toplam bakım maliyeti
+- **Finansal Entegrasyon**:
+  - Kira giderleri otomatik financial_transactions kaydı
+  - Bakım maliyetleri otomatik kayıt
+  - Proje bazlı maliyet izleme
+- **Ekipman Durumları**: Müsait → Kullanımda → Bakımda → Arızalı lifecycle
+- **Otomatik Kod Sistemi**:
+  - Ekipman: EKP-001, EKP-002...
+  - Bakım: BKM-001, BKM-002...
+- **Modern Full-Width Tasarım**:
+  - Yellow-amber-orange gradient header (ekipman teması)
+  - NULL-safe pagination (template-based)
+  - Responsive grid layout
+  - İstatistikler widget'ları
+- **3 Database Migration**: equipments, equipment_usages, equipment_maintenance
+- **3 Model**: Equipment, EquipmentUsage, EquipmentMaintenance (NULL-safe accessors)
+- **3 Controller**: CRUD işlemleri, filtreleme, statistics, financial integration
+- **9 Vue Sayfası**: Modern tasarım ile Index, Create, Edit, Show sayfaları
+- **Sidebar Entegrasyonu**: "Ekipman Yönetimi" menü grubu (truck ikonu)
+- **EquipmentManagementSeeder**: 5 ekipman + 4 kullanım + 5 bakım kaydı
+- **Routes**: `/equipments/*`, `/equipment-usages/*`, `/equipment-maintenance/*`
+- **Bug Fix**: Pagination null URL hatası tüm modüllerde düzeltildi (template-based rendering)
 
 #### 30 Ekim 2025 - İş Sağlığı ve Güvenliği (İSG) Modülü Tamamlandı 🎉
 - **5 Alt Modül Sistemi**: İş Kazaları, Eğitimler, Denetimler, Risk Değerlendirmeleri, KKD Atamaları

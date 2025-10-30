@@ -69,6 +69,9 @@ class DatabaseSeeder extends Seeder
 
             // İş Sağlığı ve Güvenliği (Faz 3)
             SafetyManagementSeeder::class, // İSG kayıtları (kazalar, eğitimler, denetimler, risk değerlendirme, KKD)
+
+            // Ekipman & Makine Yönetimi (Faz 3)
+            EquipmentManagementSeeder::class, // Ekipman kayıtları (ekipmanlar, kullanımlar, bakımlar)
         ]);
     }
 }
