@@ -207,6 +207,20 @@
             ]"
           />
 
+          <!-- Safety Management (İSG) -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager', 'site_manager', 'safety_officer'])"
+            label="İş Sağlığı ve Güvenliği"
+            icon="shield-exclamation"
+            :items="[
+              { href: route('safety-incidents.index'), label: 'İş Kazaları', active: route().current('safety-incidents.*') },
+              { href: route('safety-trainings.index'), label: 'İSG Eğitimleri', active: route().current('safety-trainings.*') },
+              { href: route('safety-inspections.index'), label: 'Güvenlik Denetimleri', active: route().current('safety-inspections.*') },
+              { href: route('risk-assessments.index'), label: 'Risk Değerlendirmeleri', active: route().current('risk-assessments.*') },
+              { href: route('ppe-assignments.index'), label: 'KKD Atamaları', active: route().current('ppe-assignments.*') }
+            ]"
+          />
+
           <!-- Document Management -->
           <SidebarGroup
             v-if="canAccess(['admin', 'hr', 'project_manager'])"

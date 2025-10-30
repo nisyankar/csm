@@ -35,6 +35,11 @@ use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\QuantityController;
+use App\Http\Controllers\SafetyIncidentController;
+use App\Http\Controllers\SafetyTrainingController;
+use App\Http\Controllers\SafetyInspectionController;
+use App\Http\Controllers\RiskAssessmentController;
+use App\Http\Controllers\PpeAssignmentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -1352,5 +1357,141 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{stockMovement}', [App\Http\Controllers\StockMovementController::class, 'destroy'])
             ->middleware('role:admin|project_manager')
             ->name('destroy');
+    });
+
+    // SAFETY MANAGEMENT ROUTES (İş Sağlığı ve Güvenliği - Faz 3)
+    // Safety Incidents (İş Kazaları ve Olaylar)
+    Route::prefix('safety-incidents')->name('safety-incidents.')->group(function () {
+        Route::get('/', [SafetyIncidentController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('index');
+        Route::get('/create', [SafetyIncidentController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('create');
+        Route::post('/', [SafetyIncidentController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('store');
+        Route::get('/{safetyIncident}', [SafetyIncidentController::class, 'show'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('show');
+        Route::get('/{safetyIncident}/edit', [SafetyIncidentController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('edit');
+        Route::put('/{safetyIncident}', [SafetyIncidentController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('update');
+        Route::delete('/{safetyIncident}', [SafetyIncidentController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Safety Trainings (İSG Eğitimleri)
+    Route::prefix('safety-trainings')->name('safety-trainings.')->group(function () {
+        Route::get('/', [SafetyTrainingController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('index');
+        Route::get('/create', [SafetyTrainingController::class, 'create'])
+            ->middleware('role:admin|project_manager|safety_officer|hr')
+            ->name('create');
+        Route::post('/', [SafetyTrainingController::class, 'store'])
+            ->middleware('role:admin|project_manager|safety_officer|hr')
+            ->name('store');
+        Route::get('/{safetyTraining}', [SafetyTrainingController::class, 'show'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('show');
+        Route::get('/{safetyTraining}/edit', [SafetyTrainingController::class, 'edit'])
+            ->middleware('role:admin|project_manager|safety_officer|hr')
+            ->name('edit');
+        Route::put('/{safetyTraining}', [SafetyTrainingController::class, 'update'])
+            ->middleware('role:admin|project_manager|safety_officer|hr')
+            ->name('update');
+        Route::delete('/{safetyTraining}', [SafetyTrainingController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Safety Inspections (Güvenlik Denetimleri)
+    Route::prefix('safety-inspections')->name('safety-inspections.')->group(function () {
+        Route::get('/', [SafetyInspectionController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('index');
+        Route::get('/create', [SafetyInspectionController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('create');
+        Route::post('/', [SafetyInspectionController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('store');
+        Route::get('/{safetyInspection}', [SafetyInspectionController::class, 'show'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('show');
+        Route::get('/{safetyInspection}/edit', [SafetyInspectionController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('edit');
+        Route::put('/{safetyInspection}', [SafetyInspectionController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('update');
+        Route::delete('/{safetyInspection}', [SafetyInspectionController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+    });
+
+    // Risk Assessments (Risk Değerlendirmeleri)
+    Route::prefix('risk-assessments')->name('risk-assessments.')->group(function () {
+        Route::get('/', [RiskAssessmentController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('index');
+        Route::get('/create', [RiskAssessmentController::class, 'create'])
+            ->middleware('role:admin|project_manager|safety_officer')
+            ->name('create');
+        Route::post('/', [RiskAssessmentController::class, 'store'])
+            ->middleware('role:admin|project_manager|safety_officer')
+            ->name('store');
+        Route::get('/{riskAssessment}', [RiskAssessmentController::class, 'show'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer')
+            ->name('show');
+        Route::get('/{riskAssessment}/edit', [RiskAssessmentController::class, 'edit'])
+            ->middleware('role:admin|project_manager|safety_officer')
+            ->name('edit');
+        Route::put('/{riskAssessment}', [RiskAssessmentController::class, 'update'])
+            ->middleware('role:admin|project_manager|safety_officer')
+            ->name('update');
+        Route::delete('/{riskAssessment}', [RiskAssessmentController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Status Actions
+        Route::post('/{riskAssessment}/approve', [RiskAssessmentController::class, 'approve'])
+            ->middleware('role:admin|project_manager')
+            ->name('approve');
+    });
+
+    // PPE Assignments (KKD Atamaları)
+    Route::prefix('ppe-assignments')->name('ppe-assignments.')->group(function () {
+        Route::get('/', [PpeAssignmentController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('index');
+        Route::get('/create', [PpeAssignmentController::class, 'create'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('create');
+        Route::post('/', [PpeAssignmentController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('store');
+        Route::get('/{ppeAssignment}', [PpeAssignmentController::class, 'show'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('show');
+        Route::get('/{ppeAssignment}/edit', [PpeAssignmentController::class, 'edit'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('edit');
+        Route::put('/{ppeAssignment}', [PpeAssignmentController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('update');
+        Route::delete('/{ppeAssignment}', [PpeAssignmentController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Return PPE
+        Route::post('/{ppeAssignment}/return', [PpeAssignmentController::class, 'returnPpe'])
+            ->middleware('role:admin|project_manager|site_manager|safety_officer|hr')
+            ->name('return');
     });
 });

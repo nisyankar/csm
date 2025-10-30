@@ -141,6 +141,21 @@
 - **6 Vue Sayfası**: Warehouses (Index, Create, Edit) + StockMovements (Index, Create, Edit)
 - **Gerçekçi Seeder**: Her proje için 2-3 depo + çoklu stok hareketleri
 
+### İş Sağlığı ve Güvenliği (İSG) Modülü 🆕
+- **İş Kazası Yönetimi**: Ramak kala, yaralanma, ölümlü kaza kayıtları
+- **Kök Sebep Analizi**: RCA (Root Cause Analysis) ve düzeltici faaliyetler
+- **İSG Eğitimleri**: Eğitim planlama, katılımcı takibi, sertifika yönetimi
+- **Güvenlik Denetimleri**: Kontrol listeleri, skor sistemi, periyodik denetimler
+- **Risk Değerlendirmesi**: RAMS (Risk Assessment Method Statement) formları
+- **KKD Yönetimi**: Kişisel koruyucu donanım zimmet ve takibi
+- **5 Alt Modül**: Safety Incidents, Trainings, Inspections, Risk Assessments, PPE Assignments
+- **Önem Derecesi Takibi**: Düşük, Orta, Yüksek, Kritik seviyeler
+- **Durum Yönetimi**: Raporlandı → İnceleniyor → Çözüldü → Kapatıldı lifecycle
+- **Modern UI**: Kırmızı-turuncu gradient tema, full-width tasarım
+- **7 Vue Sayfası**: Create (5), Edit (1), Show (1) - tümü modern tasarım
+- **Filtreleme**: Proje, tür, önem derecesi, durum bazlı arama
+- **Gerçekçi Seeder**: 2 kaza, 2 eğitim, 1 denetim, 1 risk değerlendirmesi, 2 KKD kaydı
+
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
@@ -204,6 +219,45 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 30 Ekim 2025 - İş Sağlığı ve Güvenliği (İSG) Modülü Tamamlandı 🎉
+- **5 Alt Modül Sistemi**: İş Kazaları, Eğitimler, Denetimler, Risk Değerlendirmeleri, KKD Atamaları
+- **İş Kazası Yönetimi**:
+  - 6 Olay Türü: Küçük/Büyük Yaralanma, Ramak Kala, Mal Hasarı, Çevresel, Ölümlü
+  - 4 Önem Derecesi: Düşük, Orta, Yüksek, Kritik
+  - Kök sebep analizi (RCA) ve düzeltici faaliyet takibi
+  - İş kaybı günü, tıbbi tedavi, iş durdurma flag'leri
+  - Yetkili makamlara bildirim durumu
+- **İSG Eğitim Sistemi**:
+  - 7 Eğitim Türü: Temel İSG, Yangın, İlk Yardım, Yüksekte Çalışma, Kapalı Alan, Elektrik, Diğer
+  - Eğitmen ve şirket bilgileri
+  - Eğitim süresi ve lokasyon takibi
+- **Güvenlik Denetim Sistemi**:
+  - 5 Denetim Türü: Günlük, Haftalık, Aylık, Üç Aylık, Özel
+  - Kontrol edilen/başarılı/başarısız madde sayacı
+  - Skor sistemi (0-100)
+  - 4 Genel Durum: Başarılı, Notlarla Geçti, Aksiyon Gerekli, Başarısız
+- **Risk Değerlendirmesi (RAMS)**:
+  - İş aktivitesi bazlı risk analizi
+  - 4 Risk Seviyesi: Düşük, Orta, Yüksek, Kritik
+  - Kontrol tedbirleri ve geçerlilik tarihleri
+- **KKD Yönetimi**:
+  - 9 KKD Türü: Baret, İş Ayakkabısı, Eldiven, Gözlük, Yelek, Emniyet Kemeri, Maske, Kulak Koruyucu, Diğer
+  - Marka, model, beden, miktar bilgileri
+  - Birim fiyat ve son kullanma tarihi takibi
+- **Modern Full-Width Tasarım**:
+  - Kırmızı-turuncu gradient header (İSG teması)
+  - Breadcrumb navigation
+  - Responsive grid layout (lg:grid-cols-2)
+  - Gradient butonlar ve modern input stilleri
+  - Durum bazlı renkli badge'ler
+- **5 Database Migration**: safety_incidents, safety_trainings, safety_inspections, risk_assessments, ppe_assignments
+- **5 Model**: İlişkiler, scope'lar, accessor metodları, casts
+- **5 Controller**: CRUD işlemleri, filtreleme, transaction-safe operations
+- **7 Vue Sayfası**: Create (5), Edit (1), Show (1) - tümü modern tasarım
+- **Sidebar Entegrasyonu**: "İş Sağlığı ve Güvenliği" menü grubu (shield-exclamation ikonu)
+- **SafetyManagementSeeder**: 2 kaza, 2 eğitim, 1 denetim, 1 risk değerlendirmesi, 2 KKD kaydı
+- **Routes**: `/safety-incidents/*`, `/safety-trainings/*`, `/safety-inspections/*`, `/risk-assessments/*`, `/ppe-assignments/*`
 
 #### 29 Ekim 2025 - Stok Yönetimi Modülü Tamamlandı 🎉
 - **Depo Yönetimi Sistemi**: Proje bazlı depo tanımlama

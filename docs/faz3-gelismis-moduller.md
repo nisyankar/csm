@@ -1,9 +1,9 @@
 # FAZ 3: Gelişmiş Modüller
-## 📋 PLANLANIY OR (0%)
+## 🚧 DEVAM EDİYOR (16.67%)
 
 **Hedef:** Ocak - Mart 2026
-**Durum:** Planlanıyor
-**Modül Sayısı:** 6
+**Durum:** Devam Ediyor
+**Modül Sayısı:** 6 (1 tamamlandı)
 
 ---
 
@@ -18,14 +18,20 @@
 - Bakım geçmişi ve arıza kayıtları
 - Maliyetlerin financial_transactions'a otomatik aktarımı
 
-### 2. İş Sağlığı & Güvenliği (İSG) 👷
-**Database:** `safety_incidents`, `safety_trainings`, `safety_inspections`, `risk_assessments`
+### 2. ✅ İş Sağlığı & Güvenliği (İSG) 👷
+**Durum:** Tamamlandı (%100)
+**Database:** `safety_incidents`, `safety_trainings`, `safety_inspections`, `risk_assessments`, `ppe_assignments`
 **Özellikler:**
-- İş kazası kayıtları + fotoğraf
-- Eğitim planlama
-- Kontrol listeleri
-- Risk analiz formları
-- PDF export
+- ✅ İş kazası kayıtları (ramak kala, yaralanma, ölümlü vb.)
+- ✅ İSG eğitim planlama ve takibi
+- ✅ Güvenlik denetim kontrol listeleri
+- ✅ Risk analiz ve değerlendirme formları (RAMS)
+- ✅ KKD (Kişisel Koruyucu Donanım) zimmet yönetimi
+- ✅ Kök sebep analizi ve düzeltici faaliyetler
+- ✅ Full-width modern UI tasarımı
+- ✅ Durum bazlı renkli badge'ler
+- ✅ Önem derecesi takibi (düşük, orta, yüksek, kritik)
+- 🔜 PDF export (planlanan)
 
 ### 3. Çoklu Depo/Lokasyon Sistemi 📦
 **Database:** `warehouses` (genişletilmiş), `stock_movements` (transfer desteği)
