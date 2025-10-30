@@ -66,6 +66,7 @@ class DatabaseSeeder extends Seeder
 
             // Stok Yönetimi
             StockManagementSeeder::class, // Depolar ve stok hareketleri
+            WarehouseManagementSeeder::class, // Çoklu depo, transferler ve sayımlar (Faz 3)
 
             // İş Sağlığı ve Güvenliği (Faz 3)
             SafetyManagementSeeder::class, // İSG kayıtları (kazalar, eğitimler, denetimler, risk değerlendirme, KKD)

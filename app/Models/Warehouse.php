@@ -38,4 +38,76 @@ class Warehouse extends Model
     {
         return $this->hasMany(StockMovement::class);
     }
+
+    public function receivedTransfers(): HasMany
+    {
+        return $this->hasMany(StockMovement::class, 'to_warehouse_id');
+    }
+
+    public function stockCounts(): HasMany
+    {
+        return $this->hasMany(StockCount::class);
+    }
+
+    // Accessors
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->is_active ? 'Aktif' : 'Pasif';
+    }
+
+    public function getStatusColorAttribute(): string
+    {
+        return $this->is_active ? 'green' : 'red';
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeForProject($query, $projectId)
+    {
+        return $query->where('project_id', $projectId);
+    }
+
+    // Helper Methods
+    public function getTotalMaterialsCount(): int
+    {
+        return $this->stockMovements()
+            ->selectRaw('COUNT(DISTINCT material_id) as count')
+            ->value('count') ?? 0;
+    }
+
+    public function getTotalStockValue(): float
+    {
+        return $this->stockMovements()
+            ->whereIn('movement_type', ['in', 'transfer'])
+            ->sum(\DB::raw('quantity * COALESCE(unit_price, 0)'));
+    }
+
+    public function getStockByMaterial($materialId): float
+    {
+        $inbound = $this->stockMovements()
+            ->where('material_id', $materialId)
+            ->whereIn('movement_type', ['in', 'adjustment'])
+            ->sum('quantity');
+
+        $outbound = $this->stockMovements()
+            ->where('material_id', $materialId)
+            ->where('movement_type', 'out')
+            ->sum('quantity');
+
+        $transfersIn = $this->receivedTransfers()
+            ->where('material_id', $materialId)
+            ->where('movement_type', 'transfer')
+            ->sum('quantity');
+
+        $transfersOut = $this->stockMovements()
+            ->where('material_id', $materialId)
+            ->where('movement_type', 'transfer')
+            ->sum('quantity');
+
+        return $inbound + $transfersIn - $outbound - $transfersOut;
+    }
 }

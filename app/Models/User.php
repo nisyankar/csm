@@ -306,6 +306,25 @@ class User extends Authenticatable
     // Helper metodlar
 
     /**
+     * Kullanıcının belirli bir rolü var mı?
+     *
+     * @param string|array $roles
+     * @return bool
+     */
+    public function hasRole($roles): bool
+    {
+        if (is_string($roles)) {
+            return $this->user_type === $roles;
+        }
+
+        if (is_array($roles)) {
+            return in_array($this->user_type, $roles);
+        }
+
+        return false;
+    }
+
+    /**
      * Son giriş bilgisini güncelle
      */
     public function updateLastLogin(): void

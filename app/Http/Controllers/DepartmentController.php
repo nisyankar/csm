@@ -579,10 +579,51 @@ class DepartmentController extends Controller
 
         if ($user->hasRole(['project_manager', 'site_manager'])) {
             $project = $department->project;
-            return $project->project_manager_id === $user->employee_id || 
+            return $project->project_manager_id === $user->employee_id ||
                    $project->site_manager_id === $user->employee_id;
         }
 
         return false;
+    }
+
+    private function getUserProjects()
+    {
+        $user = Auth::user();
+
+        if ($user->hasRole(['admin', 'hr'])) {
+            return Project::select('id', 'name', 'code', 'status')
+                ->orderBy('name')
+                ->get();
+        }
+
+        if ($user->hasRole(['project_manager', 'site_manager'])) {
+            return Project::where('project_manager_id', $user->employee_id)
+                ->orWhere('site_manager_id', $user->employee_id)
+                ->select('id', 'name', 'code', 'status')
+                ->orderBy('name')
+                ->get();
+        }
+
+        // For other roles, return empty collection or projects they're assigned to
+        if ($user->employee && $user->employee->current_project_id) {
+            return Project::where('id', $user->employee->current_project_id)
+                ->select('id', 'name', 'code', 'status')
+                ->get();
+        }
+
+        return collect();
+    }
+
+    private function authorizeRole(array $roles): void
+    {
+        $user = Auth::user();
+
+        foreach ($roles as $role) {
+            if ($user->hasRole($role)) {
+                return;
+            }
+        }
+
+        abort(403, 'Bu işlem için yetkiniz bulunmamaktadır.');
     }
 }

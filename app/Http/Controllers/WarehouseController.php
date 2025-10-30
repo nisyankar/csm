@@ -38,8 +38,19 @@ class WarehouseController extends Controller
 
         $warehouses = $query->latest()->paginate(15)->withQueryString();
 
+        // İstatistikler
+        $statistics = [
+            'total_warehouses' => Warehouse::count(),
+            'active_warehouses' => Warehouse::active()->count(),
+            'total_materials' => \DB::table('stock_movements')
+                ->distinct('material_id')
+                ->count('material_id'),
+            'total_stock_movements' => \DB::table('stock_movements')->count(),
+        ];
+
         return Inertia::render('Warehouses/Index', [
             'warehouses' => $warehouses,
+            'statistics' => $statistics,
             'projects' => Project::select('id', 'name')->get(),
             'filters' => $request->only(['search', 'project_id', 'is_active']),
         ]);

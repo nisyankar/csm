@@ -203,7 +203,9 @@
               { href: route('purchasing-requests.create'), label: 'Yeni Talep', active: route().current('purchasing-requests.create') },
               { href: route('materials.index'), label: 'Malzemeler', active: route().current('materials.*') },
               { href: route('warehouses.index'), label: 'Depolar', active: route().current('warehouses.*') },
-              { href: route('stock-movements.index'), label: 'Stok Hareketleri', active: route().current('stock-movements.*') }
+              { href: route('stock-movements.index'), label: 'Stok Hareketleri', active: route().current('stock-movements.*') },
+              { href: route('stock-transfers.index'), label: 'Depo Transferleri', active: route().current('stock-transfers.*') },
+              { href: route('stock-counts.index'), label: 'Stok Sayımları', active: route().current('stock-counts.*') }
             ]"
           />
 

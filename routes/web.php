@@ -43,6 +43,9 @@ use App\Http\Controllers\PpeAssignmentController;
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\EquipmentUsageController;
 use App\Http\Controllers\EquipmentMaintenanceController;
+use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\StockTransferController;
+use App\Http\Controllers\StockCountController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -1360,6 +1363,50 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{stockMovement}', [App\Http\Controllers\StockMovementController::class, 'destroy'])
             ->middleware('role:admin|project_manager')
             ->name('destroy');
+    });
+
+    // Stock Transfers (Depolar Arası Transfer - Faz 3)
+    Route::prefix('stock-transfers')->name('stock-transfers.')->group(function () {
+        Route::get('/', [App\Http\Controllers\StockTransferController::class, 'index'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\StockTransferController::class, 'create'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\StockTransferController::class, 'store'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('store');
+        Route::get('/{stockTransfer}', [App\Http\Controllers\StockTransferController::class, 'show'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('show');
+        Route::get('/warehouse-stock', [App\Http\Controllers\StockTransferController::class, 'getWarehouseStock'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('warehouse-stock');
+    });
+
+    // Stock Counts (Stok Sayımları - Faz 3)
+    Route::prefix('stock-counts')->name('stock-counts.')->group(function () {
+        Route::get('/', [App\Http\Controllers\StockCountController::class, 'index'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\StockCountController::class, 'create'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\StockCountController::class, 'store'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('store');
+        Route::get('/{stockCount}', [App\Http\Controllers\StockCountController::class, 'show'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('show');
+        Route::post('/{stockCount}/approve', [App\Http\Controllers\StockCountController::class, 'approve'])
+            ->middleware('role:admin|project_manager')
+            ->name('approve');
+        Route::post('/{stockCount}/reject', [App\Http\Controllers\StockCountController::class, 'reject'])
+            ->middleware('role:admin|project_manager')
+            ->name('reject');
+        Route::get('/system-stock', [App\Http\Controllers\StockCountController::class, 'getSystemStock'])
+            ->middleware('role:admin|project_manager|procurement_manager')
+            ->name('system-stock');
     });
 
     // SAFETY MANAGEMENT ROUTES (İş Sağlığı ve Güvenliği - Faz 3)
