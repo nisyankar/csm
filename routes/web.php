@@ -46,6 +46,7 @@ use App\Http\Controllers\EquipmentMaintenanceController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\StockTransferController;
 use App\Http\Controllers\StockCountController;
+use App\Http\Controllers\ProjectScheduleController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -1617,4 +1618,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('role:admin|project_manager')
             ->name('destroy');
     });
+
+    // ========================================
+    // PROJECT SCHEDULING - Gantt/Timeline
+    // ========================================
+
+    // Project Schedules - Proje Takvimi
+    Route::prefix('project-schedules')->name('project-schedules.')->group(function () {
+        Route::get('/', [ProjectScheduleController::class, 'index'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('index');
+        Route::get('/create', [ProjectScheduleController::class, 'create'])
+            ->middleware('role:admin|project_manager')
+            ->name('create');
+        Route::post('/', [ProjectScheduleController::class, 'store'])
+            ->middleware('role:admin|project_manager')
+            ->name('store');
+        Route::get('/{projectSchedule}', [ProjectScheduleController::class, 'show'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('show');
+        Route::get('/{projectSchedule}/edit', [ProjectScheduleController::class, 'edit'])
+            ->middleware('role:admin|project_manager')
+            ->name('edit');
+        Route::put('/{projectSchedule}', [ProjectScheduleController::class, 'update'])
+            ->middleware('role:admin|project_manager')
+            ->name('update');
+        Route::delete('/{projectSchedule}', [ProjectScheduleController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+        Route::post('/{projectSchedule}/progress', [ProjectScheduleController::class, 'updateProgress'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('update-progress');
+    });
+
+    // Gantt Chart View
+    Route::get('/projects/{project}/gantt', [ProjectScheduleController::class, 'gantt'])
+        ->middleware('role:admin|project_manager|site_manager')
+        ->name('projects.gantt');
 });

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class ProgressPayment extends Model
 {
@@ -33,6 +34,8 @@ class ProgressPayment extends Model
         'notes',
         'approved_by',
         'approved_at',
+        'project_schedule_id',
+        'auto_update_schedule',
     ];
 
     protected $casts = [
@@ -44,6 +47,7 @@ class ProgressPayment extends Model
         'payment_date' => 'date',
         'approved_at' => 'datetime',
         'is_quantity_overrun' => 'boolean',
+        'auto_update_schedule' => 'boolean',
     ];
 
     protected $appends = ['completion_percentage'];
@@ -106,6 +110,11 @@ class ProgressPayment extends Model
     public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);
+    }
+
+    public function projectSchedule(): BelongsTo
+    {
+        return $this->belongsTo(ProjectSchedule::class);
     }
 
     /**
@@ -174,8 +183,48 @@ class ProgressPayment extends Model
 
         $this->save();
 
+        // Proje takvimi otomatik güncelleme
+        if ($this->auto_update_schedule && $this->project_schedule_id) {
+            $this->syncScheduleProgress();
+        }
+
         // Blok/Kat/Daire statülerini kontrol et ve güncelle
         $this->checkAndUpdateStructureStatus();
+    }
+
+    /**
+     * Proje takvimi ilerlemesini senkronize et
+     */
+    public function syncScheduleProgress(): void
+    {
+        if (!$this->projectSchedule) {
+            return;
+        }
+
+        $schedule = $this->projectSchedule;
+
+        // Hakediş tamamlanma yüzdesini takvime aktar
+        $schedule->completion_percentage = (int) $this->completion_percentage;
+        $schedule->progress = (int) $this->completion_percentage;
+
+        // Gerçekleşen maliyeti de güncelle
+        if ($this->unit_price && $this->completed_quantity) {
+            $actualCost = $this->unit_price * $this->completed_quantity;
+            $schedule->actual_cost = $actualCost;
+        }
+
+        // Durumu güncelle
+        if ($this->completion_percentage >= 100) {
+            $schedule->status = 'completed';
+            $schedule->actual_end_date = now();
+        } elseif ($this->completion_percentage > 0) {
+            $schedule->status = 'in_progress';
+            if (!$schedule->actual_start_date) {
+                $schedule->actual_start_date = now();
+            }
+        }
+
+        $schedule->save();
     }
 
     /**

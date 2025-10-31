@@ -72,7 +72,8 @@
             icon="building-office"
             :items="[
               { href: route('projects.index'), label: 'Projeler', active: route().current('projects.*') },
-              { href: route('projects.create'), label: 'Yeni Proje', active: route().current('projects.create') }
+              { href: route('projects.create'), label: 'Yeni Proje', active: route().current('projects.create') },
+              { href: route('project-schedules.index'), label: 'Proje Takvimi & Gantt', active: route().current('project-schedules.*') }
             ]"
           />
 

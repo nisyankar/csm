@@ -61,24 +61,39 @@ class CheckRole
 
         // Roller kontrolü
         if (!empty($roles)) {
-            $hasRole = false;
-            
+            // Rolleri ayır (| veya , ile ayrılmış olabilir)
+            $allowedRoles = [];
             foreach ($roles as $role) {
+                if (str_contains($role, '|')) {
+                    $allowedRoles = array_merge($allowedRoles, explode('|', $role));
+                } elseif (str_contains($role, ',')) {
+                    $allowedRoles = array_merge($allowedRoles, explode(',', $role));
+                } else {
+                    $allowedRoles[] = $role;
+                }
+            }
+
+            // Boşlukları temizle
+            $allowedRoles = array_map('trim', $allowedRoles);
+
+            $hasRole = false;
+
+            foreach ($allowedRoles as $role) {
                 if ($user->hasRole($role)) {
                     $hasRole = true;
                     break;
                 }
             }
-            
+
             if (!$hasRole) {
                 if ($request->expectsJson()) {
                     return response()->json([
                         'message' => 'Bu işlem için yetkiniz bulunmamaktadır.',
-                        'required_roles' => $roles,
-                        'user_roles' => $user->roles->pluck('name')->toArray()
+                        'required_roles' => $allowedRoles,
+                        'user_type' => $user->user_type
                     ], 403);
                 }
-                
+
                 abort(403, 'Bu sayfaya erişim yetkiniz bulunmamaktadır.');
             }
         }

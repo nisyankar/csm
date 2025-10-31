@@ -73,6 +73,9 @@ class DatabaseSeeder extends Seeder
 
             // Ekipman & Makine Yönetimi (Faz 3)
             EquipmentManagementSeeder::class, // Ekipman kayıtları (ekipmanlar, kullanımlar, bakımlar)
+
+            // Gantt/Timeline - Proje Programlama (Faz 3)
+            ProjectScheduleSeeder::class, // Proje takvimi ve görevler
         ]);
     }
 }
