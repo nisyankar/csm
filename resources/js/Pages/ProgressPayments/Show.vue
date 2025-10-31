@@ -218,7 +218,7 @@
             <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-green-50 flex items-center justify-between">
               <h3 class="text-lg font-medium text-gray-900">İlişkili Metraj Kaydı</h3>
               <Link
-                :href="`/quantities/${progressPayment.quantity.id}`"
+                :href="route('quantities.show', progressPayment.quantity.id)"
                 class="inline-flex items-center text-sm text-emerald-600 hover:text-emerald-800 font-medium"
               >
                 <span>Metraj Detayı</span>

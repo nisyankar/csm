@@ -147,6 +147,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Kullanıcının proje rolleri
+     */
+    public function projectRoles(): HasMany
+    {
+        return $this->hasMany(UserProjectRole::class);
+    }
+
+    /**
+     * Kullanıcının activity loglari
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
      * Kullanıcının girdiği puantajlar
      */
     public function enteredTimesheets(): HasMany
@@ -438,18 +454,70 @@ class User extends Authenticatable
         if (in_array($this->user_type, ['admin', 'hr'])) {
             return true;
         }
-        
-        // Proje erişim listesi kontrolü
+
+        // Proje bazlı rol kontrolü (yeni sistem)
+        $hasProjectRole = $this->projectRoles()
+            ->where('project_id', $projectId)
+            ->active()
+            ->exists();
+
+        if ($hasProjectRole) {
+            return true;
+        }
+
+        // Proje erişim listesi kontrolü (eski sistem)
         if ($this->project_access) {
             return in_array($projectId, $this->project_access);
         }
-        
+
         // Employee ise sadece kendi projesine
         if ($this->employee) {
             return $this->employee->current_project_id === $projectId;
         }
-        
+
         return false;
+    }
+
+    /**
+     * Belirli projedeki rolü al
+     */
+    public function getProjectRole(int $projectId): ?UserProjectRole
+    {
+        return $this->projectRoles()
+            ->where('project_id', $projectId)
+            ->active()
+            ->first();
+    }
+
+    /**
+     * Kullanıcının tüm erişebildiği projeleri al
+     */
+    public function getAccessibleProjects()
+    {
+        // Admin ve HR her projeye erişebilir
+        if (in_array($this->user_type, ['admin', 'hr'])) {
+            return Project::all();
+        }
+
+        // Proje rollerine göre erişim
+        $projectIds = $this->projectRoles()
+            ->active()
+            ->pluck('project_id')
+            ->toArray();
+
+        // Eski sistem proje erişim listesi
+        if ($this->project_access) {
+            $projectIds = array_merge($projectIds, $this->project_access);
+        }
+
+        // Employee'nin mevcut projesi
+        if ($this->employee && $this->employee->current_project_id) {
+            $projectIds[] = $this->employee->current_project_id;
+        }
+
+        $projectIds = array_unique($projectIds);
+
+        return Project::whereIn('id', $projectIds)->get();
     }
 
     /**

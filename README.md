@@ -156,6 +156,28 @@
 - **Filtreleme**: Proje, tür, önem derecesi, durum bazlı arama
 - **Gerçekçi Seeder**: 2 kaza, 2 eğitim, 1 denetim, 1 risk değerlendirmesi, 2 KKD kaydı
 
+### Rol & Yetki Yönetimi Modülü 🆕
+- **Proje Bazlı Rol Sistemi**: Kullanıcıların projelere özel rol ve yetki ataması
+- **7 Rol Tipi**: Proje Müdürü, Şantiye Şefi, Mühendis, Usta Başı, Denetçi, İSG Uzmanı, Görüntüleyici
+- **Activity Log Sistemi**: Tüm sistem aktivitelerinin detaylı kaydı
+- **8 Aktivite Tipi**: Created, Updated, Deleted, Viewed, Login, Logout, Access Denied, Custom
+- **4 Önem Seviyesi**: Info, Warning, Error, Critical
+- **Route Permission Management**: Tüm route'lar için yetki yönetimi
+- **Otomatik Route Sync**: Laravel route list'ten otomatik senkronizasyon
+- **Anlamlı Türkçe İsimler**: Route'lar için otomatik Türkçe isim oluşturma
+- **11 Farklı Rol**: Admin, HR, Proje Müdürü, Şantiye Şefi, Mühendis, Usta Başı, Denetçi, İSG, Görüntüleyici, Muhasebe, Finans
+- **Toplu Yetki Yönetimi**: Birden fazla route için aynı anda yetki atama
+- **Filtreleme**: Modül, durum, proje erişimi bazlı arama
+- **CheckProjectAccess Middleware**: Otomatik proje erişim kontrolü
+- **Polymorphic Activity Log**: Tüm modeller için activity tracking
+- **Modern UI**: Purple-indigo-blue (Proje Rolleri), Slate-gray (Activity Logs), Orange-red (Route Yetkileri) gradient temalar
+- **3 Database Migration**: user_project_roles, activity_logs, route_permissions
+- **3 Model**: UserProjectRole, ActivityLog, RoutePermission (ilişkiler, scope'lar, helper metodları)
+- **3 Controller**: Full CRUD, sync, bulk update, filtreleme
+- **6 Vue Sayfası**: UserProjectRoles (Index, Create, Edit), ActivityLogs (Index, Show), RoutePermissions (Index)
+- **Sidebar Entegrasyonu**: "Rol & Yetki Yönetimi" menü grubu (shield-check ikonu)
+- **Routes**: `/user-project-roles/*`, `/activity-logs/*`, `/route-permissions/*`
+
 ### Ekipman & Makine Yönetimi Modülü 🆕
 - **Ekipman Envanteri**: 17 farklı ekipman tipi (Ekskavatör, Buldozer, Vinç, Loader, Kompaktör, Jeneratör vb.)
 - **Sahiplik Yönetimi**: Mülkiyetli, Kiralık, Leasing olmak üzere 3 sahiplik türü
@@ -241,6 +263,67 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 31 Ekim 2025 - Rol & Yetki Yönetimi Modülü Tamamlandı 🎉
+- **Proje Bazlı Rol Sistemi**: Kullanıcıların projelere özel rol ve yetki ataması
+  - UserProjectRole model ve migration
+  - 7 farklı rol tipi (project_manager, site_manager, engineer, foreman, viewer, inspector, safety_officer)
+  - Tarih aralığı ile geçici atama desteği (start_date, end_date)
+  - Rol bazlı permission sistemi (JSON)
+  - Aktif/Pasif durum kontrolü ve otomatik geçerlilik kontrolü
+- **Activity Log Sistemi**: Kapsamlı sistem aktivite izleme
+  - 8 farklı aktivite tipi (created, updated, deleted, viewed, logged_in, logged_out, access_denied, custom)
+  - 4 önem seviyesi (info, warning, error, critical)
+  - Polymorphic ilişki desteği (subject_type, subject_id)
+  - IP adresi, user agent, route bilgisi otomatik kaydı
+  - Proje bazlı filtreleme ve kullanıcı bazlı activity history
+  - Static helper metodları (logCreated, logUpdated, logDeleted vb.)
+- **Route Permission Management**: Granüler yetki kontrolü
+  - RoutePermission model ve migration
+  - Otomatik route sync (Laravel route list'ten)
+  - Anlamlı Türkçe isim oluşturma sistemi (generateDisplayName)
+  - Action type belirleme (view, create, edit, delete, vb.)
+  - 11 farklı rol desteği (admin, hr, project_manager, site_manager, engineer, foreman, inspector, safety_officer, viewer, accounting, finance)
+  - Modül bazlı filtreleme ve toplu yetki güncelleme
+  - Public route desteği ve proje erişimi kontrolü
+- **Middleware Geliştirmeleri**:
+  - CheckProjectAccess: Otomatik proje erişim kontrolü
+  - Dinamik project_id tespiti (route params, form data)
+  - Erişim engelleme durumunda otomatik activity log kaydı
+- **User Model Güncellemeleri**:
+  - projectRoles() ilişkisi
+  - activityLogs() ilişkisi
+  - canAccessProject() - Yeni ve eski sistem birlikte çalışıyor
+  - getProjectRole() - Kullanıcının projedeki rolünü getir
+  - getAccessibleProjects() - Erişilebilir projeleri listele
+- **Modern Full-Width UI Tasarımı**:
+  - UserProjectRoles: Purple-indigo-blue gradient header
+  - ActivityLogs: Slate-gray gradient header
+  - RoutePermissions: Orange-red gradient header
+  - Hakediş modülüne benzer modern card'lar ve filtreler
+  - Rol ve önem seviyesi için renkli badge'ler
+  - NULL-safe pagination (dynamic component kullanımı)
+  - Modal-based düzenleme formu (route permissions)
+- **Controller'lar**:
+  - UserProjectRoleController: Full CRUD + activate/deactivate + byUser/byProject metodları
+  - ActivityLogController: index, show, userActivity, projectActivity, export metodları
+  - RoutePermissionController: CRUD + syncFromRoutes + bulkUpdate + batchAssignByModule
+- **Routes ve Sidebar**:
+  - user-project-roles.* route grubu (admin, hr erişimi)
+  - activity-logs.* route grubu (admin, hr erişimi)
+  - route-permissions.* route grubu (sadece admin)
+  - "Rol & Yetki Yönetimi" sidebar bölümü eklendi
+  - Route Yetkileri menüsü (admin only)
+- **6 Vue Sayfası**: Modern full-width gradient header'lı
+  - UserProjectRoles (Index, Create, Edit)
+  - ActivityLogs (Index, Show)
+  - RoutePermissions (Index)
+- **Teknik İyileştirmeler**:
+  - Modal component path düzeltmesi (@/Components/UI/Modal.vue)
+  - UserProjectRoleController prop isim tutarlılığı
+  - Migration şema iyileştirmesi (nullable fields)
+  - Pagination Link null href hatası düzeltildi (tüm sayfalarda)
+  - TECHNICAL_DEBT.md dosyası oluşturuldu (ProgressPayments form hatası dokümante edildi)
 
 #### 30 Ekim 2025 - Ekipman & Makine Yönetimi Modülü Tamamlandı 🎉
 - **Ekipman Envanteri Sistemi**: 17 farklı ekipman tipi ile kapsamlı envanter yönetimi

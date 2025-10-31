@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Resource Access Control
             'project.access' => \App\Http\Middleware\ProjectAccess::class,
+            'check.project' => \App\Http\Middleware\CheckProjectAccess::class,
             'department.access' => \App\Http\Middleware\DepartmentAccess::class,
 
             // Security & Validation

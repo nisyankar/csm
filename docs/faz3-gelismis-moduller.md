@@ -1,9 +1,9 @@
 # FAZ 3: Gelişmiş Modüller
-## 🚧 DEVAM EDİYOR (50%)
+## 🚧 DEVAM EDİYOR (62%)
 
 **Hedef:** Ocak - Mart 2026
 **Durum:** Devam Ediyor
-**Modül Sayısı:** 8 (4 tamamlandı ✅, 4 planlama/geliştirme aşamasında 🔄)
+**Modül Sayısı:** 8 (5 tamamlandı ✅, 3 planlama/geliştirme aşamasında 🔄)
 
 ---
 
@@ -116,24 +116,72 @@
 - Dashboard builder
 - KPI tanımlama sistemi
 
-### 6. 🔄 Rol & Yetki Sistemi (Proje Bazlı) 🎯
-**Durum:** Planlama (%30 - Analiz Tamamlandı)
+### 6. ✅ Rol & Yetki Sistemi (Proje Bazlı) 🎯
+**Durum:** Tamamlandı (%100)
 **Database:** `user_project_roles`, `activity_logs`, `route_permissions`
 **Özellikler:**
-- 🔄 Proje bazlı yetkilendirme
-- 🔄 Çoklu proje yöneticisi/şantiye şefi
-- 🔄 Activity log (tüm işlem geçmişi)
-- 🔄 Middleware: CheckProjectAccess
-- 🆕 **Route-based Permission Management:**
-  - Tüm Vue sayfalarının route tanımlarından otomatik yetki listesi oluşturma
-  - Akıllı kategorilendirme (modül bazlı gruplandırma)
-  - Hiyerarşik yetki yapısı (ana başlık → alt sayfalar)
-  - Toplu yetki atama (başlığa yetki = tüm alt sayfalara yetki)
-  - Granüler yetki kontrolü (sadece belirli sayfalara yetki)
-- 🆕 **Project-based Role Assignment Screen:**
-  - Çalışan kartı üzerinden proje ataması
-  - Proje listesinde arama ve filtreleme
-  - Çift taraflı arama desteği (hem çalışan hem proje)
+- ✅ **Proje bazlı rol yönetimi:**
+  - UserProjectRole model ve migration
+  - 7 farklı rol tipi (project_manager, site_manager, engineer, foreman, viewer, inspector, safety_officer)
+  - Tarih aralığı ile geçici atama desteği
+  - Rol bazlı permission sistemi (JSON)
+  - Aktif/Pasif durum kontrolü
+- ✅ **Activity Log Sistemi:**
+  - Tüm sistem aktivitelerini kaydetme
+  - 8 farklı aktivite tipi (created, updated, deleted, viewed, logged_in, logged_out, access_denied, custom)
+  - 4 önem seviyesi (info, warning, error, critical)
+  - Polymorphic ilişki desteği (subject)
+  - IP adresi, user agent, route bilgisi kaydı
+  - Proje bazlı filtreleme
+- ✅ **Middleware:**
+  - CheckProjectAccess: Proje erişim kontrolü
+  - Dinamik project_id tespiti (route params, form data)
+  - Otomatik activity log kaydı (erişim engelleme)
+- ✅ **User Model Geliştirmeleri:**
+  - projectRoles() ilişkisi
+  - activityLogs() ilişkisi
+  - canAccessProject() - Proje erişim kontrolü (yeni sistem + eski sistem uyumlu)
+  - getProjectRole() - Kullanıcının projedeki rolünü getir
+  - getAccessibleProjects() - Erişilebilir projeleri listele
+- ✅ **Modern UI/UX:**
+  - UserProjectRoles Index.vue (purple-indigo-blue gradient)
+  - ActivityLogs Index.vue (slate-gray gradient)
+  - Hakediş modülüne benzer full-width tasarım
+  - Modern card'lar ve filtreler
+  - Rol badge'leri (renkli)
+  - Önem seviyesi göstergeleri
+- ✅ **Controller'lar:**
+  - UserProjectRoleController (CRUD + activate/deactivate + byUser/byProject)
+  - ActivityLogController (index, show, userActivity, projectActivity, export)
+- ✅ **Route'lar ve Sidebar:**
+  - user-project-roles.* route grubu (admin, hr)
+  - activity-logs.* route grubu (admin, hr)
+  - route-permissions.* route grubu (admin only)
+  - Sidebar'a "Rol & Yetki Yönetimi" bölümü eklendi
+  - Route Yetkileri menüsü (sadece admin)
+- ✅ **Route-based Permission Management:**
+  - RoutePermission model ve migration
+  - RoutePermissionController (full CRUD + sync + bulk update)
+  - Otomatik route sync (syncFromRoutes) - Laravel route list'ten tüm route'ları çeker
+  - Anlamlı Türkçe isim oluşturma (generateDisplayName)
+  - Action type belirleme (view, create, edit, delete, vb.)
+  - RoutePermissions/Index.vue (orange-red gradient, modern UI)
+  - Modül bazlı filtreleme
+  - Toplu yetki güncelleme
+  - Tekil route düzenleme (modal)
+  - Tablo görünümü: Anlamlı isim, route adı, URI, izinli roller
+  - 11 farklı rol desteği (admin, hr, project_manager, site_manager, engineer, foreman, inspector, safety_officer, viewer, accounting, finance)
+- ✅ **Vue Sayfaları:**
+  - UserProjectRoles/Index.vue, Create.vue, Edit.vue
+  - ActivityLogs/Index.vue, Show.vue
+  - RoutePermissions/Index.vue
+  - Tüm sayfalar modern full-width gradient header'lı
+  - Pagination null-safe düzeltildi (dynamic component kullanımı)
+- ✅ **Teknik İyileştirmeler:**
+  - Modal component path düzeltmesi (@/Components/UI/Modal.vue)
+  - UserProjectRoleController prop isim tutarlılığı
+  - Migration şema iyileştirmesi (nullable fields)
+  - Pagination Link null href hatası düzeltildi
 
 ### 7. 🆕 Geçici Görevlendirme & Puantaj Transferi 🔀
 **Durum:** Teknik Borç / Planlama (%0)

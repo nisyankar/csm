@@ -259,6 +259,18 @@
             ]"
           />
 
+          <!-- Role & Permission Management -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'hr'])"
+            label="Rol & Yetki Yönetimi"
+            icon="shield-check"
+            :items="[
+              { href: route('user-project-roles.index'), label: 'Proje Rolleri', active: route().current('user-project-roles.*') },
+              { href: route('activity-logs.index'), label: 'Aktivite Logları', active: route().current('activity-logs.*') },
+              ...(canAccess(['admin']) ? [{ href: route('route-permissions.index'), label: 'Route Yetkileri', active: route().current('route-permissions.*') }] : [])
+            ]"
+          />
+
           <!-- System Management (Sadece admin ve system_admin için) -->
           <SidebarGroup
             v-if="canAccess(['admin', 'system_admin'])"

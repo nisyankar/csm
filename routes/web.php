@@ -47,6 +47,9 @@ use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\StockTransferController;
 use App\Http\Controllers\StockCountController;
 use App\Http\Controllers\ProjectScheduleController;
+use App\Http\Controllers\UserProjectRoleController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\RoutePermissionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -1617,6 +1620,84 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{equipmentMaintenance}', [EquipmentMaintenanceController::class, 'destroy'])
             ->middleware('role:admin|project_manager')
             ->name('destroy');
+    });
+
+    // ========================================
+    // USER PROJECT ROLES - Proje Rol Yönetimi
+    // ========================================
+    Route::prefix('user-project-roles')->name('user-project-roles.')->group(function () {
+        Route::get('/', [UserProjectRoleController::class, 'index'])
+            ->middleware('role:admin|hr')
+            ->name('index');
+        Route::get('/create', [UserProjectRoleController::class, 'create'])
+            ->middleware('role:admin|hr')
+            ->name('create');
+        Route::post('/', [UserProjectRoleController::class, 'store'])
+            ->middleware('role:admin|hr')
+            ->name('store');
+        Route::get('/{userProjectRole}/edit', [UserProjectRoleController::class, 'edit'])
+            ->middleware('role:admin|hr')
+            ->name('edit');
+        Route::put('/{userProjectRole}', [UserProjectRoleController::class, 'update'])
+            ->middleware('role:admin|hr')
+            ->name('update');
+        Route::delete('/{userProjectRole}', [UserProjectRoleController::class, 'destroy'])
+            ->middleware('role:admin|hr')
+            ->name('destroy');
+        Route::post('/{userProjectRole}/activate', [UserProjectRoleController::class, 'activate'])
+            ->middleware('role:admin|hr')
+            ->name('activate');
+        Route::post('/{userProjectRole}/deactivate', [UserProjectRoleController::class, 'deactivate'])
+            ->middleware('role:admin|hr')
+            ->name('deactivate');
+        Route::get('/user/{user}', [UserProjectRoleController::class, 'byUser'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('by-user');
+        Route::get('/project/{project}', [UserProjectRoleController::class, 'byProject'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('by-project');
+    });
+
+    // ========================================
+    // ACTIVITY LOGS - Aktivite Logları
+    // ========================================
+    Route::prefix('activity-logs')->name('activity-logs.')->group(function () {
+        Route::get('/', [ActivityLogController::class, 'index'])
+            ->middleware('role:admin|hr')
+            ->name('index');
+        Route::get('/{activityLog}', [ActivityLogController::class, 'show'])
+            ->middleware('role:admin|hr')
+            ->name('show');
+        Route::get('/user/{user}', [ActivityLogController::class, 'userActivity'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('user-activity');
+        Route::get('/project/{project}', [ActivityLogController::class, 'projectActivity'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('project-activity');
+        Route::get('/export', [ActivityLogController::class, 'export'])
+            ->middleware('role:admin|hr')
+            ->name('export');
+    });
+
+    // ========================================
+    // ROUTE PERMISSIONS - Route Yetki Yönetimi
+    // ========================================
+    Route::prefix('route-permissions')->name('route-permissions.')->group(function () {
+        Route::get('/', [RoutePermissionController::class, 'index'])
+            ->middleware('role:admin')
+            ->name('index');
+        Route::put('/{routePermission}', [RoutePermissionController::class, 'update'])
+            ->middleware('role:admin')
+            ->name('update');
+        Route::post('/bulk-update', [RoutePermissionController::class, 'bulkUpdate'])
+            ->middleware('role:admin')
+            ->name('bulk-update');
+        Route::post('/sync', [RoutePermissionController::class, 'syncFromRoutes'])
+            ->middleware('role:admin')
+            ->name('sync');
+        Route::post('/batch-assign', [RoutePermissionController::class, 'batchAssignByModule'])
+            ->middleware('role:admin')
+            ->name('batch-assign');
     });
 
     // ========================================
