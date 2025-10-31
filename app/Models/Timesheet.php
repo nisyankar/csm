@@ -126,6 +126,11 @@ class Timesheet extends Model
         return $this->belongsTo(LeaveRequest::class);
     }
 
+    public function temporaryAssignment(): BelongsTo
+    {
+        return $this->belongsTo(TemporaryAssignment::class);
+    }
+
     /**
      * Scopes
      */
@@ -169,6 +174,11 @@ class Timesheet extends Model
     public function scopeUnlocked($query)
     {
         return $query->where('is_locked', false);
+    }
+
+    public function scopeForAssignment($query, $assignmentId)
+    {
+        return $query->where('temporary_assignment_id', $assignmentId);
     }
 
     /**

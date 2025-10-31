@@ -20,6 +20,14 @@
 - Maaş geçmişi takibi
 - Proje atamaları
 - Taşeron çalışan desteği
+- **Geçici Görevlendirme & Puantaj Transferi 🆕**:
+  - Çalışanların farklı projelere geçici görevlendirmesi
+  - Varsayılan vardiya seçimi (puantaj entegrasyonu)
+  - İzin entegrasyonu (geçici görevlendirme sırasındaki izinler hedef projeye kaydedilir)
+  - Onay/red süreci ve durum yönetimi (pending, active, completed, cancelled)
+  - Çakışan görevlendirme engelleme
+  - Otomatik tamamlama (süresi dolan görevlendirmeler)
+  - İlerleme takibi ve süre uzatma
 
 ### İzin Yönetimi
 - Yıllık izin, hastalık izni, ücretsiz izin vb. tüm izin tipleri
@@ -624,3 +632,30 @@ Detaylı proje planı ve durum takibi için:
 ## Lisans
 
 Bu proje MIT lisansı altında lisanslanmıştır.
+
+## Changelog
+
+### 2025-10-31 - Geçici Görevlendirme Modülü + Vardiya & İzin Entegrasyonu
+- ✅ Geçici Görevlendirme & Puantaj Transferi modülü eklendi
+- ✅ Migration: temporary_assignments tablosu + timesheets foreign key
+- ✅ **Vardiya Entegrasyonu**: preferred_shift_id kolonu eklendi
+  - Geçici görevlendirme kaydında varsayılan vardiya seçimi (zorunlu)
+  - Puantaj toplu girişinde otomatik vardiya ön yüklemesi
+  - Vue Create/Edit/Show sayfalarında vardiya UI'ı
+- ✅ **İzin Entegrasyonu**: LeaveTimesheetSyncService güncellemesi
+  - Geçici görevlendirme sırasında alınan izin hedef projeye kaydedilir
+  - determineProjectForLeave() metodu ile otomatik proje tespiti
+  - temporary_assignment_id ilişkisi ve açıklayıcı notlar
+- ✅ TemporaryAssignment Model (9 relationship, 5 scope, 4 accessor)
+- ✅ TemporaryAssignmentService (11 method, conflict check, auto-complete)
+- ✅ TemporaryAssignmentController (16 route, full CRUD + actions)
+- ✅ Modern Vue UI (Index, Create, Edit, Show - indigo-purple-pink gradient)
+- ✅ Console Command: assignments:auto-complete (günlük otomatik çalışma)
+- ✅ Model entegrasyonları (Timesheet, Employee)
+- ✅ Sidebar menüsü (Çalışan Yönetimi altında)
+- ✅ NULL-safe pagination ve responsive design
+- ✅ Çakışan görevlendirme engelleme
+- ✅ Onay/red/tamamlama süreçleri
+- ✅ İlerleme takibi ve süre uzatma
+- ✅ Seeder: 10 örnek görevlendirme (shift desteği ile)
+

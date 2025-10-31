@@ -241,6 +241,14 @@ class Employee extends Model
                    ->limit(5);
     }
 
+    /**
+     * Personelin geçici görevlendirilmeleri
+     */
+    public function temporaryAssignments(): HasMany
+    {
+        return $this->hasMany(TemporaryAssignment::class);
+    }
+
     // Accessor ve Mutator'lar
 
     /**
@@ -364,6 +372,18 @@ class Employee extends Model
     public function hasLeaveBalance(int $requestedDays): bool
     {
         return $this->remaining_leave_days >= $requestedDays;
+    }
+
+    /**
+     * Personelin aktif geçici görevlendirilmesini döndür
+     */
+    public function getActiveTemporaryAssignment(): ?TemporaryAssignment
+    {
+        return $this->temporaryAssignments()
+                    ->where('status', 'active')
+                    ->where('start_date', '<=', now())
+                    ->where('end_date', '>=', now())
+                    ->first();
     }
 
     /**

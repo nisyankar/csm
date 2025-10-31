@@ -50,6 +50,7 @@
               { href: route('employees.index'), label: 'Çalışanlar', active: route().current('employees.*') },
               { href: route('employees.create'), label: 'Yeni Çalışan', active: route().current('employees.create') },
               { href: route('employee-assignments.index'), label: 'Proje Atamaları', active: route().current('employee-assignments.*') },
+              { href: route('temporary-assignments.index'), label: 'Geçici Görevlendirme', active: route().current('temporary-assignments.*') },
               { href: route('departments.index'), label: 'Departmanlar', active: route().current('departments.*') }
             ]"
           />

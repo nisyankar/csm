@@ -1765,4 +1765,53 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('role:admin|project_manager')
             ->name('calculate');
     });
+
+    // ========================================
+    // TEMPORARY ASSIGNMENTS - Geçici Görevlendirme
+    // ========================================
+    Route::prefix('temporary-assignments')->name('temporary-assignments.')->group(function () {
+        Route::get('/', [App\Http\Controllers\TemporaryAssignmentController::class, 'index'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\TemporaryAssignmentController::class, 'create'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\TemporaryAssignmentController::class, 'store'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('store');
+        Route::get('/{temporaryAssignment}', [App\Http\Controllers\TemporaryAssignmentController::class, 'show'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('show');
+        Route::get('/{temporaryAssignment}/edit', [App\Http\Controllers\TemporaryAssignmentController::class, 'edit'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('edit');
+        Route::put('/{temporaryAssignment}', [App\Http\Controllers\TemporaryAssignmentController::class, 'update'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('update');
+        Route::delete('/{temporaryAssignment}', [App\Http\Controllers\TemporaryAssignmentController::class, 'destroy'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('destroy');
+
+        // Assignment Actions
+        Route::post('/{temporaryAssignment}/approve', [App\Http\Controllers\TemporaryAssignmentController::class, 'approve'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('approve');
+        Route::post('/{temporaryAssignment}/reject', [App\Http\Controllers\TemporaryAssignmentController::class, 'reject'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('reject');
+        Route::post('/{temporaryAssignment}/complete', [App\Http\Controllers\TemporaryAssignmentController::class, 'complete'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('complete');
+
+        // API Routes
+        Route::get('/employee/{employee}', [App\Http\Controllers\TemporaryAssignmentController::class, 'byEmployee'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('by-employee');
+        Route::get('/project/{project}', [App\Http\Controllers\TemporaryAssignmentController::class, 'byProject'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('by-project');
+        Route::post('/check-conflicts', [App\Http\Controllers\TemporaryAssignmentController::class, 'checkConflicts'])
+            ->middleware('role:admin|hr|project_manager')
+            ->name('check-conflicts');
+    });
 });

@@ -6,6 +6,7 @@ use App\Models\Timesheet;
 use App\Models\Employee;
 use App\Models\Project;
 use App\Models\Shift;
+use App\Models\TemporaryAssignment;
 use App\Services\Timesheet\WeeklyOvertimeCalculator;
 use App\Services\Timesheet\LeaveTimesheetSyncService;
 use Illuminate\Http\Request;
@@ -55,7 +56,7 @@ class TimesheetBulkController extends Controller
             $startDate = Carbon::parse($month . '-01')->startOfMonth();
             $endDate = Carbon::parse($month . '-01')->endOfMonth();
 
-            // Çalışanları getir
+            // Çalışanları getir (normal proje ataması olanlar)
             $employeesQuery = Employee::where('status', 'active')
                 ->whereHas('projects', function ($query) use ($projectId) {
                     $query->where('projects.id', $projectId);
@@ -66,6 +67,48 @@ class TimesheetBulkController extends Controller
             }
 
             $employees = $employeesQuery->with(['department'])->get();
+
+            // Geçici görevlendirilen çalışanları da ekle (o ay içinde bu projeye atananlar)
+            $temporaryEmployees = Employee::where('status', 'active')
+                ->whereHas('temporaryAssignments', function ($query) use ($projectId, $startDate, $endDate) {
+                    $query->where('to_project_id', $projectId)
+                          ->where('status', 'active')
+                          ->where(function ($q) use ($startDate, $endDate) {
+                              // Görevlendirme tarihleri ay ile kesişiyorsa
+                              $q->whereBetween('start_date', [$startDate, $endDate])
+                                ->orWhereBetween('end_date', [$startDate, $endDate])
+                                ->orWhere(function ($q2) use ($startDate, $endDate) {
+                                    $q2->where('start_date', '<=', $startDate)
+                                       ->where('end_date', '>=', $endDate);
+                                });
+                          });
+                })
+                ->with(['department', 'temporaryAssignments' => function ($query) use ($projectId, $startDate, $endDate) {
+                    $query->where('to_project_id', $projectId)
+                          ->where('status', 'active')
+                          ->where(function ($q) use ($startDate, $endDate) {
+                              $q->whereBetween('start_date', [$startDate, $endDate])
+                                ->orWhereBetween('end_date', [$startDate, $endDate])
+                                ->orWhere(function ($q2) use ($startDate, $endDate) {
+                                    $q2->where('start_date', '<=', $startDate)
+                                       ->where('end_date', '>=', $endDate);
+                                });
+                          })
+                          ->with('preferredShift');
+                }])
+                ->get();
+
+            // Geçici görevlendirilen çalışanları mevcut listeye ekle (duplicate kontrolü ile)
+            foreach ($temporaryEmployees as $tempEmployee) {
+                if (!$employees->contains('id', $tempEmployee->id)) {
+                    // Geçici görevlendirme bilgisini ekle
+                    $assignment = $tempEmployee->temporaryAssignments->first();
+                    $tempEmployee->is_temporary = true;
+                    $tempEmployee->temporary_assignment = $assignment;
+                    $tempEmployee->default_shift_id = $assignment?->preferred_shift_id; // Varsayılan vardiya
+                    $employees->push($tempEmployee);
+                }
+            }
 
             // Mevcut puantaj kayıtlarını getir
             $existingTimesheets = Timesheet::where('project_id', $projectId)

@@ -5,6 +5,7 @@ namespace App\Services\Timesheet;
 use App\Models\LeaveRequest;
 use App\Models\Timesheet;
 use App\Models\Shift;
+use App\Models\TemporaryAssignment;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -129,9 +130,12 @@ class LeaveTimesheetSyncService
             ]);
         }
 
+        // KRİTİK: Geçici görevlendirme kontrolü - eğer bu tarihte geçici görevlendirme varsa hedef projeye kaydet
+        $projectData = $this->determineProjectForLeave($leaveRequest->employee_id, $date);
+
         $data = [
             'employee_id' => $leaveRequest->employee_id,
-            'project_id' => $leaveRequest->employee->current_project_id ?? $leaveRequest->employee->projects->first()->id ?? null,
+            'project_id' => $projectData['project_id'],
             'shift_id' => $shift->id,
             'work_date' => $date,
             'hours_worked' => $shift->daily_hours,
@@ -147,10 +151,15 @@ class LeaveTimesheetSyncService
             'approval_status' => 'approved', // İzin kayıtları otomatik onaylı
             'approved_by' => $leaveRequest->approver_id,
             'approved_at' => $leaveRequest->approved_at,
-            'notes' => "İzin: {$leaveRequest->leave_type_display}",
+            'notes' => $this->generateLeaveNotes($leaveRequest, $projectData),
             'entry_method' => 'leave_sync',
             'entered_by' => $leaveRequest->approver_id,
         ];
+
+        // Eğer geçici görevlendirme varsa, ilişkili bilgiyi de kaydet
+        if ($projectData['temporary_assignment_id']) {
+            $data['temporary_assignment_id'] = $projectData['temporary_assignment_id'];
+        }
 
         if ($existing) {
             $existing->update($data);
@@ -349,5 +358,58 @@ class LeaveTimesheetSyncService
             'success' => true,
             'message' => 'Leave timesheets removed (leave is no longer approved).',
         ];
+    }
+
+    /**
+     * İzin için doğru projeyi belirle (geçici görevlendirme varsa hedef proje)
+     */
+    private function determineProjectForLeave(int $employeeId, Carbon $date): array
+    {
+        // Geçici görevlendirme kontrolü
+        $temporaryAssignment = TemporaryAssignment::where('employee_id', $employeeId)
+            ->where('status', 'active')
+            ->where('start_date', '<=', $date)
+            ->where('end_date', '>=', $date)
+            ->first();
+
+        if ($temporaryAssignment) {
+            // Geçici görevlendirme varsa hedef projeye kaydet
+            return [
+                'project_id' => $temporaryAssignment->to_project_id,
+                'temporary_assignment_id' => $temporaryAssignment->id,
+                'is_temporary' => true,
+                'from_project_id' => $temporaryAssignment->from_project_id,
+            ];
+        }
+
+        // Normal durumda ana projeye kaydet
+        $employee = \App\Models\Employee::find($employeeId);
+        $projectId = $employee->current_project_id
+            ?? $employee->projects->first()?->id
+            ?? null;
+
+        return [
+            'project_id' => $projectId,
+            'temporary_assignment_id' => null,
+            'is_temporary' => false,
+            'from_project_id' => null,
+        ];
+    }
+
+    /**
+     * İzin notu oluştur (geçici görevlendirme durumunu da belirt)
+     */
+    private function generateLeaveNotes(LeaveRequest $leaveRequest, array $projectData): string
+    {
+        $notes = "İzin: {$leaveRequest->leave_type_display}";
+
+        if ($projectData['is_temporary']) {
+            $fromProject = \App\Models\Project::find($projectData['from_project_id']);
+            $toProject = \App\Models\Project::find($projectData['project_id']);
+
+            $notes .= " (Geçici görevlendirme nedeniyle {$fromProject?->name} yerine {$toProject?->name} projesine kaydedildi)";
+        }
+
+        return $notes;
     }
 }
