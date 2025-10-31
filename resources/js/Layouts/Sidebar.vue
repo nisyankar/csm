@@ -74,7 +74,8 @@
             :items="[
               { href: route('projects.index'), label: 'Projeler', active: route().current('projects.*') },
               { href: route('projects.create'), label: 'Yeni Proje', active: route().current('projects.create') },
-              { href: route('project-schedules.index'), label: 'Proje Takvimi & Gantt', active: route().current('project-schedules.*') }
+              { href: route('project-schedules.index'), label: 'Proje Takvimi & Gantt', active: route().current('project-schedules.*') },
+              { href: route('dwg-imports.index'), label: 'DWG İçe Aktarım', active: route().current('dwg-imports.*') }
             ]"
           />
 

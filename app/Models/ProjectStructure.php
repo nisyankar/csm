@@ -15,6 +15,7 @@ class ProjectStructure extends Model
     protected $fillable = [
         'project_id',
         'code',
+        'order',
         'name',
         'structure_type',
         'total_floors',

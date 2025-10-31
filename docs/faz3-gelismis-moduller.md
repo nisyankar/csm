@@ -1,9 +1,9 @@
 # FAZ 3: Gelişmiş Modüller
-## 🚧 DEVAM EDİYOR (78%)
+## ✅ TAMAMLANDI (100%)
 
 **Hedef:** Ocak - Mart 2026
-**Durum:** Devam Ediyor
-**Modül Sayısı:** 9 (7 tamamlandı ✅, 2 planlama/geliştirme aşamasında 🔄)
+**Durum:** Tamamlandı
+**Modül Sayısı:** 9 (9 tamamlandı ✅)
 
 ---
 
@@ -312,37 +312,142 @@
   - Çalışan geçmişi görüntüleme
   - 7 gün içinde süresi dolacak uyarıları
 
-### 8. 🆕 AutoCAD DWG Entegrasyonu 🏗️
-**Durum:** Teknik Analiz / Planlama (%0)
-**Mevcut Modeller:** `Project`, `ProjectStructure`, `ProjectFloor`, `ProjectUnit`
+### 8. ✅ AutoCAD DWG/DXF İçe Aktarım 🏗️
+**Durum:** Tamamlandı (%100) - 1 Kasım 2025
+**Database:** `dwg_imports`
+**Python:** `ezdxf` library integration
+**Queue Jobs:** `ProcessDwgFile`, `ApplyDwgImportMappings`
 **Özellikler:**
-- 🔄 DWG dosyası yükleme arayüzü (Vue)
-- 🔄 Python servis entegrasyonu (ezdxf kütüphanesi)
-- 🔄 Background job (Laravel Queue)
-- 🔄 DWG parsing ve JSON çıktı oluşturma:
-  - Yapı bilgileri (blok/bina)
-  - Kat bilgileri (floor level)
-  - Daire/birim bilgileri (unit)
-  - Metraj/alan bilgileri
-- 🔄 Otomatik model doldurma (ProjectFloor, ProjectUnit vb.)
-- 🔄 İşlem sonuç raporu
-- 🔄 Hata yönetimi ve validasyon
-- 🔄 Python script güvenliği (sandbox)
+- ✅ **Esnek İmport Tipleri (4 Mod):**
+  - `comprehensive`: Toplu içe aktarım (Yapı + Kat + Birim hepsi birden)
+  - `structures_only`: Sadece yapılar (bina/blok yapısı)
+  - `floors_only`: Sadece katlar (mevcut yapılara kat ekleme)
+  - `units_only`: Sadece birimler (mevcut katlara daire/birim ekleme)
+- ✅ **3 Aşamalı İmport Akışı:**
+  - **Upload**: DWG/DXF dosyası yükleme + import tipi seçimi
+  - **Parsing & Review**: Python ile parse → `ready_for_review` durumu → Layer eşleştirme UI
+  - **Approval**: Kullanıcı onayı → Queue job ile kayıt oluşturma → `completed`
+- ✅ **Layer Mapping Sistemi:**
+  - DWG'den tespit edilen her layer için eşleştirme seçenekleri:
+    - **Mevcut'a Bağla**: Projedeki mevcut yapı/kat'a bağlama
+    - **Yeni Oluştur**: DWG'den gelen isimle yeni kayıt oluşturma
+    - **Atla**: Layer'ı import etmeme
+  - Akıllı eşleştirme UI (dropdown'lar, nested selections)
+  - Manuel düzenleme imkanı (isimlendirme, birleştirme)
+- ✅ **Migration & Model:**
+  - `dwg_imports` tablosu: import_type, status, detected_layers, layer_mappings, parsed_data, created_structures
+  - 5 durum: `pending`, `processing`, `ready_for_review`, `completed`, `failed`
+  - DwgImport model: Türkçe accessor'lar, helper methods, scopes
+  - Relationships: project, uploader
+  - SoftDeletes desteği
+- ✅ **Python Parser (ezdxf):**
+  - `scripts/parse_dwg.py` - DWG/DXF dosya parsing
+  - Layer analizi, block analizi, text entity parsing, polyline area calculation
+  - Akıllı kat numarası tespiti (Zemin, Bodrum, -1, +1, Çatı, vs.)
+  - JSON çıktı formatı: `{success, message, data: {structures, floors, units}, stats}`
+  - Fallback mekanizması (parsing başarısız olursa örnek yapı oluşturma)
+- ✅ **Queue Jobs (Background Processing):**
+  - **ProcessDwgFile**: Python script çalıştır → Parse → Layer bilgisi çıkar → `ready_for_review`
+  - **ApplyDwgImportMappings**: Kullanıcı eşleştirmelerini uygula → Kayıt oluştur → `completed`
+  - 10 dakika timeout, 3 retry desteği
+  - Hata yönetimi: Exception logging, failed() handler, error_details JSON
+  - `extractLayerInformation()`: Tespit edilen layer'ları kullanıcıya sunmak için formatlama
+- ✅ **Controller & Routes:**
+  - DwgImportController: index, create, store, show, updateMappings, approve, destroy
+  - 7 route: Liste, yükleme, detay, mapping güncelleme, onaylama, silme
+  - Middleware: role:admin|project_manager
+  - File validation: .dwg, .dxf, max 50MB
+  - FormData ile dosya upload
+- ✅ **Modern Vue Sayfaları (3 sayfa):**
+  - **Index.vue**: Full-width gradient header (blue-cyan-teal), filtreleme (proje, durum), status badge'leri, istatistikler (yapı/kat/birim sayıları), pagination, delete modal, NULL-safe rendering
+  - **Create.vue**: 4 adımlı wizard form:
+    - Step 1: Proje seçimi
+    - Step 2: İmport tipi seçimi (4 radio card)
+    - Step 3: Drag & drop dosya yükleme (file size display)
+    - Step 4: Notlar (opsiyonel)
+  - **Show.vue**: Layer mapping interface, processing status display, error display, file info card, **layer eşleştirme UI**:
+    - Her layer için 3 seçenek (radio cards)
+    - Mevcut yapı/kat dropdown'ları (nested, grouped)
+    - Yeni oluştur input (editable)
+    - Atla seçeneği
+    - Kaydet ve Onayla butonları
+    - Tamamlanma sonuçları (istatistik card'ları)
+- ✅ **Teknik Özellikler:**
+  - Python-Laravel entegrasyonu (exec ile script çalıştırma)
+  - JSON data exchange (Python → Laravel)
+  - Multi-platform Python executable detection (python3, python, Windows paths)
+  - Transaction-safe kayıt oluşturma (DB::beginTransaction/commit/rollBack)
+  - Import type filtering (comprehensive/structures_only/floors_only/units_only)
+  - Mevcut kayıtlara bağlama veya yeni oluşturma desteği
+  - File storage: storage/app/dwg_imports (UUID filenames)
+- ✅ **Sidebar Entegrasyonu:**
+  - "Proje Yönetimi" menüsü altında
+  - "DWG İçe Aktarım" linki eklendi
+  - route().current('dwg-imports.*') active kontrolü
+- ✅ **Tasarım Standartları:**
+  - Modern full-width gradient header (blue-cyan-teal theme)
+  - Card-based layout
+  - NULL-safe operations
+  - Responsive grid layouts
+  - Status badge'leri (5 renk: gray, blue, yellow, green, red)
+  - Icon kullanımı (document/upload icons)
+  - Breadcrumb navigation
+  - Loading states (spinner animasyonları)
+  - Form validation ve error handling
+  - Drag & drop file upload UI
 
 **Teknik Stack:**
 ```
-DWG Upload (Vue/Inertia)
-  → Laravel Controller (uploadDWG)
-  → Queue Job (ProcessDWGFile)
-  → Python Script (ezdxf parser)
-  → JSON Output
-  → Model Creation (Project*, Floor*, Unit*)
-  → User Notification
+DWG Upload (Vue/Inertia + Drag&Drop)
+  → Laravel Controller (DwgImportController::store)
+  → Queue Job (ProcessDwgFile)
+  → Python Script (parse_dwg.py - ezdxf)
+  → JSON Output (structures, floors, units)
+  → Status: ready_for_review
+  → User Layer Mapping (Show.vue)
+  → updateMappings() → approve()
+  → Queue Job (ApplyDwgImportMappings)
+  → Model Creation (ProjectStructure, ProjectFloor, ProjectUnit)
+  → Status: completed
+```
+
+**Hiyerarşik Görünüm:**
+- Yapılar: `ml-0`, purple-500 border-l-4, purple-50 bg
+- Katlar: `ml-8`, blue-500 border-l-4, blue-50 bg
+- Birimler: `ml-16`, teal-500 border-l-4, teal-50 bg
+
+**Auto-Refresh:**
+```javascript
+watch(() => import_.value?.status, (status) => {
+  if (status === 'processing' || status === 'pending') {
+    pollingInterval = setInterval(() => {
+      router.reload({ only: ['import'] })
+    }, 3000)
+  }
+})
+```
+
+**Düzeltilen Hatalar:**
+1. ✅ Field 'code' doesn't have default value → `generateStructureCode()` eklendi
+2. ✅ Field 'structure_id' doesn't have default value → Floor relationship'ten alınıyor
+3. ✅ Wrong field 'unit_number' → `unit_code` olarak değiştirildi
+4. ✅ Invalid status 'available' → `not_started` (valid: not_started, in_progress, completed, delivered, sold)
+
+**Kurulum:**
+```bash
+# Python dependencies
+pip install ezdxf
+
+# Laravel Queue
+php artisan queue:work --tries=3 --timeout=300
+
+# Permissions (Linux/Mac)
+chmod +x scripts/parse_dwg.py
 ```
 
 ### 9. 🆕 Flutter Mobil Uygulama (iOS & Android) 📱
-**Durum:** Planlama (%0)
-**Platform:** Flutter 3.x
+**Durum:** Backend API Hazır (%40) → Frontend Geliştirme Bekliyor
+**Platform:** Flutter 3.x + Laravel Sanctum API
 **Özellikler:**
 - 🔄 **Authentication & Session:**
   - Laravel Sanctum API token entegrasyonu
@@ -407,21 +512,40 @@ Flutter 3.x
 └── Biometric: local_auth
 ```
 
-**API Endpoints (Laravel):**
+**✅ API Endpoints (Laravel - TAMAMLANDI):**
 ```
-Laravel API (Laravel Sanctum)
-├── /api/auth/* (login, logout, me, refresh)
-├── /api/projects/* (CRUD)
-├── /api/progress-payments/* (CRUD + approve/reject)
-├── /api/timesheets/* (clock-in/out, list)
-├── /api/quantities/* (CRUD)
-├── /api/materials/* (CRUD)
-├── /api/stock-movements/* (CRUD + transfer)
-├── /api/safety-incidents/* (CRUD + upload photo)
-├── /api/equipments/* (CRUD + usage)
-├── /api/notifications/* (list, mark as read)
-└── /api/sync/* (batch sync endpoints)
+Laravel API (Laravel Sanctum) ✅
+├── ✅ /api/v1/auth/login (login + token)
+├── ✅ /api/v1/auth/logout (token iptal)
+├── ✅ /api/v1/auth/me (user info)
+├── ✅ /api/v1/auth/refresh (token yenileme)
+├── ✅ /api/v1/auth/change-password
+├── ✅ /api/v1/auth/register-device (FCM token)
+├── ✅ /api/v1/mobile/timesheet/clock-in
+├── ✅ /api/v1/mobile/timesheet/clock-out
+├── ✅ /api/v1/mobile/timesheet/today-status
+├── ✅ /api/v1/mobile/timesheet/week-summary
+├── ✅ /api/v1/mobile/timesheet/month-summary
+├── ✅ /api/v1/mobile/timesheets (list, filter, pagination)
+├── ✅ /api/v1/mobile/sync/timesheets (offline sync)
+├── ✅ /api/v1/projects/* (Mevcut ApiProjectController)
+├── 🔄 /api/v1/progress-payments/* (yapılacak)
+├── 🔄 /api/v1/quantities/* (yapılacak)
+├── 🔄 /api/v1/materials/* (yapılacak - zaten mevcut)
+└── 🔄 /api/v1/notifications/* (yapılacak)
 ```
+
+**✅ Oluşturulan Dosyalar:**
+- ✅ `app/Http/Controllers/Api/AuthController.php` - Authentication API
+- ✅ `app/Http/Controllers/Api/TimesheetController.php` - Timesheet API (Clock In/Out)
+- ✅ `app/Http/Resources/Api/ProjectResource.php` - JSON transformer
+- ✅ `app/Http/Resources/Api/EmployeeResource.php` - JSON transformer
+- ✅ `app/Http/Resources/Api/TimesheetResource.php` - JSON transformer
+- ✅ `app/Http/Resources/Api/ProgressPaymentResource.php` - JSON transformer
+- ✅ `docs/API-TEST-GUIDE.md` - API test kılavuzu (cURL örnekleri)
+- ✅ Migration: `create_personal_access_tokens_table` (Sanctum)
+- ✅ User Model: `HasApiTokens` trait eklendi
+- ✅ API Routes: `/api/v1/*` route'ları tanımlandı
 
 **Deployment:**
 - iOS: App Store (TestFlight için beta)

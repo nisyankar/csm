@@ -13,10 +13,15 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\QRCodeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\Api\AuthController as ApiAuthController;
+use App\Http\Controllers\Api\TimesheetController as ApiTimesheetController;
+use App\Http\Controllers\Api\ProgressPaymentController as ApiProgressPaymentController;
 use App\Http\Controllers\Api\ProjectController as ApiProjectController;
 use App\Http\Controllers\Api\SubcontractorController as ApiSubcontractorController;
 use App\Http\Controllers\Api\MaterialController as ApiMaterialController;
 use App\Http\Controllers\Api\DepartmentController as ApiDepartmentController;
+use App\Http\Controllers\Api\NotificationController as ApiNotificationController;
+use App\Http\Controllers\Api\FileUploadController as ApiFileUploadController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -54,27 +59,27 @@ Route::prefix('v1/public')->name('api.public.')->group(function () {
     Route::post('/project/location-verify', [QRCodeController::class, 'verifyProjectLocation'])->name('project.location-verify');
 });
 
-// Authentication API Routes
+// Authentication API Routes (Mobile App - Sanctum)
 Route::prefix('v1/auth')->name('api.auth.')->group(function () {
-    
+
     // Login/Logout
-    Route::post('/login', [AuthController::class, 'apiLogin'])->name('login');
-    Route::post('/qr-login', [AuthController::class, 'apiQrLogin'])->name('qr-login');
-    Route::post('/logout', [AuthController::class, 'apiLogout'])->middleware('auth:sanctum')->name('logout');
-    
+    Route::post('/login', [ApiAuthController::class, 'login'])->name('login');
+    Route::post('/logout', [ApiAuthController::class, 'logout'])->middleware('auth:sanctum')->name('logout');
+    Route::post('/logout-all', [ApiAuthController::class, 'logoutAll'])->middleware('auth:sanctum')->name('logout-all');
+
     // Token Management
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/user', function (Request $request) {
-            return response()->json([
-                'user' => $request->user()->load(['employee', 'roles', 'permissions']),
-            ]);
-        })->name('user');
-        
-        Route::post('/refresh-token', [AuthController::class, 'refreshToken'])->name('refresh-token');
-        Route::post('/revoke-tokens', [AuthController::class, 'revokeAllTokens'])->name('revoke-tokens');
-        Route::get('/active-sessions', [AuthController::class, 'getActiveSessions'])->name('active-sessions');
+        Route::get('/me', [ApiAuthController::class, 'me'])->name('me');
+        Route::post('/refresh', [ApiAuthController::class, 'refresh'])->name('refresh');
+        Route::post('/change-password', [ApiAuthController::class, 'changePassword'])->name('change-password');
+
+        // FCM Token Registration (for push notifications)
+        Route::post('/register-device', [ApiAuthController::class, 'registerDevice'])->name('register-device');
     });
-    
+
+    // QR Code Login (for kiosk mode)
+    Route::post('/qr-login', [AuthController::class, 'apiQrLogin'])->name('qr-login');
+
     // Password Reset (if needed for mobile)
     Route::post('/forgot-password', [AuthController::class, 'apiForgotPassword'])->name('forgot-password');
     Route::post('/reset-password', [AuthController::class, 'apiResetPassword'])->name('reset-password');
@@ -254,6 +259,7 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(functi
             ->name('store');
         Route::get('/categories', [ApiMaterialController::class, 'categories'])->name('categories');
         Route::get('/active', [ApiMaterialController::class, 'active'])->name('active');
+        Route::get('/low-stock', [ApiMaterialController::class, 'lowStock'])->name('low-stock');
         Route::get('/category/{category}', [ApiMaterialController::class, 'byCategory'])->name('by-category');
         Route::get('/{material}', [ApiMaterialController::class, 'show'])->name('show');
         Route::put('/{material}', [ApiMaterialController::class, 'update'])
@@ -287,6 +293,22 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(functi
         Route::post('/{department}/assign-supervisor', [ApiDepartmentController::class, 'assignSupervisor'])
             ->middleware('role:admin|hr|project_manager|site_manager')
             ->name('assign-supervisor');
+    });
+
+    // Progress Payment API (Hakediş Yönetimi)
+    Route::prefix('progress-payments')->name('progress-payments.')->group(function () {
+        Route::get('/', [ApiProgressPaymentController::class, 'index'])->name('index');
+        Route::get('/statistics', [ApiProgressPaymentController::class, 'statistics'])->name('statistics');
+        Route::get('/pending-approvals', [ApiProgressPaymentController::class, 'pendingApprovals'])->name('pending-approvals');
+        Route::get('/{progressPayment}', [ApiProgressPaymentController::class, 'show'])->name('show');
+
+        // Approval Actions
+        Route::post('/{progressPayment}/approve', [ApiProgressPaymentController::class, 'approve'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('approve');
+        Route::post('/{progressPayment}/reject', [ApiProgressPaymentController::class, 'reject'])
+            ->middleware('role:admin|project_manager|site_manager')
+            ->name('reject');
     });
     
     // Leave Request API
@@ -356,47 +378,29 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(functi
     
     // Notification API
     Route::prefix('notifications')->name('notifications.')->group(function () {
-        Route::get('/', [NotificationController::class, 'apiIndex'])->name('index');
-        Route::get('/unread-count', [NotificationController::class, 'apiUnreadCount'])->name('unread-count');
-        Route::get('/recent', [NotificationController::class, 'apiRecent'])->name('recent');
-        
+        Route::get('/', [ApiNotificationController::class, 'index'])->name('index');
+        Route::get('/unread', [ApiNotificationController::class, 'unread'])->name('unread');
+        Route::get('/unread-count', [ApiNotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::get('/{id}', [ApiNotificationController::class, 'show'])->name('show');
+
         // Notification Actions
-        Route::post('/{id}/mark-read', [NotificationController::class, 'apiMarkAsRead'])->name('mark-read');
-        Route::post('/mark-all-read', [NotificationController::class, 'apiMarkAllAsRead'])->name('mark-all-read');
-        Route::delete('/{id}', [NotificationController::class, 'apiDestroy'])->name('destroy');
-        
-        // Bulk Actions
-        Route::post('/bulk-mark-read', [NotificationController::class, 'apiBulkMarkAsRead'])->name('bulk-mark-read');
-        Route::post('/bulk-delete', [NotificationController::class, 'apiBulkDelete'])->name('bulk-delete');
-        
-        // Settings
-        Route::get('/settings', [NotificationController::class, 'apiGetSettings'])->name('settings');
-        Route::post('/settings', [NotificationController::class, 'apiUpdateSettings'])->name('update-settings');
-        
-        // Admin/Manager Features
-        Route::middleware('role:admin|project_manager|site_manager')->group(function () {
-            Route::post('/send', [NotificationController::class, 'apiSend'])->name('send');
-            Route::get('/templates', [NotificationController::class, 'apiTemplates'])->name('templates');
-            Route::post('/send-test', [NotificationController::class, 'apiSendTest'])->name('send-test');
-        });
+        Route::post('/{id}/mark-as-read', [ApiNotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::post('/mark-all-read', [ApiNotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::delete('/{id}', [ApiNotificationController::class, 'destroy'])->name('destroy');
+
+        // Device Registration (FCM)
+        Route::post('/register-device', [ApiNotificationController::class, 'registerDevice'])->name('register-device');
+        Route::post('/unregister-device', [ApiNotificationController::class, 'unregisterDevice'])->name('unregister-device');
     });
     
     // File Upload API
     Route::prefix('files')->name('files.')->group(function () {
-        Route::post('/upload', [FileUploadController::class, 'apiUpload'])->name('upload');
-        Route::post('/upload-multiple', [FileUploadController::class, 'apiUploadMultiple'])->name('upload-multiple');
-        Route::post('/upload-base64', [FileUploadController::class, 'apiUploadBase64'])->name('upload-base64');
-        
-        Route::get('/{id}', [FileUploadController::class, 'apiGetFileInfo'])->name('info');
-        Route::get('/{id}/download', [FileUploadController::class, 'apiDownload'])->name('download');
-        Route::delete('/{id}', [FileUploadController::class, 'apiDelete'])->name('delete');
-        
-        // File Processing
-        Route::post('/{id}/generate-thumbnail', [FileUploadController::class, 'apiGenerateThumbnail'])->name('generate-thumbnail');
-        Route::post('/validate-signature', [FileUploadController::class, 'apiValidateFileSignature'])->name('validate-signature');
-        
-        // Upload Progress (for large files)
-        Route::get('/upload-progress/{upload_id}', [FileUploadController::class, 'apiGetUploadProgress'])->name('upload-progress');
+        Route::post('/upload', [ApiFileUploadController::class, 'upload'])->name('upload');
+        Route::post('/upload-image', [ApiFileUploadController::class, 'uploadImage'])->name('upload-image');
+        Route::post('/upload-multiple-images', [ApiFileUploadController::class, 'uploadMultipleImages'])->name('upload-multiple-images');
+        Route::post('/upload-avatar', [ApiFileUploadController::class, 'uploadAvatar'])->name('upload-avatar');
+        Route::post('/upload-base64', [ApiFileUploadController::class, 'uploadBase64'])->name('upload-base64');
+        Route::post('/delete', [ApiFileUploadController::class, 'delete'])->name('delete');
     });
     
     // QR Code API
@@ -448,34 +452,36 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(functi
         Route::get('/dashboard-charts', [ReportController::class, 'apiDashboardCharts'])->name('dashboard-charts');
     });
     
-    // Mobile Specific API Routes
+    // Mobile Specific API Routes (Flutter App)
     Route::prefix('mobile')->name('mobile.')->group(function () {
-        
+
         // Mobile Dashboard
         Route::get('/dashboard', [DashboardController::class, 'apiMobileDashboard'])->name('dashboard');
         Route::get('/quick-actions', [DashboardController::class, 'apiQuickActions'])->name('quick-actions');
-        
-        // Mobile Timesheet
-        Route::get('/timesheet/today', [TimesheetController::class, 'apiMobileTodayStatus'])->name('timesheet.today');
-        Route::post('/timesheet/quick-entry', [TimesheetController::class, 'apiMobileQuickEntry'])->name('timesheet.quick-entry');
-        Route::get('/timesheet/week-summary', [TimesheetController::class, 'apiMobileWeekSummary'])->name('timesheet.week-summary');
-        
+
+        // Mobile Timesheet (Clock In/Out)
+        Route::post('/timesheet/clock-in', [ApiTimesheetController::class, 'clockIn'])->name('timesheet.clock-in');
+        Route::post('/timesheet/clock-out', [ApiTimesheetController::class, 'clockOut'])->name('timesheet.clock-out');
+        Route::get('/timesheet/today-status', [ApiTimesheetController::class, 'todayStatus'])->name('timesheet.today-status');
+        Route::get('/timesheet/week-summary', [ApiTimesheetController::class, 'weekSummary'])->name('timesheet.week-summary');
+        Route::get('/timesheet/month-summary', [ApiTimesheetController::class, 'monthSummary'])->name('timesheet.month-summary');
+        Route::get('/timesheet/{timesheet}', [ApiTimesheetController::class, 'show'])->name('timesheet.show');
+        Route::get('/timesheets', [ApiTimesheetController::class, 'index'])->name('timesheets.list');
+
+        // Offline Sync
+        Route::post('/sync/timesheets', [ApiTimesheetController::class, 'syncOfflineData'])->name('sync.timesheets');
+
         // Mobile Approvals
         Route::get('/approvals/pending-count', [TimesheetApprovalController::class, 'apiMobilePendingCount'])->name('approvals.pending-count');
         Route::get('/approvals/quick-list', [TimesheetApprovalController::class, 'apiMobileQuickList'])->name('approvals.quick-list');
-        
+
         // Mobile Notifications
         Route::get('/notifications/badge-count', [NotificationController::class, 'apiMobileBadgeCount'])->name('notifications.badge-count');
         Route::get('/notifications/latest', [NotificationController::class, 'apiMobileLatest'])->name('notifications.latest');
-        
+
         // Mobile Profile
         Route::get('/profile', [AuthController::class, 'apiMobileProfile'])->name('profile');
         Route::get('/profile/quick-stats', [AuthController::class, 'apiMobileProfileStats'])->name('profile.stats');
-        
-        // Offline Sync
-        Route::post('/sync/upload', [TimesheetController::class, 'apiOfflineSync'])->name('sync.upload');
-        Route::get('/sync/download', [TimesheetController::class, 'apiSyncData'])->name('sync.download');
-        Route::get('/sync/status', [TimesheetController::class, 'apiSyncStatus'])->name('sync.status');
     });
     
     // Admin API Routes

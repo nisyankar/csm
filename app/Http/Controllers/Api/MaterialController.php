@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\MaterialResource;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class MaterialController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $query = Material::query();
 
@@ -41,10 +42,12 @@ class MaterialController extends Controller
         $perPage = $request->query('per_page', 15);
         $materials = $query->paginate($perPage);
 
-        return response()->json(['success' => true, 'data' => $materials]);
+        return MaterialResource::collection($materials)->additional([
+            'success' => true,
+        ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -61,21 +64,22 @@ class MaterialController extends Controller
 
         $material = Material::create($validated);
 
-        return response()->json([
+        return (new MaterialResource($material))->additional([
             'success' => true,
             'message' => 'Malzeme başarıyla oluşturuldu.',
-            'data' => $material,
-        ], 201);
+        ])->response()->setStatusCode(201);
     }
 
-    public function show(Material $material): JsonResponse
+    public function show(Material $material)
     {
         $material->load(['purchasingItems.purchasingRequest']);
 
-        return response()->json(['success' => true, 'data' => $material]);
+        return (new MaterialResource($material))->additional([
+            'success' => true,
+        ]);
     }
 
-    public function update(Request $request, Material $material): JsonResponse
+    public function update(Request $request, Material $material)
     {
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -90,10 +94,9 @@ class MaterialController extends Controller
 
         $material->update($validated);
 
-        return response()->json([
+        return (new MaterialResource($material->fresh()))->additional([
             'success' => true,
             'message' => 'Malzeme başarıyla güncellendi.',
-            'data' => $material,
         ]);
     }
 
@@ -126,7 +129,7 @@ class MaterialController extends Controller
         return response()->json(['success' => true, 'data' => $categories]);
     }
 
-    public function active(Request $request): JsonResponse
+    public function active(Request $request)
     {
         $query = Material::active();
 
@@ -145,10 +148,12 @@ class MaterialController extends Controller
 
         $materials = $query->orderBy('name')->get();
 
-        return response()->json(['success' => true, 'data' => $materials]);
+        return MaterialResource::collection($materials)->additional([
+            'success' => true,
+        ]);
     }
 
-    public function byCategory(Request $request, string $category): JsonResponse
+    public function byCategory(Request $request, string $category)
     {
         $query = Material::where('category', $category);
 
@@ -158,6 +163,27 @@ class MaterialController extends Controller
 
         $materials = $query->orderBy('name')->get();
 
-        return response()->json(['success' => true, 'data' => $materials]);
+        return MaterialResource::collection($materials)->additional([
+            'success' => true,
+        ]);
+    }
+
+    /**
+     * Düşük stok seviyesindeki malzemeler (Mobile için)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+     */
+    public function lowStock(Request $request)
+    {
+        $query = Material::active()
+            ->whereColumn('current_stock', '<', 'min_stock_level')
+            ->orderBy('current_stock', 'asc');
+
+        $materials = $query->get();
+
+        return MaterialResource::collection($materials)->additional([
+            'success' => true,
+        ]);
     }
 }

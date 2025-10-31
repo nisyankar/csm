@@ -208,6 +208,31 @@
 - **EquipmentManagementSeeder**: 5 ekipman, 4 kullanım, 5 bakım kaydı
 - **Routes**: `/equipments/*`, `/equipment-usages/*`, `/equipment-maintenance/*`
 
+### AutoCAD DWG/DXF İçe Aktarım Modülü 🆕
+- **DWG/DXF Parse Sistemi**: Python ezdxf kütüphanesi ile AutoCAD dosya okuma
+- **4 İmport Modu**: Kapsamlı (Yapı+Kat+Birim), Sadece Yapılar, Sadece Katlar, Sadece Birimler
+- **3 Aşamalı Workflow**:
+  - Upload: Dosya yükleme ve import tipi seçimi
+  - Parsing & Review: Python parse → Layer eşleştirme UI
+  - Approval: Onay ve kayıt oluşturma
+- **Akıllı Layer Mapping**:
+  - Mevcut yapı/kata bağlama
+  - Yeni kayıt oluşturma
+  - Layer atlama seçenekleri
+- **Otomatik Tespit**: Yapı, kat, birim bilgilerinin DWG'den otomatik çıkarımı
+- **Queue İşleme**: Arka planda asenkron parse ve kayıt oluşturma
+- **Hiyerarşik Görünüm**: Yapı→Kat→Birim hiyerarşik gösterim (renkli indent)
+- **Auto-Refresh**: İşlem sırasında otomatik sayfa yenileme (3 saniye polling)
+- **Otomatik Kodlama**: Yapı kodları akıllı oluşturma (A, B, C veya BLK1, BLK2)
+- **Transaction-Safe**: DB transaction ile güvenli kayıt oluşturma
+- **Modern UI**: Blue-cyan-teal gradient tema, wizard-style form
+- **Python Integration**: Laravel-Python exec entegrasyonu, JSON data exchange
+- **5 Durum**: Pending, Processing, Ready for Review, Completed, Failed
+- **3 Vue Sayfası**: Index (liste), Create (upload wizard), Show (mapping interface)
+- **2 Queue Jobs**: ProcessDwgFile (parsing), ApplyDwgImportMappings (record creation)
+- **Sidebar Entegrasyonu**: "Proje Yönetimi" menü grubu altında
+- **Routes**: `/dwg-imports/*`
+
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
@@ -275,6 +300,55 @@ php artisan serve
 ## Geliştirme Notları
 
 ### Son Güncellemeler
+
+#### 1 Kasım 2025 - AutoCAD DWG/DXF İçe Aktarım Modülü Tamamlandı 🎉
+- **DWG/DXF Dosya Parse Sistemi**: Python ezdxf kütüphanesi entegrasyonu
+- **4 Esnek İmport Modu**:
+  - comprehensive: Toplu içe aktarım (Yapı + Kat + Birim)
+  - structures_only: Sadece yapılar
+  - floors_only: Sadece katlar
+  - units_only: Sadece birimler
+- **3 Aşamalı Workflow**:
+  - Upload: DWG/DXF dosyası yükleme + import tipi seçimi (wizard UI)
+  - Parsing & Review: Python script ile parse → ready_for_review → Layer eşleştirme UI
+  - Approval: Kullanıcı onayı → Queue job ile kayıt oluşturma → completed
+- **Akıllı Layer Mapping Sistemi**:
+  - Her layer için 3 seçenek: Mevcut'a Bağla, Yeni Oluştur, Atla
+  - Nested dropdown'lar (yapı→kat hiyerarşisi)
+  - Manuel isimlendirme ve birleştirme
+- **Queue Jobs**:
+  - ProcessDwgFile: Python script çalıştır → Parse → Layer bilgisi çıkar
+  - ApplyDwgImportMappings: User mappings uygula → DB kayıtları oluştur
+  - 10 dakika timeout, 3 retry, transaction-safe
+- **Python Parser (scripts/parse_dwg.py)**:
+  - ezdxf ile DWG/DXF okuma
+  - Layer, block, text entity, polyline analizi
+  - Akıllı kat numarası tespiti (Bodrum, Zemin, +1, Çatı vb.)
+  - JSON output formatı
+  - Fallback mekanizması (örnek yapı oluşturma)
+- **Otomatik Özellikler**:
+  - Yapı kodu oluşturma (A, B, C veya BLK1, BLK2...)
+  - Kat-birim ilişkilendirme
+  - Structure_id otomatik atama
+  - Unit status: not_started
+- **Modern UI (Blue-Cyan-Teal Gradient)**:
+  - Index: Filtreleme, istatistikler, status badge'leri
+  - Create: 4 adımlı wizard (proje → tip → dosya → not)
+  - Show: Layer mapping interface, hiyerarşik görünüm
+  - Auto-refresh: 3 saniye polling (processing sırasında)
+- **Hiyerarşik Görünüm**:
+  - Yapılar: ml-0, purple border
+  - Katlar: ml-8, blue border
+  - Birimler: ml-16, teal border
+  - Renkli arka planlar ve left border
+- **3 Vue Sayfası**: Index, Create (wizard), Show (mapping UI)
+- **DwgImport Model**: 5 durum, relationships, accessor'lar
+- **Routes**: /dwg-imports/* (admin, project_manager)
+- **Bug Fixes**:
+  - Field 'code' hatası düzeltildi (generateStructureCode)
+  - Field 'structure_id' hatası düzeltildi (floor relationship)
+  - Field 'unit_code' hatası düzeltildi (unit_number → unit_code)
+  - Status 'available' hatası düzeltildi (not_started)
 
 #### 31 Ekim 2025 - Rol & Yetki Yönetimi Modülü Tamamlandı 🎉
 - **Proje Bazlı Rol Sistemi**: Kullanıcıların projelere özel rol ve yetki ataması

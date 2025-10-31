@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DwgImportController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeProjectAssignmentController;
 use App\Http\Controllers\TimesheetController;
@@ -1813,5 +1814,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/check-conflicts', [App\Http\Controllers\TemporaryAssignmentController::class, 'checkConflicts'])
             ->middleware('role:admin|hr|project_manager')
             ->name('check-conflicts');
+    });
+
+    // ========================================
+    // DWG IMPORTS - AutoCAD DWG/DXF İçe Aktarımı
+    // ========================================
+    Route::prefix('dwg-imports')->name('dwg-imports.')->group(function () {
+        Route::get('/', [DwgImportController::class, 'index'])
+            ->middleware('role:admin|project_manager')
+            ->name('index');
+        Route::get('/create', [DwgImportController::class, 'create'])
+            ->middleware('role:admin|project_manager')
+            ->name('create');
+        Route::post('/', [DwgImportController::class, 'store'])
+            ->middleware('role:admin|project_manager')
+            ->name('store');
+        Route::get('/{dwgImport}', [DwgImportController::class, 'show'])
+            ->middleware('role:admin|project_manager')
+            ->name('show');
+        Route::delete('/{dwgImport}', [DwgImportController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Import Actions
+        Route::post('/{dwgImport}/update-mappings', [DwgImportController::class, 'updateMappings'])
+            ->middleware('role:admin|project_manager')
+            ->name('update-mappings');
+        Route::post('/{dwgImport}/approve', [DwgImportController::class, 'approve'])
+            ->middleware('role:admin|project_manager')
+            ->name('approve');
     });
 });
