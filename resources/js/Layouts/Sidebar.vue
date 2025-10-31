@@ -271,6 +271,16 @@
             ]"
           />
 
+          <!-- Reporting Module -->
+          <SidebarGroup
+            v-if="canAccess(['admin', 'project_manager'])"
+            label="Raporlama"
+            icon="chart-bar"
+            :items="[
+              { href: route('kpis.index'), label: 'KPI Tanımları', active: route().current('kpis.*') }
+            ]"
+          />
+
           <!-- System Management (Sadece admin ve system_admin için) -->
           <SidebarGroup
             v-if="canAccess(['admin', 'system_admin'])"

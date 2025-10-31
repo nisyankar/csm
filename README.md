@@ -203,10 +203,14 @@
 ## Teknoloji Stack
 
 - **Backend**: Laravel 11
-- **Frontend**: Vue.js 3 + Inertia.js
+- **Frontend Web**: Vue.js 3 + Inertia.js
+- **Frontend Mobile**: Flutter 3.x (iOS & Android) 📱
 - **Veritabanı**: MariaDB / MySQL
-- **Authentication**: Laravel Sanctum
+- **Authentication**: Laravel Sanctum (Web + Mobile API)
 - **Yetkilendirme**: Spatie Laravel Permission
+- **Mobile State Management**: Riverpod / Bloc
+- **Mobile Local Storage**: Hive / SQLite
+- **Push Notifications**: Firebase Cloud Messaging (FCM)
 
 ## Kurulum
 
@@ -324,6 +328,78 @@ php artisan serve
   - Migration şema iyileştirmesi (nullable fields)
   - Pagination Link null href hatası düzeltildi (tüm sayfalarda)
   - TECHNICAL_DEBT.md dosyası oluşturuldu (ProgressPayments form hatası dokümante edildi)
+- **Bug Fix - ProgressPayments Link Method Hatası**:
+  - Show.vue'daki metraj detay linki template literal yerine route() helper kullanacak şekilde düzeltildi
+  - `/quantities/${id}` → `route('quantities.show', id)`
+  - TECHNICAL_DEBT.md güncellendi, hata çözüldü olarak işaretlendi
+
+#### 31 Ekim 2025 - Flutter Mobil Uygulama (iOS & Android) Planlaması 📱
+- **Modül Eklendi**: Flutter 3.x ile iOS ve Android mobil uygulama geliştirme Faz 3'e dahil edildi
+- **Platform ve Framework**:
+  - Flutter 3.x (Dart 3.x)
+  - Material Design 3 UI/UX
+  - Riverpod/Bloc state management
+  - Dio + Retrofit API client
+  - Hive/SQLite local database
+- **Authentication & Security**:
+  - Laravel Sanctum API token entegrasyonu
+  - Biometric authentication (Face ID, Touch ID, Fingerprint)
+  - Secure token storage (flutter_secure_storage)
+  - Auto-refresh token mekanizması
+  - SSL pinning ve Jailbreak/Root detection
+- **Ana Modüller** (8 modül):
+  - Dashboard (KPI'lar, son aktiviteler)
+  - Projeler (liste, detay, oluştur)
+  - Hakediş (liste, detay, onay/red)
+  - Puantaj (giriş/çıkış, liste, tarih seçici)
+  - Metraj (liste, detay, fotoğraf ekleme)
+  - Stok (liste, transfer, sayım)
+  - İSG (kaza kaydı, denetim, fotoğraf)
+  - Ekipman (liste, kullanım kaydı, bakım)
+- **Offline Support**:
+  - Local database (Hive/SQLite)
+  - Background sync mekanizması
+  - Conflict resolution stratejisi
+  - Queue sistemi (pending requests)
+- **Kamera & Medya**:
+  - Fotoğraf çekme ve yükleme (image_picker, camera)
+  - QR kod okuma (mobile_scanner)
+  - PDF görüntüleme
+  - Image compression
+- **Bildirimler**:
+  - Firebase Cloud Messaging (FCM)
+  - Push notification (hakediş onayı, görevlendirme)
+  - Local notification (hatırlatıcılar)
+- **Harita & Konum**:
+  - Google Maps entegrasyonu
+  - Proje/şantiye lokasyonu
+  - GPS koordinat kaydı
+  - Geo-fencing (şantiye giriş/çıkış)
+- **UI/UX Özellikleri**:
+  - Material Design 3
+  - Dark/Light theme
+  - Responsive layout (tablet desteği)
+  - Pull-to-refresh
+  - Infinite scroll pagination
+  - Skeleton loaders
+  - Türkçe dil desteği
+- **API Endpoints (Laravel)**:
+  - `/api/auth/*` - Login, logout, me, refresh
+  - `/api/projects/*` - Proje CRUD
+  - `/api/progress-payments/*` - Hakediş CRUD + approve/reject
+  - `/api/timesheets/*` - Puantaj clock-in/out
+  - `/api/quantities/*` - Metraj CRUD
+  - `/api/materials/*`, `/api/stock-movements/*` - Stok yönetimi
+  - `/api/safety-incidents/*` - İSG kayıtları
+  - `/api/equipments/*` - Ekipman yönetimi
+  - `/api/notifications/*` - Bildirimler
+  - `/api/sync/*` - Batch sync endpoints
+- **Deployment**:
+  - iOS: App Store (TestFlight beta)
+  - Android: Google Play Store (Internal Testing)
+  - CI/CD: Codemagic / GitHub Actions
+  - Semantic versioning (1.0.0)
+- **Dokümantasyon**: `docs/faz3-gelismis-moduller.md` güncellendi (Modül 9 olarak eklendi)
 
 #### 30 Ekim 2025 - Ekipman & Makine Yönetimi Modülü Tamamlandı 🎉
 - **Ekipman Envanteri Sistemi**: 17 farklı ekipman tipi ile kapsamlı envanter yönetimi
@@ -485,6 +561,26 @@ php artisan serve
 - **5 Vue Sayfası**: Dashboard, Index, Show, Create, Edit (full-width tasarım)
 - **Form Validation**: Comprehensive hata gösterimi (genel liste + input bazlı)
 - **15 Seeder Kayıt**: Test verisi ile sistem hazır
+
+#### 31 Ekim 2025 - Raporlama Katmanı Derinleştirme 📊
+- **KPI Tanımlama Sistemi**: 6 önceden tanımlı performans göstergesi
+  - Proje tamamlanma yüzdesi, Maliyet varyansı, İşgücü verimliliği
+  - İSG kaza oranı, Ekipman kullanım oranı, Zamanında teslim oranı
+- **Report Builder Service**: PDF ve Excel export desteği
+  - maatwebsite/excel entegrasyonu
+  - barryvdh/laravel-dompdf entegrasyonu
+  - 5 rapor şablonu (Hakediş, Puantaj, Finansal, İSG, Ekipman)
+- **Dashboard Service**: 8 widget tipi ile özelleştirilebilir dashboard
+  - Widget'lar: Proje özeti, Finansal özet, KPI genel bakış, vb.
+  - Kullanıcı bazlı layout yönetimi
+- **Modern UI (Teal-Cyan-Blue Gradient)**:
+  - KPIs/Index.vue (full-width, filtreleme, arama)
+  - KPIs/Create.vue, KPIs/Edit.vue
+  - Modül ve durum badge'leri
+- **Sidebar Menüsü**: "Raporlama" grubu eklendi
+- **ReportingSeeder**: 6 KPI + 5 rapor şablonu otomatik oluşturma
+- **Faz 3 İlerleme**: %56 → %67 (6/9 modül tamamlandı)
+- **Gantt Görünümü İyileştirmesi**: Project Schedules sayfasına Gantt linkleri eklendi
 
 #### 26 Ekim 2025 - Keşif/Metraj ve Hakediş Entegrasyonu 🎯
 - **Metraj-Hakediş İlişkisi**: İş akışı düzeltildi (Metraj → Hakediş)

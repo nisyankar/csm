@@ -1736,4 +1736,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/projects/{project}/gantt', [ProjectScheduleController::class, 'gantt'])
         ->middleware('role:admin|project_manager|site_manager')
         ->name('projects.gantt');
+
+    // ========================================
+    // REPORTING MODULE - Raporlama Katmanı (Faz 3)
+    // ========================================
+
+    // KPI Definitions - KPI Tanımları
+    Route::prefix('kpis')->name('kpis.')->group(function () {
+        Route::get('/', [App\Http\Controllers\KpiController::class, 'index'])
+            ->middleware('role:admin|project_manager')
+            ->name('index');
+        Route::get('/create', [App\Http\Controllers\KpiController::class, 'create'])
+            ->middleware('role:admin|project_manager')
+            ->name('create');
+        Route::post('/', [App\Http\Controllers\KpiController::class, 'store'])
+            ->middleware('role:admin|project_manager')
+            ->name('store');
+        Route::get('/{kpi}/edit', [App\Http\Controllers\KpiController::class, 'edit'])
+            ->middleware('role:admin|project_manager')
+            ->name('edit');
+        Route::put('/{kpi}', [App\Http\Controllers\KpiController::class, 'update'])
+            ->middleware('role:admin|project_manager')
+            ->name('update');
+        Route::delete('/{kpi}', [App\Http\Controllers\KpiController::class, 'destroy'])
+            ->middleware('role:admin')
+            ->name('destroy');
+        Route::post('/{kpi}/calculate', [App\Http\Controllers\KpiController::class, 'calculate'])
+            ->middleware('role:admin|project_manager')
+            ->name('calculate');
+    });
 });

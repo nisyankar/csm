@@ -127,9 +127,17 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span :class="getStatusBadge(task.status)">{{ getStatusLabel(task.status) }}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-3">
-                  <Link :href="route('project-schedules.show', task.id)" class="text-blue-600 hover:text-blue-900">Detay</Link>
-                  <Link :href="route('project-schedules.edit', task.id)" class="text-orange-600 hover:text-orange-900">Düzenle</Link>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <div class="flex items-center gap-3">
+                    <Link :href="route('project-schedules.show', task.id)" class="text-blue-600 hover:text-blue-900 font-medium">Detay</Link>
+                    <Link :href="route('project-schedules.edit', task.id)" class="text-orange-600 hover:text-orange-900 font-medium">Düzenle</Link>
+                    <Link v-if="task.project_id" :href="route('projects.gantt', task.project_id)" class="inline-flex items-center text-purple-600 hover:text-purple-900 font-medium">
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Gantt
+                    </Link>
+                  </div>
                 </td>
               </tr>
             </tbody>

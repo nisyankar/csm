@@ -1,9 +1,9 @@
 # FAZ 3: Gelişmiş Modüller
-## 🚧 DEVAM EDİYOR (62%)
+## 🚧 DEVAM EDİYOR (67%)
 
 **Hedef:** Ocak - Mart 2026
 **Durum:** Devam Ediyor
-**Modül Sayısı:** 8 (5 tamamlandı ✅, 3 planlama/geliştirme aşamasında 🔄)
+**Modül Sayısı:** 9 (6 tamamlandı ✅, 3 planlama/geliştirme aşamasında 🔄)
 
 ---
 
@@ -107,14 +107,51 @@
   - Hakediş güncellendiğinde takvim otomatik güncelleniyor
   - Tamamlanma yüzdesi, gerçekleşen maliyet ve durum senkronizasyonu
 
-### 5. 🔄 Raporlama Katmanı Derinleştirme 📈
-**Durum:** Planlama (%0)
-**Service:** `ReportBuilderService`
+### 5. ✅ Raporlama Katmanı Derinleştirme 📈
+**Durum:** Tamamlandı (%100)
+**Database:** `report_templates`, `scheduled_reports`, `kpi_definitions`, `user_dashboards`
+**Service:** `ReportBuilderService`, `KpiCalculatorService`, `DashboardService`
 **Özellikler:**
-- PDF/Excel export (maatwebsite/excel)
-- Planlı e-posta raporu
-- Dashboard builder
-- KPI tanımlama sistemi
+- ✅ **PDF/Excel Export Sistemi:**
+  - maatwebsite/excel paketi entegrasyonu
+  - barryvdh/laravel-dompdf paketi entegrasyonu
+  - ReportBuilderService (multi-format export)
+  - Modül bazlı rapor şablonları
+  - 5 örnek rapor şablonu (Hakediş, Puantaj, Finansal, İSG, Ekipman)
+- ✅ **KPI Tanımlama Sistemi:**
+  - KpiDefinition model ve migration
+  - KpiCalculatorService (6 önceden tanımlı formül)
+  - Formüller: project_completion, cost_variance, labor_productivity, safety_incident_rate, equipment_utilization, on_time_delivery
+  - Hedef değer ve uyarı eşiği takibi
+  - Modül bazlı KPI filtreleme
+  - 6 örnek KPI tanımı (seeder)
+- ✅ **Dashboard Yönetimi:**
+  - DashboardService (widget veri sağlama)
+  - UserDashboard model (JSON layout desteği)
+  - 8 widget tipi: projects_summary, financial_summary, kpi_overview, progress_payments, timesheets_summary, safety_incidents, equipment_status, recent_activities
+  - Kullanıcı bazlı özelleştirilebilir dashboard
+- ✅ **Modern UI/UX (Teal-Cyan-Blue Gradient):**
+  - KPIs/Index.vue (full-width, modern filtreleme)
+  - KPIs/Create.vue (form validasyonu, formula seçici)
+  - KPIs/Edit.vue (inline düzenleme)
+  - Aktif/Pasif durum badge'leri
+  - Modül badge'leri (renkli kategorizasyon)
+- ✅ **Controller & Routes:**
+  - KpiController (full CRUD + calculate endpoint)
+  - kpis.* route grubu (admin, project_manager)
+  - RESTful API yapısı
+- ✅ **Sidebar Entegrasyonu:**
+  - "Raporlama" menü grubu eklendi
+  - Chart-bar icon
+  - KPI Tanımları linki
+- ✅ **Seeder & Test Data:**
+  - ReportingSeeder (6 KPI + 5 rapor şablonu)
+  - Gerçekçi örnek veriler
+  - firstOrCreate ile güvenli seeding
+- ✅ NULL-safe pagination
+- ✅ Breadcrumb navigation
+- 🔜 Planlı e-posta raporu (gelecek sprint)
+- 🔜 Dashboard builder UI (gelecek sprint)
 
 ### 6. ✅ Rol & Yetki Sistemi (Proje Bazlı) 🎯
 **Durum:** Tamamlandı (%100)
@@ -225,6 +262,95 @@ DWG Upload (Vue/Inertia)
   → User Notification
 ```
 
+### 9. 🆕 Flutter Mobil Uygulama (iOS & Android) 📱
+**Durum:** Planlama (%0)
+**Platform:** Flutter 3.x
+**Özellikler:**
+- 🔄 **Authentication & Session:**
+  - Laravel Sanctum API token entegrasyonu
+  - Login/Logout/Remember Me
+  - Biometric authentication (Face ID, Touch ID, Fingerprint)
+  - Secure token storage (flutter_secure_storage)
+  - Auto-refresh token mekanizması
+- 🔄 **Ana Modüller:**
+  - Dashboard (KPI'lar, son aktiviteler)
+  - Projeler (liste, detay, oluştur)
+  - Hakediş (liste, detay, onay/red)
+  - Puantaj (giriş/çıkış, liste, tarih seçici)
+  - Metraj (liste, detay, fotoğraf ekleme)
+  - Stok (liste, transfer, sayım)
+  - İSG (kaza kaydı, denetim, fotoğraf)
+  - Ekipman (liste, kullanım kaydı, bakım)
+- 🔄 **Offline Support:**
+  - Hive/SQLite local database
+  - Sync mekanizması (background sync)
+  - Conflict resolution stratejisi
+  - Queue sistemi (pending requests)
+- 🔄 **Kamera & Medya:**
+  - Fotoğraf çekme ve yükleme
+  - QR kod okuma (ekipman, malzeme)
+  - PDF görüntüleme
+  - Image compression
+- 🔄 **Bildirimler:**
+  - Firebase Cloud Messaging (FCM)
+  - Push notification (hakediş onayı, görevlendirme vb.)
+  - Local notification (hatırlatıcılar)
+- 🔄 **UI/UX:**
+  - Material Design 3
+  - Dark/Light theme
+  - Responsive layout (tablet desteği)
+  - Pull-to-refresh
+  - Infinite scroll pagination
+  - Skeleton loaders
+  - Türkçe dil desteği
+- 🔄 **Güvenlik:**
+  - SSL pinning
+  - Jailbreak/Root detection
+  - API request encryption (opsiyonel)
+  - Biometric auth
+- 🔄 **Harita & Konum:**
+  - Google Maps entegrasyonu
+  - Proje/şantiye lokasyonu
+  - GPS koordinat kaydı
+  - Geo-fencing (şantiye giriş/çıkış)
+
+**Teknik Stack:**
+```
+Flutter 3.x
+├── State Management: Riverpod / Bloc
+├── API Client: Dio + Retrofit
+├── Local DB: Hive / Drift (SQLite)
+├── Routing: Go Router
+├── Auth: flutter_secure_storage + Sanctum
+├── Notifications: firebase_messaging
+├── Camera: image_picker, camera
+├── Maps: google_maps_flutter
+├── QR: mobile_scanner
+└── Biometric: local_auth
+```
+
+**API Endpoints (Laravel):**
+```
+Laravel API (Laravel Sanctum)
+├── /api/auth/* (login, logout, me, refresh)
+├── /api/projects/* (CRUD)
+├── /api/progress-payments/* (CRUD + approve/reject)
+├── /api/timesheets/* (clock-in/out, list)
+├── /api/quantities/* (CRUD)
+├── /api/materials/* (CRUD)
+├── /api/stock-movements/* (CRUD + transfer)
+├── /api/safety-incidents/* (CRUD + upload photo)
+├── /api/equipments/* (CRUD + usage)
+├── /api/notifications/* (list, mark as read)
+└── /api/sync/* (batch sync endpoints)
+```
+
+**Deployment:**
+- iOS: App Store (TestFlight için beta)
+- Android: Google Play Store (Internal Testing)
+- CI/CD: Codemagic / GitHub Actions
+- Versioning: Semantic versioning (1.0.0)
+
 ---
 
 ## 📋 TEKNİK BORÇLAR
@@ -250,11 +376,13 @@ DWG Upload (Vue/Inertia)
 
 ## 🔮 SONRAKI ADIMLAR
 
-1. **Rol & Yetki Sistemi** implementasyonunu tamamla
-2. **AutoCAD DWG Entegrasyonu** için Python servis altyapısını kur
-3. **Geçici Görevlendirme** modülünü tasarla ve geliştir
-4. **Puantaj finansal entegrasyonu** düzeltmesi yap
-5. **Gantt/Timeline** modülünü başlat
+1. ✅ ~~**Rol & Yetki Sistemi** implementasyonunu tamamla~~
+2. **Raporlama Katmanı** - PDF/Excel export sistemi
+3. **Flutter Mobil Uygulama** - Laravel API backend kurulumu (Sanctum)
+4. **Flutter Mobil Uygulama** - iOS/Android app geliştirme
+5. **Geçici Görevlendirme** modülünü tasarla ve geliştir
+6. **AutoCAD DWG Entegrasyonu** için Python servis altyapısını kur
+7. **Puantaj finansal entegrasyonu** düzeltmesi yap
 
 ---
 
