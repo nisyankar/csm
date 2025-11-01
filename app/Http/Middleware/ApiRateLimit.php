@@ -30,12 +30,17 @@ class ApiRateLimit
      */
     public function handle(Request $request, Closure $next, int $customLimit = null): Response
     {
+        // Development ortamında rate limiting'i devre dışı bırak
+        if (config('app.env') === 'local' || config('app.debug') === true) {
+            return $next($request);
+        }
+
         $identifier = $this->getIdentifier($request);
         $limit = $this->getLimit($request, $customLimit);
-        
+
         $cacheKey = "api_rate_limit:{$identifier}";
         $attempts = Cache::get($cacheKey, 0);
-        
+
         // Limit aşıldı mı?
         if ($attempts >= $limit) {
             return response()->json([
@@ -46,17 +51,17 @@ class ApiRateLimit
                 'retry_after' => 3600 // 1 hour in seconds
             ], 429);
         }
-        
+
         // Sayacı artır
         Cache::put($cacheKey, $attempts + 1, now()->addHour());
-        
+
         $response = $next($request);
-        
+
         // Rate limit bilgilerini header'a ekle
         $response->headers->set('X-RateLimit-Limit', $limit);
         $response->headers->set('X-RateLimit-Remaining', max(0, $limit - $attempts - 1));
         $response->headers->set('X-RateLimit-Reset', now()->addHour()->timestamp);
-        
+
         return $response;
     }
 

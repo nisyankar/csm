@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\MaterialController as ApiMaterialController;
 use App\Http\Controllers\Api\DepartmentController as ApiDepartmentController;
 use App\Http\Controllers\Api\NotificationController as ApiNotificationController;
 use App\Http\Controllers\Api\FileUploadController as ApiFileUploadController;
+use App\Http\Controllers\Api\QuantityController as ApiQuantityController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -135,11 +136,11 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(functi
     
     // Timesheet API
     Route::prefix('timesheets')->name('timesheets.')->group(function () {
-        Route::get('/', [TimesheetController::class, 'apiIndex'])->name('index');
-        Route::post('/', [TimesheetController::class, 'apiStore'])->name('store');
-        Route::get('/{timesheet}', [TimesheetController::class, 'apiShow'])->name('show');
-        Route::put('/{timesheet}', [TimesheetController::class, 'apiUpdate'])->name('update');
-        Route::delete('/{timesheet}', [TimesheetController::class, 'apiDestroy'])->name('destroy');
+        Route::get('/', [ApiTimesheetController::class, 'index'])->name('index');
+        Route::post('/', [ApiTimesheetController::class, 'store'])->name('store');
+        Route::get('/{timesheet}', [ApiTimesheetController::class, 'show'])->name('show');
+        Route::put('/{timesheet}', [ApiTimesheetController::class, 'update'])->name('update');
+        Route::delete('/{timesheet}', [ApiTimesheetController::class, 'destroy'])->name('destroy');
         
         // Timesheet Actions
         Route::post('/{timesheet}/submit', [TimesheetController::class, 'apiSubmitForApproval'])->name('submit');
@@ -220,6 +221,31 @@ Route::middleware(['auth:sanctum'])->prefix('v1')->name('api.v1.')->group(functi
 
         // Project Dashboard
         Route::get('/{project}/dashboard', [ApiProjectController::class, 'dashboard'])->name('dashboard');
+    });
+
+    // Quantities (Metraj) API
+    Route::prefix('quantities')->name('quantities.')->group(function () {
+        Route::get('/', [ApiQuantityController::class, 'index'])->name('index');
+        Route::post('/', [ApiQuantityController::class, 'store'])
+            ->middleware('role:admin|project_manager|site_manager|engineer')
+            ->name('store');
+        Route::get('/stats', [ApiQuantityController::class, 'stats'])->name('stats');
+        Route::get('/project/{projectId}', [ApiQuantityController::class, 'byProject'])->name('by-project');
+        Route::get('/{quantity}', [ApiQuantityController::class, 'show'])->name('show');
+        Route::put('/{quantity}', [ApiQuantityController::class, 'update'])
+            ->middleware('role:admin|project_manager|site_manager|engineer')
+            ->name('update');
+        Route::delete('/{quantity}', [ApiQuantityController::class, 'destroy'])
+            ->middleware('role:admin|project_manager')
+            ->name('destroy');
+
+        // Quantity Actions
+        Route::post('/{quantity}/verify', [ApiQuantityController::class, 'verify'])
+            ->middleware('role:admin|project_manager|site_manager|engineer')
+            ->name('verify');
+        Route::post('/{quantity}/approve', [ApiQuantityController::class, 'approve'])
+            ->middleware('role:admin|project_manager')
+            ->name('approve');
     });
 
     // Subcontractor API

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../projects/presentation/pages/projects_list_page.dart';
+import '../../../quantities/presentation/pages/quantities_list_page.dart';
+import '../../../timesheet/presentation/pages/today_status_page.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -25,7 +28,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
 
     // Create staggered animations for cards
     _cardAnimations = List.generate(
-      4,
+      5,
       (index) => Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
           parent: _animationController,
@@ -316,7 +319,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         subtitle: 'Giriş/Çıkış',
         gradient: const [Color(0xFF2563EB), Color(0xFF3B82F6)],
         onTap: () {
-          // TODO: Navigate to timesheet
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const TodayStatusPage(),
+            ),
+          );
         },
       ),
       _QuickActionData(
@@ -326,6 +333,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         gradient: const [Color(0xFFEC4899), Color(0xFFF472B6)],
         onTap: () {
           // TODO: Navigate to progress payments
+        },
+      ),
+      _QuickActionData(
+        icon: Icons.straighten_rounded,
+        title: 'Metraj',
+        subtitle: 'Keşif/Metraj',
+        gradient: const [Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const QuantitiesListPage(),
+            ),
+          );
         },
       ),
       _QuickActionData(
@@ -343,7 +363,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         subtitle: 'Tüm Projeler',
         gradient: const [Color(0xFFF59E0B), Color(0xFFFBBF24)],
         onTap: () {
-          // TODO: Navigate to projects
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ProjectsListPage(),
+            ),
+          );
         },
       ),
     ];

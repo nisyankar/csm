@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProjectResource;
 use App\Models\Project;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
 class ProjectController extends Controller
 {
@@ -121,38 +121,15 @@ class ProjectController extends Controller
 
     public function show(Project $project): JsonResponse
     {
+        // Load only essential relations for mobile app
         $project->load([
-            'projectManager',
-            'siteManager',
-            'departments.supervisor',
-            'currentEmployees',
-            'subcontractors.category',
-            'structures.floors',
-            'structures.units',
+            'projectManager:id,first_name,last_name',
+            'siteManager:id,first_name,last_name',
         ]);
-
-        // Calculate statistics
-        $stats = [
-            'total_employees' => $project->currentEmployees->count(),
-            'total_departments' => $project->departments->count(),
-            'completed_departments' => $project->departments->where('status', 'completed')->count(),
-            'total_hours_worked' => $project->timesheets()
-                ->where('approval_status', 'approved')
-                ->sum('total_minutes') / 60,
-            'this_month_expenses' => $project->timesheets()
-                ->where('approval_status', 'approved')
-                ->whereMonth('work_date', now()->month)
-                ->sum('calculated_wage'),
-            'completion_percentage' => $this->calculateProjectCompletion($project),
-            'days_remaining' => $project->planned_end_date->diffInDays(now(), false),
-            'budget_usage_percentage' => $project->budget_usage_percentage,
-            'is_delayed' => $project->is_delayed,
-        ];
 
         return response()->json([
             'success' => true,
-            'data' => $project,
-            'stats' => $stats,
+            'data' => new ProjectResource($project),
         ]);
     }
 
@@ -479,8 +456,10 @@ class ProjectController extends Controller
             'remaining_budget' => $project->remaining_budget,
             'budget_usage_percentage' => $project->budget_usage_percentage,
             'this_month_expenses' => $project->timesheets()
+                ->with('employee')
                 ->where('approval_status', 'approved')
                 ->whereMonth('work_date', now()->month)
+                ->get()
                 ->sum('calculated_wage'),
         ];
     }
@@ -522,8 +501,10 @@ class ProjectController extends Controller
 
         for ($date = $startDate->copy(); $date <= now(); $date->addDay()) {
             $dailyExpense = $project->timesheets()
+                ->with('employee')
                 ->where('work_date', $date->toDateString())
                 ->where('approval_status', 'approved')
+                ->get()
                 ->sum('calculated_wage');
 
             $data[] = [

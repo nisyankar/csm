@@ -56,6 +56,20 @@ class Timesheet extends Model
         'floor_id',
         'unit_id',
         'work_item_id',
+        // Mobil check-in/out alanları
+        'check_in_time',
+        'check_out_time',
+        'check_in_method',
+        'check_out_method',
+        'check_in_location',
+        'check_out_location',
+        'total_hours',
+        'regular_hours',
+        'status',
+        'is_late',
+        'is_early_leave',
+        'is_overtime',
+        'rejection_reason',
     ];
 
     protected $casts = [
@@ -77,6 +91,14 @@ class Timesheet extends Model
         'weekly_required_hours' => 'decimal:2',
         'weekly_overtime_hours' => 'decimal:2',
         'week_calculation_done' => 'boolean',
+        // Mobil check-in/out casts
+        'check_in_location' => 'array',
+        'check_out_location' => 'array',
+        'total_hours' => 'decimal:2',
+        'regular_hours' => 'decimal:2',
+        'is_late' => 'boolean',
+        'is_early_leave' => 'boolean',
+        'is_overtime' => 'boolean',
     ];
 
     protected $appends = [

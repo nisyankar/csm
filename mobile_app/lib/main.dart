@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/api/api_client.dart';
 import 'core/config/app_router.dart';
 import 'core/constants/app_constants.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize date formatting for Turkish locale
+  await initializeDateFormatting('tr_TR', null);
 
   // Initialize API Client
   await ApiClient().init();

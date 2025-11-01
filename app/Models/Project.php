@@ -41,6 +41,12 @@ class Project extends Model
         'client_contact',
         'estimated_employees',
         'notes',
+        // GPS ve QR check-in için
+        'latitude',
+        'longitude',
+        'allowed_radius',
+        'qr_code_secret',
+        'allowed_check_in_methods',
     ];
 
     protected $casts = [
@@ -52,6 +58,10 @@ class Project extends Model
         'spent_amount' => 'decimal:2',
         'estimated_employees' => 'integer',
         'weekend_days' => 'array',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
+        'allowed_radius' => 'integer',
+        'allowed_check_in_methods' => 'array',
     ];
 
     protected $appends = [
@@ -62,6 +72,13 @@ class Project extends Model
         'completion_percentage',
         'is_active',
         'is_delayed',
+    ];
+
+    /**
+     * Attributes to hide from API responses (mobile doesn't use these)
+     */
+    protected $hidden = [
+        'weekend_days',
     ];
 
     // İlişkiler

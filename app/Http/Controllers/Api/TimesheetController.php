@@ -38,11 +38,11 @@ class TimesheetController extends Controller
         }
 
         if ($request->has('date')) {
-            $query->whereDate('date', $request->date);
+            $query->whereDate('work_date', $request->date);
         }
 
         if ($request->has('start_date') && $request->has('end_date')) {
-            $query->whereBetween('date', [$request->start_date, $request->end_date]);
+            $query->whereBetween('work_date', [$request->start_date, $request->end_date]);
         }
 
         if ($request->has('status')) {
@@ -50,7 +50,7 @@ class TimesheetController extends Controller
         }
 
         // Sıralama
-        $query->orderBy('date', 'desc')->orderBy('check_in_time', 'desc');
+        $query->orderBy('work_date', 'desc')->orderBy('check_in_time', 'desc');
 
         // Sayfalama
         $perPage = $request->input('per_page', 15);
@@ -101,7 +101,7 @@ class TimesheetController extends Controller
         // Bugün için zaten giriş yapmış mı kontrol et
         $today = Carbon::today();
         $existingTimesheet = Timesheet::where('employee_id', $employee->id)
-            ->whereDate('date', $today)
+            ->whereDate('work_date', $today)
             ->first();
 
         if ($existingTimesheet && $existingTimesheet->check_in_time) {
@@ -128,13 +128,13 @@ class TimesheetController extends Controller
             $timesheet = Timesheet::create([
                 'employee_id' => $employee->id,
                 'project_id' => $request->project_id,
-                'date' => $today,
+                'work_date' => $today,
                 'check_in_time' => $checkInTime,
                 'check_in_method' => $request->check_in_method ?? 'manual',
                 'check_in_location' => $request->check_in_location,
                 'entered_by' => $user->id,
                 'status' => 'active',
-                'approval_status' => 'pending',
+                'approval_status' => 'draft',
                 'notes' => $request->notes,
             ]);
 
@@ -190,7 +190,7 @@ class TimesheetController extends Controller
         } else {
             // Bugün için açık puantaj kaydı bul
             $timesheet = Timesheet::where('employee_id', $employee->id)
-                ->whereDate('date', Carbon::today())
+                ->whereDate('work_date', Carbon::today())
                 ->whereNotNull('check_in_time')
                 ->whereNull('check_out_time')
                 ->first();
@@ -217,15 +217,15 @@ class TimesheetController extends Controller
             $checkOutTime = $request->check_out_time ?? Carbon::now()->format('H:i:s');
 
             // Toplam çalışma saati hesapla
-            $checkIn = Carbon::parse($timesheet->date->format('Y-m-d') . ' ' . $timesheet->check_in_time);
-            $checkOut = Carbon::parse($timesheet->date->format('Y-m-d') . ' ' . $checkOutTime);
+            $checkIn = Carbon::parse($timesheet->work_date->format('Y-m-d') . ' ' . $timesheet->check_in_time);
+            $checkOut = Carbon::parse($timesheet->work_date->format('Y-m-d') . ' ' . $checkOutTime);
 
             // Eğer çıkış saati giriş saatinden önceyse, ertesi güne geçmiş demektir
             if ($checkOut->lessThan($checkIn)) {
                 $checkOut->addDay();
             }
 
-            $totalMinutes = $checkOut->diffInMinutes($checkIn);
+            $totalMinutes = $checkIn->diffInMinutes($checkOut);
             $totalHours = round($totalMinutes / 60, 2);
 
             // Mola süresi varsa çıkar (varsayılan 1 saat)
@@ -283,9 +283,13 @@ class TimesheetController extends Controller
         }
 
         $timesheet = Timesheet::where('employee_id', $user->employee->id)
-            ->whereDate('date', Carbon::today())
+            ->whereDate('work_date', Carbon::today())
             ->with(['employee', 'project'])
             ->first();
+
+        // Employee'nin atandığı proje bilgisini al
+        $employee = $user->employee;
+        $currentProject = $employee->current_project_id ? $employee->currentProject : null;
 
         if (!$timesheet) {
             return response()->json([
@@ -295,6 +299,12 @@ class TimesheetController extends Controller
                     'has_clocked_in' => false,
                     'has_clocked_out' => false,
                     'timesheet' => null,
+                    'current_project' => $currentProject ? [
+                        'id' => $currentProject->id,
+                        'name' => $currentProject->name,
+                        'project_code' => $currentProject->project_code,
+                        'allowed_check_in_methods' => $currentProject->allowed_check_in_methods ?? ['manual'],
+                    ] : null,
                 ],
             ], 200);
         }
@@ -306,6 +316,12 @@ class TimesheetController extends Controller
                 'has_clocked_out' => !is_null($timesheet->check_out_time),
                 'timesheet' => new TimesheetResource($timesheet),
                 'working_hours' => $this->calculateCurrentWorkingHours($timesheet),
+                'current_project' => $currentProject ? [
+                    'id' => $currentProject->id,
+                    'name' => $currentProject->name,
+                    'project_code' => $currentProject->project_code,
+                    'allowed_check_in_methods' => $currentProject->allowed_check_in_methods ?? ['manual'],
+                ] : null,
             ],
         ], 200);
     }
@@ -331,9 +347,9 @@ class TimesheetController extends Controller
         $endOfWeek = Carbon::now()->endOfWeek();
 
         $timesheets = Timesheet::where('employee_id', $user->employee->id)
-            ->whereBetween('date', [$startOfWeek, $endOfWeek])
+            ->whereBetween('work_date', [$startOfWeek, $endOfWeek])
             ->with(['project'])
-            ->orderBy('date', 'asc')
+            ->orderBy('work_date', 'asc')
             ->get();
 
         $summary = [
@@ -374,9 +390,9 @@ class TimesheetController extends Controller
         $endOfMonth = Carbon::createFromDate($year, $month, 1)->endOfMonth();
 
         $timesheets = Timesheet::where('employee_id', $user->employee->id)
-            ->whereBetween('date', [$startOfMonth, $endOfMonth])
+            ->whereBetween('work_date', [$startOfMonth, $endOfMonth])
             ->with(['project'])
-            ->orderBy('date', 'asc')
+            ->orderBy('work_date', 'asc')
             ->get();
 
         $summary = [
@@ -433,7 +449,7 @@ class TimesheetController extends Controller
         $request->validate([
             'timesheets' => 'required|array',
             'timesheets.*.project_id' => 'required|exists:projects,id',
-            'timesheets.*.date' => 'required|date',
+            'timesheets.*.work_date' => 'required|date',
             'timesheets.*.check_in_time' => 'required|date_format:H:i:s',
             'timesheets.*.check_out_time' => 'nullable|date_format:H:i:s',
         ]);
@@ -458,12 +474,12 @@ class TimesheetController extends Controller
             foreach ($request->timesheets as $timesheetData) {
                 // Aynı tarih için kayıt var mı kontrol et
                 $existing = Timesheet::where('employee_id', $user->employee->id)
-                    ->whereDate('date', $timesheetData['date'])
+                    ->whereDate('work_date', $timesheetData['work_date'])
                     ->first();
 
                 if ($existing) {
                     $results['failed'][] = [
-                        'date' => $timesheetData['date'],
+                        'date' => $timesheetData['work_date'],
                         'reason' => 'Bu tarih için zaten kayıt mevcut',
                     ];
                     continue;
@@ -473,7 +489,7 @@ class TimesheetController extends Controller
                 $timesheet = Timesheet::create([
                     'employee_id' => $user->employee->id,
                     'project_id' => $timesheetData['project_id'],
-                    'date' => $timesheetData['date'],
+                    'work_date' => $timesheetData['work_date'],
                     'check_in_time' => $timesheetData['check_in_time'],
                     'check_out_time' => $timesheetData['check_out_time'] ?? null,
                     'check_in_method' => 'mobile_offline',
@@ -485,7 +501,7 @@ class TimesheetController extends Controller
                 ]);
 
                 $results['success'][] = [
-                    'date' => $timesheetData['date'],
+                    'date' => $timesheetData['work_date'],
                     'timesheet_id' => $timesheet->id,
                 ];
             }
@@ -516,10 +532,16 @@ class TimesheetController extends Controller
             return 0;
         }
 
-        $checkIn = Carbon::parse($timesheet->date->format('Y-m-d') . ' ' . $timesheet->check_in_time);
+        // Eğer çıkış yapılmışsa, total_hours'u döndür
+        if ($timesheet->check_out_time) {
+            return $timesheet->total_hours ?? 0;
+        }
+
+        // Aktif kayıt için anlık çalışma saatini hesapla
+        $checkIn = Carbon::parse($timesheet->work_date->format('Y-m-d') . ' ' . $timesheet->check_in_time);
         $now = Carbon::now();
 
-        $totalMinutes = $now->diffInMinutes($checkIn);
+        $totalMinutes = $checkIn->diffInMinutes($now);
         $breakDuration = $timesheet->break_duration ?? 60;
         $workingMinutes = max(0, $totalMinutes - $breakDuration);
 

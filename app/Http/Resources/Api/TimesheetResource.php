@@ -18,7 +18,7 @@ class TimesheetResource extends JsonResource
             'id' => $this->id,
             'employee_id' => $this->employee_id,
             'project_id' => $this->project_id,
-            'date' => $this->date?->format('Y-m-d'),
+            'date' => $this->work_date?->format('Y-m-d'),
             'check_in_time' => $this->check_in_time,
             'check_out_time' => $this->check_out_time,
             'check_in_method' => $this->check_in_method,
@@ -39,9 +39,15 @@ class TimesheetResource extends JsonResource
             'is_late' => $this->is_late,
             'is_early_leave' => $this->is_early_leave,
 
-            // İlişkiler
-            'employee' => new EmployeeResource($this->whenLoaded('employee')),
-            'project' => new ProjectResource($this->whenLoaded('project')),
+            // Employee (flat structure)
+            'employee_name' => $this->employee
+                ? $this->employee->first_name . ' ' . $this->employee->last_name
+                : null,
+            'employee_code' => $this->employee?->employee_code,
+
+            // Project (flat structure)
+            'project_name' => $this->project?->name,
+            'project_code' => $this->project?->project_code,
 
             // Timestamps
             'approved_at' => $this->approved_at?->toISOString(),
