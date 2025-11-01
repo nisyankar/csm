@@ -120,6 +120,19 @@ class TimesheetController extends Controller
             ], 403);
         }
 
+        // GPS doğrulama
+        $checkInMethod = $request->check_in_method ?? 'manual';
+        if ($checkInMethod === 'gps') {
+            $gpsValidation = $this->validateGpsLocation($request->project_id, $request->check_in_location);
+            if (!$gpsValidation['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $gpsValidation['message'],
+                    'data' => $gpsValidation['data'] ?? null,
+                ], 400);
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -130,7 +143,7 @@ class TimesheetController extends Controller
                 'project_id' => $request->project_id,
                 'work_date' => $today,
                 'check_in_time' => $checkInTime,
-                'check_in_method' => $request->check_in_method ?? 'manual',
+                'check_in_method' => $checkInMethod,
                 'check_in_location' => $request->check_in_location,
                 'entered_by' => $user->id,
                 'status' => 'active',
@@ -211,6 +224,19 @@ class TimesheetController extends Controller
             ], 403);
         }
 
+        // GPS doğrulama
+        $checkOutMethod = $request->check_out_method ?? 'manual';
+        if ($checkOutMethod === 'gps') {
+            $gpsValidation = $this->validateGpsLocation($timesheet->project_id, $request->check_out_location);
+            if (!$gpsValidation['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $gpsValidation['message'],
+                    'data' => $gpsValidation['data'] ?? null,
+                ], 400);
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -239,7 +265,7 @@ class TimesheetController extends Controller
 
             $timesheet->update([
                 'check_out_time' => $checkOutTime,
-                'check_out_method' => $request->check_out_method ?? 'manual',
+                'check_out_method' => $checkOutMethod,
                 'check_out_location' => $request->check_out_location,
                 'total_hours' => $workingHours,
                 'regular_hours' => $regularHours,
@@ -546,5 +572,117 @@ class TimesheetController extends Controller
         $workingMinutes = max(0, $totalMinutes - $breakDuration);
 
         return round($workingMinutes / 60, 2);
+    }
+
+    /**
+     * GPS konumunu doğrula
+     *
+     * @param int $projectId
+     * @param array|null $userLocation
+     * @return array
+     */
+    private function validateGpsLocation($projectId, $userLocation)
+    {
+        // Konum bilgisi gönderilmemişse
+        if (!$userLocation || !isset($userLocation['latitude']) || !isset($userLocation['longitude'])) {
+            return [
+                'valid' => false,
+                'message' => 'GPS konum bilgisi gereklidir. Lütfen konumunuzu etkinleştirin.',
+            ];
+        }
+
+        // Projeyi getir
+        $project = \App\Models\Project::find($projectId);
+
+        if (!$project) {
+            return [
+                'valid' => false,
+                'message' => 'Proje bulunamadı.',
+            ];
+        }
+
+        // Proje GPS bilgisi yoksa GPS kontrolü yapma (manual gibi davran)
+        if (!$project->latitude || !$project->longitude) {
+            return [
+                'valid' => true,
+                'message' => 'Bu proje için GPS kontrolü yapılmamaktadır.',
+            ];
+        }
+
+        // Mesafe hesapla (metre cinsinden)
+        $distance = $this->calculateDistance(
+            $userLocation['latitude'],
+            $userLocation['longitude'],
+            $project->latitude,
+            $project->longitude
+        );
+
+        // İzin verilen yarıçap (varsayılan 300 metre)
+        $allowedRadius = $project->allowed_radius ?? 300;
+
+        // Mesafe kontrolü
+        if ($distance > $allowedRadius) {
+            return [
+                'valid' => false,
+                'message' => sprintf(
+                    'Proje alanının dışındasınız. Mesafe: %.0f metre (İzin verilen: %d metre)',
+                    $distance,
+                    $allowedRadius
+                ),
+                'data' => [
+                    'distance' => round($distance, 2),
+                    'allowed_radius' => $allowedRadius,
+                    'project_location' => [
+                        'latitude' => $project->latitude,
+                        'longitude' => $project->longitude,
+                    ],
+                ],
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'message' => sprintf('Konum doğrulandı. Mesafe: %.0f metre', $distance),
+            'data' => [
+                'distance' => round($distance, 2),
+                'allowed_radius' => $allowedRadius,
+            ],
+        ];
+    }
+
+    /**
+     * İki GPS koordinatı arasındaki mesafeyi hesapla (Haversine formülü)
+     *
+     * @param float $lat1 Birinci nokta enlem
+     * @param float $lon1 Birinci nokta boylam
+     * @param float $lat2 İkinci nokta enlem
+     * @param float $lon2 İkinci nokta boylam
+     * @return float Metre cinsinden mesafe
+     */
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        // Dünya yarıçapı (metre)
+        $earthRadius = 6371000;
+
+        // Dereceleri radyana çevir
+        $lat1Rad = deg2rad($lat1);
+        $lon1Rad = deg2rad($lon1);
+        $lat2Rad = deg2rad($lat2);
+        $lon2Rad = deg2rad($lon2);
+
+        // Farkları hesapla
+        $deltaLat = $lat2Rad - $lat1Rad;
+        $deltaLon = $lon2Rad - $lon1Rad;
+
+        // Haversine formülü
+        $a = sin($deltaLat / 2) * sin($deltaLat / 2) +
+             cos($lat1Rad) * cos($lat2Rad) *
+             sin($deltaLon / 2) * sin($deltaLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        $distance = $earthRadius * $c;
+
+        return $distance;
     }
 }

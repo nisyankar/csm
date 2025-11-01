@@ -1,8 +1,23 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 class ApiConstants {
-  // Base URL - Change this to your backend URL
-  // static const String baseUrl = 'http://10.0.2.2:8000/api'; // Android emulator
-  static const String baseUrl = 'http://localhost:8000/api'; // Web / iOS simulator
-  // static const String baseUrl = 'https://your-domain.com/api'; // Production
+  // Base URL - Automatically configured based on platform
+  static String get baseUrl {
+    if (kIsWeb) {
+      // Web platform
+      return 'http://localhost:8000/api';
+    } else if (Platform.isAndroid) {
+      // Android emulator (10.0.2.2 is the host machine's localhost from emulator's perspective)
+      return 'http://10.0.2.2:8000/api';
+    } else {
+      // iOS Simulator and other platforms
+      return 'http://localhost:8000/api';
+    }
+  }
+
+  // Production URL - Uncomment and configure when deploying to production
+  // static const String baseUrl = 'https://your-domain.com/api';
 
   static const String apiVersion = 'v1';
 

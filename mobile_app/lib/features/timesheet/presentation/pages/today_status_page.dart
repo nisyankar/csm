@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/location_service.dart';
+import '../../../../core/services/location_service_provider.dart';
 import '../../../projects/presentation/providers/projects_providers.dart';
 import '../providers/timesheet_providers.dart';
 
@@ -14,7 +16,7 @@ class TodayStatusPage extends ConsumerStatefulWidget {
 
 class _TodayStatusPageState extends ConsumerState<TodayStatusPage> {
   int? _selectedProjectId;
-  String _selectedMethod = 'manual';
+  String _selectedMethod = 'gps'; // GPS varsayılan yöntem
   final TextEditingController _notesController = TextEditingController();
 
   @override
@@ -51,9 +53,75 @@ class _TodayStatusPageState extends ConsumerState<TodayStatusPage> {
     }
 
     try {
+      Map<String, double>? location;
+
+      // GPS yöntemi seçildiyse konum al
+      if (_selectedMethod == 'gps') {
+        final locationService = ref.read(locationServiceProvider);
+
+        try {
+          final position = await locationService.getCurrentLocation();
+          location = {
+            'latitude': position.latitude,
+            'longitude': position.longitude,
+          };
+        } on AppLocationServiceDisabledException catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: Colors.orange,
+                action: SnackBarAction(
+                  label: 'GPS Aç',
+                  textColor: Colors.white,
+                  onPressed: () => locationService.openLocationSettings(),
+                ),
+              ),
+            );
+          }
+          return;
+        } on AppLocationPermissionPermanentlyDeniedException catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: Colors.red,
+                action: SnackBarAction(
+                  label: 'Ayarlar',
+                  textColor: Colors.white,
+                  onPressed: () => locationService.openAppSettings(),
+                ),
+              ),
+            );
+          }
+          return;
+        } on AppLocationPermissionDeniedException catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        } on AppLocationException catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(e.toString()),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
       await ref.read(todayTimesheetProvider.notifier).clockIn(
             projectId: projectId,
             checkInMethod: _selectedMethod,
+            location: location,
             notes: _notesController.text.isEmpty ? null : _notesController.text,
           );
 
@@ -87,10 +155,76 @@ class _TodayStatusPageState extends ConsumerState<TodayStatusPage> {
 
     if (confirmed == true) {
       try {
+        Map<String, double>? location;
+
+        // GPS yöntemi seçildiyse konum al
+        if (_selectedMethod == 'gps') {
+          final locationService = ref.read(locationServiceProvider);
+
+          try {
+            final position = await locationService.getCurrentLocation();
+            location = {
+              'latitude': position.latitude,
+              'longitude': position.longitude,
+            };
+          } on AppLocationServiceDisabledException catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.toString()),
+                  backgroundColor: Colors.orange,
+                  action: SnackBarAction(
+                    label: 'GPS Aç',
+                    textColor: Colors.white,
+                    onPressed: () => locationService.openLocationSettings(),
+                  ),
+                ),
+              );
+            }
+            return;
+          } on AppLocationPermissionPermanentlyDeniedException catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.toString()),
+                  backgroundColor: Colors.red,
+                  action: SnackBarAction(
+                    label: 'Ayarlar',
+                    textColor: Colors.white,
+                    onPressed: () => locationService.openAppSettings(),
+                  ),
+                ),
+              );
+            }
+            return;
+          } on AppLocationPermissionDeniedException catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.toString()),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            return;
+          } on AppLocationException catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.toString()),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+            return;
+          }
+        }
+
         final state = ref.read(todayTimesheetProvider);
         await ref.read(todayTimesheetProvider.notifier).clockOut(
               timesheetId: state.activeTimesheet?.id,
               checkOutMethod: _selectedMethod,
+              location: location,
               notes: _notesController.text.isEmpty ? null : _notesController.text,
             );
 
@@ -455,11 +589,11 @@ class _TodayStatusPageState extends ConsumerState<TodayStatusPage> {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                _buildMethodChip('manual', 'Manuel', Icons.touch_app),
                 _buildMethodChip('gps', 'GPS', Icons.location_on),
                 _buildMethodChip('qr', 'QR Kod', Icons.qr_code_scanner),
                 _buildMethodChip('nfc', 'NFC', Icons.nfc),
                 _buildMethodChip('biometric', 'Biyometrik', Icons.fingerprint),
+                _buildMethodChip('manual', 'Manuel', Icons.touch_app),
               ],
             ),
           ],
